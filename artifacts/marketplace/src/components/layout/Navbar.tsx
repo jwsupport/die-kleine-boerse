@@ -40,9 +40,11 @@ export function Navbar() {
             <span className="hidden md:inline">{t.nav_sell}</span>
           </Link>
 
-          <Link href="/messages" className="text-slate-500 hover:text-slate-900 transition-colors">
-            <MessageSquare className="w-5 h-5 stroke-[1.5]" />
-          </Link>
+          {isAuthenticated && (
+            <Link href="/messages" className="text-slate-500 hover:text-slate-900 transition-colors">
+              <MessageSquare className="w-5 h-5 stroke-[1.5]" />
+            </Link>
+          )}
 
           {!isLoading && isAuthenticated && user ? (
             <div className="flex items-center gap-3">
