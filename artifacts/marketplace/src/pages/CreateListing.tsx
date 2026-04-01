@@ -9,7 +9,7 @@ import { SEO } from "@/components/seo/SEO";
 import { CATEGORIES, categoryByLabel } from "@/lib/categories";
 import { ShieldCheck, Zap } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
-import { useT } from "@/lib/i18n";
+import { useT, getCatLabel } from "@/lib/i18n";
 
 export function CreateListing() {
   const t = useT();
@@ -141,7 +141,7 @@ export function CreateListing() {
                   <option value="" disabled>{t.create_categorySelect}</option>
                   {CATEGORIES.map((c) => (
                     <option key={c.id} value={c.label}>
-                      {c.label}{c.fee > 0 ? ` — €${c.fee.toFixed(2)}` : ""}
+                      {getCatLabel(c.id, t)}{c.fee > 0 ? ` — €${c.fee.toFixed(2)}` : ""}
                     </option>
                   ))}
                 </select>

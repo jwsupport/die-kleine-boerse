@@ -75,6 +75,15 @@ export const translations = {
     create_checkoutError: "Fehler beim Checkout",
     create_summary: "Zusammenfassung",
 
+    cat_living_interior: "Wohnen & Einrichten",
+    cat_fashion_accessories: "Mode & Accessoires",
+    cat_art_collectibles: "Kunst & Sammlerstücke",
+    cat_tech_electronics: "Technik & Gadgets",
+    cat_leisure_hobbies: "Freizeit & Hobby",
+    cat_vehicles_mobility: "Fahrzeuge & Mobilität",
+    cat_real_estate: "Immobilien",
+    cat_services: "Dienstleistungen",
+
     messages_conversations: "Gespräche",
     messages_placeholder: "Nachricht schreiben…",
     messages_noConversations: "Keine Gespräche",
@@ -290,6 +299,15 @@ export const translations = {
     create_checkoutError: "Checkout error",
     create_summary: "Summary",
 
+    cat_living_interior: "Living & Interior",
+    cat_fashion_accessories: "Fashion & Accessories",
+    cat_art_collectibles: "Art & Collectibles",
+    cat_tech_electronics: "Tech & Gadgets",
+    cat_leisure_hobbies: "Leisure & Hobbies",
+    cat_vehicles_mobility: "Vehicles & Mobility",
+    cat_real_estate: "Real Estate",
+    cat_services: "Services",
+
     messages_conversations: "Conversations",
     messages_placeholder: "Write a message…",
     messages_noConversations: "No conversations",
@@ -468,4 +486,9 @@ export function useLanguage() {
 export function useT(): Translations {
   const { lang } = useLanguage();
   return translations[lang] as Translations;
+}
+
+export function getCatLabel(categoryId: string, t: Translations): string {
+  const key = `cat_${categoryId.replace(/-/g, "_")}` as keyof Translations;
+  return (t[key] as string | undefined) ?? categoryId;
 }

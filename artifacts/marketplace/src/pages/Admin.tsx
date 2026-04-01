@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@workspace/replit-auth-web";
-import { useT } from "@/lib/i18n";
+import { useT, getCatLabel } from "@/lib/i18n";
 import { isAdminEmail } from "@/lib/admin";
 import {
   useAdminGetListings,
@@ -423,7 +423,7 @@ export function Admin() {
                 <SelectTrigger id="edit-category"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {CATEGORIES.map((c) => (
-                    <SelectItem key={c.id} value={c.label}>{c.label}</SelectItem>
+                    <SelectItem key={c.id} value={c.label}>{getCatLabel(c.id, t)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "@/components/seo/SEO";
 import { CATEGORIES } from "@/lib/categories";
 import { ChevronLeft, Plus } from "lucide-react";
-import { useT } from "@/lib/i18n";
+import { useT, getCatLabel } from "@/lib/i18n";
 
 export function CategoryPage() {
   const t = useT();
@@ -36,8 +36,8 @@ export function CategoryPage() {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
       <SEO
-        title={`${cat.label} kaufen & verkaufen — Die kleine Börse`}
-        description={`Entdecke gebrauchte ${cat.label.toLowerCase()} Artikel in deiner Nähe auf Die kleine Börse — fair, sicher und kuratiert.`}
+        title={`${getCatLabel(cat.id, t)} kaufen & verkaufen — Die kleine Börse`}
+        description={`Entdecke gebrauchte ${getCatLabel(cat.id, t).toLowerCase()} Artikel in deiner Nähe auf Die kleine Börse — fair, sicher und kuratiert.`}
       />
       <Navbar />
 
@@ -51,7 +51,7 @@ export function CategoryPage() {
           <div className="flex items-center gap-4">
             {Icon && <Icon className="w-8 h-8 text-slate-300" strokeWidth={1.5} />}
             <div>
-              <h1 className="text-3xl font-medium tracking-tight text-slate-900">{cat.label}</h1>
+              <h1 className="text-3xl font-medium tracking-tight text-slate-900">{getCatLabel(cat.id, t)}</h1>
               {cat.fee > 0 && (
                 <p className="text-sm text-slate-400 mt-0.5">{t.categoryPage_listingFee}: €{cat.fee.toFixed(2)}</p>
               )}
