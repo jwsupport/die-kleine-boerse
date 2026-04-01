@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, ilike, and, gte, lte, sql } from "drizzle-orm";
+import { eq, ilike, and, gte, lte, sql, count } from "drizzle-orm";
 import { db, listingsTable, profilesTable } from "@workspace/db";
 import type { Listing } from "@workspace/db";
 import {
@@ -103,6 +103,23 @@ router.post("/listings", async (req, res): Promise<void> => {
 
   if (!existingProfile) {
     await db.insert(profilesTable).values({ id: sellerId });
+  }
+
+  // Enforce image limit
+  if (imageUrls && imageUrls.length > 4) {
+    res.status(400).json({ error: "Maximum of 4 images per listing." });
+    return;
+  }
+
+  // Enforce 200 active listings per user
+  const [{ value: activeCount }] = await db
+    .select({ value: count() })
+    .from(listingsTable)
+    .where(and(eq(listingsTable.sellerId, sellerId), eq(listingsTable.status, "active")));
+
+  if (Number(activeCount) >= 200) {
+    res.status(400).json({ error: "Maximum limit of 200 active listings reached." });
+    return;
   }
 
   const fee = CATEGORY_FEES[category] ?? 0;

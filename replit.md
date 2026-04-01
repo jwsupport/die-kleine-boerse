@@ -5,6 +5,9 @@
 **CURATED.** is a localized marketplace application with a Quiet Luxury aesthetic (slate-900 palette, Inter font, generous whitespace).
 
 ### Feature Set
+- 4-slot image gallery uploader in CreateListing (URL-based, live previews, hover-remove, keyboard shortcuts)
+- 200 active listings per user limit enforced at backend + DB CHECK constraint (cardinality ≤ 4 images)
+- MyAds slot progress bar showing active listings / 200 with color escalation
 - Browsable listing feed with category/location/search filtering
 - Listing detail page with real-time chat (send message to seller), star ratings, report system
 - Create listing (requires Replit Auth login)

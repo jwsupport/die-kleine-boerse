@@ -1,0 +1,102 @@
+To maintain the "Quiet Luxury" and minimalist appeal of **Die kleine Börse**, we need to implement these constraints strictly in the code. This prevents spam, keeps your storage costs low on Supabase, and ensures the site remains fast (which is critical for **SEO**).
+
+Here is the technical implementation and the logic for your business model, translated into English.
+
+---
+
+### 1. Database Constraints (SQL)
+We need a way to track how many active ads a user currently has and how many images are attached to each.
+
+```sql
+-- Security Check: Prevent more than 200 ads per user
+CREATE OR REPLACE FUNCTION check_user_listing_limit()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (SELECT COUNT(*) FROM listings WHERE seller_id = NEW.seller_id AND status = 'active') >= 200 THEN
+    RAISE EXCEPTION 'Maximum limit of 200 active listings reached.';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_limit_listings
+BEFORE INSERT ON listings
+FOR EACH ROW EXECUTE FUNCTION check_user_listing_limit();
+
+-- Image Constraint: Ensure the array does not exceed 4 items
+ALTER TABLE listings 
+ADD CONSTRAINT check_max_images 
+CHECK (cardinality(images) <= 4);
+```
+
+---
+
+### 2. Frontend Logic: Image Upload & Limits (React)
+This component handles the "Max 4 images" rule and shows the user how many slots are left.
+
+```tsx
+import { useState } from 'react';
+
+export default function ImageUploader({ existingImages = [] }) {
+  const [images, setImages] = useState(existingImages);
+  const MAX_IMAGES = 4;
+
+  const handleUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    
+    if (images.length + files.length > MAX_IMAGES) {
+      alert(`Limited to ${MAX_IMAGES} images per listing.`);
+      return;
+    }
+
+    // Logic for Supabase Storage Upload goes here...
+    // const newUrls = await uploadToSupabase(files);
+    // setImages([...images, ...newUrls]);
+  };
+
+  return (
+    <div className="mt-6">
+      <label className="block text-xs uppercase tracking-widest text-slate-400 mb-4 font-semibold">
+        Gallery ({images.length} / {MAX_IMAGES})
+      </label>
+      
+      <div className="grid grid-cols-4 gap-4">
+        {images.map((img, idx) => (
+          <div key={idx} className="aspect-square bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
+            <img src={img} alt="Preview" className="object-cover w-full h-full" />
+          </div>
+        ))}
+
+        {images.length < MAX_IMAGES && (
+          <label className="aspect-square border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-50 transition-all">
+            <input type="file" multiple className="hidden" onChange={handleUpload} accept="image/*" />
+            <span className="text-slate-400 text-2xl">+</span>
+          </label>
+        )}
+      </div>
+      <p className="text-[10px] text-slate-400 mt-2 italic">
+        High-resolution images preferred for better search visibility.
+      </p>
+    </div>
+  );
+}
+```
+
+---
+
+### 3. Business & SEO Strategy for "Die kleine Börse"
+
+* **Scarcity & Quality:** By limiting users to **200 ads**, you prevent "mass-importers" from flooding your marketplace with low-quality items. This keeps your search results relevant and high-end.
+* **Performance (PageSpeed):** Limiting to **4 images** ensures that your "Listing Details" pages load extremely fast. Fast loading is a "Core Web Vital" that Google uses to rank sites higher.
+* **User Dashboard:** In the user's profile, you should display a progress bar: *"You are using 45 of your 200 free slots."* This encourages users to curate their shop carefully.
+
+---
+
+### **Summary of your Business Model for "Die kleine Börse"**
+* **Listing Limit:** 200 Active Ads max.
+* **Visuals:** Max. 4 Images per Ad.
+* **Standard Categories:** Free.
+* **Premium Categories:** * **Cars:** €5.49
+    * **Real Estate:** €9.49
+
+Would you like me to build the **User Dashboard** next, where the user can see their **200-listing limit** and manage their active ads?

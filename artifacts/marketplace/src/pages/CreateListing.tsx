@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/seo/SEO";
 import { CATEGORIES, categoryByLabel } from "@/lib/categories";
 import { ShieldCheck, Zap } from "lucide-react";
+import { ImageUploader } from "@/components/ImageUploader";
 
 export function CreateListing() {
   const [_, setLocation] = useLocation();
@@ -23,7 +24,7 @@ export function CreateListing() {
     category: "",
     location: "",
     description: "",
-    imageUrls: "",
+    imageUrls: [] as string[],
   });
 
   const selectedCategory = categoryByLabel[formData.category];
@@ -63,9 +64,7 @@ export function CreateListing() {
           category: formData.category,
           location: formData.location,
           description: formData.description || null,
-          imageUrls: formData.imageUrls
-            ? formData.imageUrls.split(",").map((s) => s.trim()).filter(Boolean)
-            : [],
+          imageUrls: formData.imageUrls,
         },
       },
       {
@@ -196,18 +195,10 @@ export function CreateListing() {
               />
             </div>
 
-            <div>
-              <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
-                Bilder
-              </label>
-              <input
-                type="text"
-                className="w-full p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none text-slate-900 placeholder:text-slate-400"
-                placeholder="Bild-URLs kommagetrennt eingeben"
-                {...field("imageUrls")}
-              />
-              <p className="text-xs text-slate-400 mt-1.5">Direkte Bild-Links, durch Komma getrennt.</p>
-            </div>
+            <ImageUploader
+              value={formData.imageUrls}
+              onChange={(urls) => setFormData((p) => ({ ...p, imageUrls: urls }))}
+            />
 
             {/* Dynamic fee summary — only shown when a category is selected */}
             {formData.category && (

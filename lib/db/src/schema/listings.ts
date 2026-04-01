@@ -1,4 +1,5 @@
-import { pgTable, text, boolean, timestamp, uuid, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, boolean, timestamp, uuid, numeric, check } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
@@ -25,7 +26,9 @@ export const listingsTable = pgTable("listings", {
   paymentStatus: text("payment_status").notNull().default("not_required"),
   listingFee: numeric("listing_fee", { precision: 10, scale: 2 }).notNull().default("0.00"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  check("check_max_images", sql`cardinality(${table.imageUrls}) <= 4`),
+]);
 
 export const insertListingSchema = createInsertSchema(listingsTable).omit({ id: true, createdAt: true });
 export type InsertListing = z.infer<typeof insertListingSchema>;
