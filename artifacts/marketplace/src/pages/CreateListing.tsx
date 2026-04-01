@@ -6,17 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/seo/SEO";
-
-const CATEGORIES: { value: string; label: string }[] = [
-  { value: "Möbel", label: "Möbel" },
-  { value: "Elektronik", label: "Elektronik" },
-  { value: "Kleidung", label: "Kleidung" },
-  { value: "Kunst", label: "Kunst" },
-  { value: "Bücher", label: "Bücher" },
-  { value: "Haushalt", label: "Haushalt" },
-  { value: "Sport", label: "Sport" },
-  { value: "Sonstiges", label: "Sonstiges" },
-];
+import { CATEGORIES } from "@/lib/categories";
 
 export function CreateListing() {
   const [_, setLocation] = useLocation();
@@ -143,7 +133,7 @@ export function CreateListing() {
                 >
                   <option value="" disabled>Auswählen…</option>
                   {CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
+                    <option key={c.id} value={c.label}>{c.label}</option>
                   ))}
                 </select>
               </div>

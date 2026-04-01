@@ -7,6 +7,7 @@ import { Search, MapPin } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "@/components/seo/SEO";
 import { MarketplaceSchema } from "@/components/seo/schemas";
+import { categoryByLabel } from "@/lib/categories";
 
 export function Home() {
   const [search, setSearch] = useState("");
@@ -71,23 +72,28 @@ export function Home() {
             </div>
           </div>
 
-          <div className="flex items-center gap-6 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
             <button
               onClick={() => setCategory(undefined)}
-              className={`whitespace-nowrap text-sm font-medium transition-colors ${!category ? 'text-slate-900 border-b-2 border-slate-900' : 'text-slate-500 hover:text-slate-900'}`}
+              className={`whitespace-nowrap text-sm font-medium transition-colors px-4 py-2 rounded-full ${!category ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
             >
-              All Items
+              Alle
             </button>
-            {stats?.map((stat) => (
-              <button
-                key={stat.category}
-                onClick={() => setCategory(stat.category)}
-                className={`whitespace-nowrap text-sm font-medium transition-colors flex items-center gap-2 ${category === stat.category ? 'text-slate-900 border-b-2 border-slate-900' : 'text-slate-500 hover:text-slate-900'}`}
-              >
-                {stat.category}
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">{stat.count}</span>
-              </button>
-            ))}
+            {stats?.map((stat) => {
+              const meta = categoryByLabel[stat.category];
+              const Icon = meta?.Icon;
+              return (
+                <button
+                  key={stat.category}
+                  onClick={() => setCategory(stat.category)}
+                  className={`whitespace-nowrap text-sm font-medium transition-colors flex items-center gap-1.5 px-4 py-2 rounded-full ${category === stat.category ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
+                >
+                  {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
+                  {stat.category}
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${category === stat.category ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>{stat.count}</span>
+                </button>
+              );
+            })}
           </div>
         </header>
 
