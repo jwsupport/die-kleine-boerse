@@ -3,6 +3,7 @@ import { useRoute, Link } from "wouter";
 import { useGetListings, getGetListingsQueryKey } from "@workspace/api-client-react";
 import { ListingCard } from "@/components/ListingCard";
 import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "@/components/seo/SEO";
 import { CATEGORIES } from "@/lib/categories";
@@ -105,11 +106,7 @@ export function CategoryPage() {
         )}
       </main>
 
-      <footer className="border-t border-slate-100 py-10 mt-16">
-        <div className="container mx-auto px-4 md:px-8 max-w-7xl text-center text-xs text-slate-400">
-          © {new Date().getFullYear()} Die kleine Börse. Curated Marketplace Excellence.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
