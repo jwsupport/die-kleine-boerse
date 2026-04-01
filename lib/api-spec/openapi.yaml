@@ -1,15 +1,22 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Marketplace API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: profiles
+    description: User profile operations
+  - name: listings
+    description: Listing CRUD operations
+  - name: messages
+    description: Real-time messaging
+  - name: stats
+    description: Aggregated statistics
 paths:
   /healthz:
     get:
@@ -24,6 +31,298 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /profiles/{id}:
+    get:
+      operationId: getProfile
+      tags: [profiles]
+      summary: Get user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "404":
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /profiles/{id}/listings:
+    get:
+      operationId: getProfileListings
+      tags: [profiles]
+      summary: Get listings by profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of listings by this seller
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+
+  /listings:
+    get:
+      operationId: getListings
+      tags: [listings]
+      summary: Get all listings
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+    post:
+      operationId: createListing
+      tags: [listings]
+      summary: Create a new listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateListingBody"
+      responses:
+        "201":
+          description: Listing created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /listings/{id}:
+    get:
+      operationId: getListing
+      tags: [listings]
+      summary: Get a listing by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Listing found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingWithSeller"
+        "404":
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateListing
+      tags: [listings]
+      summary: Update a listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateListingBody"
+      responses:
+        "200":
+          description: Listing updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteListing
+      tags: [listings]
+      summary: Delete a listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted successfully
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /listings/{id}/messages:
+    get:
+      operationId: getMessages
+      tags: [messages]
+      summary: Get messages for a listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Messages for this listing conversation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message about a listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /messages/conversations:
+    get:
+      operationId: getConversations
+      tags: [messages]
+      summary: Get all conversations for a user
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+
+  /stats/categories:
+    get:
+      operationId: getCategoryStats
+      tags: [stats]
+      summary: Get listing counts by category
+      responses:
+        "200":
+          description: Category statistics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryStat"
+
+  /stats/recent:
+    get:
+      operationId: getRecentListings
+      tags: [stats]
+      summary: Get recently added listings
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recent listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +333,227 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: ["string", "null"]
+        fullName:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - createdAt
+
+    Listing:
+      type: object
+      properties:
+        id:
+          type: string
+        sellerId:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        price:
+          type: number
+        isNegotiable:
+          type: boolean
+        category:
+          type: string
+        location:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - sellerId
+        - title
+        - price
+        - isNegotiable
+        - category
+        - location
+        - imageUrls
+        - createdAt
+
+    ListingWithSeller:
+      type: object
+      properties:
+        id:
+          type: string
+        sellerId:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        price:
+          type: number
+        isNegotiable:
+          type: boolean
+        category:
+          type: string
+        location:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+        seller:
+          $ref: "#/components/schemas/Profile"
+      required:
+        - id
+        - sellerId
+        - title
+        - price
+        - isNegotiable
+        - category
+        - location
+        - imageUrls
+        - createdAt
+        - seller
+
+    CreateListingBody:
+      type: object
+      properties:
+        sellerId:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        price:
+          type: number
+        isNegotiable:
+          type: boolean
+        category:
+          type: string
+        location:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+      required:
+        - sellerId
+        - title
+        - price
+        - category
+        - location
+
+    UpdateListingBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        price:
+          type: number
+        isNegotiable:
+          type: boolean
+        category:
+          type: string
+        location:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        listingId:
+          type: string
+        senderId:
+          type: string
+        receiverId:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+        senderName:
+          type: ["string", "null"]
+      required:
+        - id
+        - listingId
+        - senderId
+        - receiverId
+        - content
+        - createdAt
+
+    SendMessageBody:
+      type: object
+      properties:
+        senderId:
+          type: string
+        receiverId:
+          type: string
+        content:
+          type: string
+      required:
+        - senderId
+        - receiverId
+        - content
+
+    Conversation:
+      type: object
+      properties:
+        listingId:
+          type: string
+        listingTitle:
+          type: string
+        listingImage:
+          type: ["string", "null"]
+        otherUserId:
+          type: string
+        otherUserName:
+          type: ["string", "null"]
+        lastMessage:
+          type: string
+        lastMessageAt:
+          type: string
+        unreadCount:
+          type: integer
+      required:
+        - listingId
+        - listingTitle
+        - otherUserId
+        - lastMessage
+        - lastMessageAt
+        - unreadCount
+
+    CategoryStat:
+      type: object
+      properties:
+        category:
+          type: string
+        count:
+          type: integer
+      required:
+        - category
+        - count
