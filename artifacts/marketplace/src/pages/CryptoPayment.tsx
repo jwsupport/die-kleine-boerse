@@ -8,7 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, Copy, AlertCircle, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/8x29AT1dR6EH58P3or4wM00";
+const STRIPE_LINKS: { maxFee: number; url: string }[] = [
+  { maxFee: 1.00, url: "https://buy.stripe.com/8x29AT1dR6EH58P3or4wM00" },
+  { maxFee: 5.49, url: "https://buy.stripe.com/4gM00j2hV8MP1WD9MP4wM02" },
+];
+
+function getStripeLink(fee: number): string {
+  const match = STRIPE_LINKS.find((l) => Math.abs(l.maxFee - fee) < 0.01);
+  return match?.url ?? STRIPE_LINKS[0].url;
+}
 const USDT_ADDRESS = "TEoXrL4bSj7adM6CbdYowTrdDp6RNuuXZL";
 const SOL_ADDRESS = "J7ptr4kryRKb51cSqE66C6qBeUYxHZwmU9q7xCKubCW2";
 const QR_BASE = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=";
@@ -68,8 +76,11 @@ export default function CryptoPayment() {
     },
   });
 
+  const fee = Number(listing?.listingFee ?? 0);
+
   const handleStripeClick = () => {
-    const url = `${STRIPE_PAYMENT_LINK}?client_reference_id=${id}`;
+    const base = getStripeLink(fee);
+    const url = `${base}?client_reference_id=${id}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -127,8 +138,6 @@ export default function CryptoPayment() {
     );
   }
 
-  const fee = Number(listing.listingFee ?? 0);
-
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
       <Navbar />
@@ -168,7 +177,7 @@ export default function CryptoPayment() {
                 onClick={handleStripeClick}
               >
                 <CreditCard className="w-4 h-4" />
-                {t.pay_stripe_button}
+                {t.pay_stripe_title} — €{fee.toFixed(2).replace(".", ",")}
               </Button>
             </div>
           </div>

@@ -20,7 +20,7 @@ import {
 const router: IRouter = Router();
 
 const CATEGORY_FEES: Record<string, number> = {
-  "Vehicles & Mobility": 1.00,
+  "Vehicles & Mobility": 5.49,
   "Real Estate": 1.00,
 };
 

@@ -1,0 +1,143 @@
+Hier ist die technische Umsetzung für deinen Header und Footer, perfekt abgestimmt auf das **"Quiet Luxury"** Design von **Die kleine Börse**.
+
+Der Header erkennt automatisch, ob du (`welik.jakob@gmail.com`) eingeloggt bist, und schaltet die Admin-Funktionen frei. Der Footer ist so strukturiert, dass er alle Kategorien für Google (SEO) sichtbar macht, auch wenn sie noch leer sind.
+
+### 1. Der Dynamische Header (Navigation.tsx)
+
+```tsx
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
+
+export default function Header() {
+  const [user, setUser] = useState(null);
+  const ADMIN_EMAIL = 'welik.jakob@gmail.com';
+
+  useEffect(() => {
+    const session = supabase.auth.session();
+    setUser(session?.user ?? null);
+  }, []);
+
+  return (
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-8 py-5 flex justify-between items-center">
+      {/* Logo */}
+      <a href="/" className="text-xl font-bold tracking-tighter uppercase text-slate-900">
+        Die kleine Börse
+      </a>
+
+      {/* Main Navigation */}
+      <div className="hidden md:flex items-center space-x-10 text-[13px] font-medium uppercase tracking-widest text-slate-500">
+        <a href="/browse" className="hover:text-slate-900 transition-colors">Entdecken</a>
+        <a href="/categories" className="hover:text-slate-900 transition-colors">Kategorien</a>
+        
+        {/* Admin Link - Only visible for you */}
+        {user?.email === ADMIN_EMAIL && (
+          <a href="/admin" className="text-blue-600 font-bold border-b-2 border-blue-600 pb-1">
+            Admin Panel
+          </a>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center space-x-6">
+        {user ? (
+          <>
+            <a href="/messages" className="text-slate-400 hover:text-slate-900">
+              <span className="sr-only">Nachrichten</span>
+              <i className="chat-icon"></i> {/* Platzhalter für Icon */}
+            </a>
+            <a href="/account" className="text-slate-900 font-semibold text-sm">Mein Konto</a>
+            <a href="/create" className="bg-slate-900 text-white px-6 py-2.5 rounded-full text-xs font-bold hover:bg-slate-700 transition-all shadow-sm">
+              Anzeige aufgeben
+            </a>
+          </>
+        ) : (
+          <a href="/login" className="text-slate-900 font-semibold text-sm">Login</a>
+        )}
+      </div>
+    </nav>
+  );
+}
+```
+
+---
+
+### 2. Der SEO-Optimierte Footer (Footer.tsx)
+
+Dieser Footer nutzt eine Grid-Struktur, um deine 8 Kategorien und die rechtlichen Links sauber zu trennen.
+
+```tsx
+export default function Footer() {
+  const categories = [
+    { name: 'Wohnen & Interieur', slug: 'living-interior' },
+    { name: 'Mode & Accessoires', slug: 'fashion-accessories' },
+    { name: 'Kunst & Sammlerstücke', slug: 'art-collectibles' },
+    { name: 'Technik & Gadgets', slug: 'tech-electronics' },
+    { name: 'Fahrzeuge & Mobilität', slug: 'vehicles-mobility' },
+    { name: 'Immobilien', slug: 'real-estate' },
+    { name: 'Freizeit & Hobbies', slug: 'leisure-hobbies' },
+    { name: 'Dienstleistungen', slug: 'services' }
+  ];
+
+  return (
+    <footer className="bg-white border-t border-slate-100 pt-20 pb-10 px-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
+        
+        {/* Brand Column */}
+        <div className="col-span-1 md:col-span-1">
+          <h2 className="text-lg font-bold uppercase tracking-tighter mb-4 text-slate-900">Die kleine Börse</h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Ihr exklusiver Marktplatz für hochwertige Fundstücke, Automobile und Immobilien. Qualität vor Quantität.
+          </p>
+        </div>
+
+        {/* Categories Column (SEO Booster) */}
+        <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <h3 className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-300 mb-2">Kategorien</h3>
+            {categories.slice(0, 4).map(cat => (
+              <a key={cat.slug} href={`/category/${cat.slug}`} className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
+                {cat.name}
+              </a>
+            ))}
+          </div>
+          <div className="space-y-3 pt-6">
+            {categories.slice(4).map(cat => (
+              <a key={cat.slug} href={`/category/${cat.slug}`} className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
+                {cat.name}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Legal Column */}
+        <div className="space-y-3">
+          <h3 className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-300 mb-2">Rechtliches</h3>
+          <a href="/impressum" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">Impressum</a>
+          <a href="/agb" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">AGB</a>
+          <a href="/datenschutz" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">Datenschutz</a>
+          <a href="/sicherheit" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">Sicherheitstipps</a>
+        </div>
+      </div>
+
+      {/* Copyright Bar */}
+      <div className="max-w-7xl mx-auto pt-8 border-t border-slate-50 flex flex-col md:flex-row justify-between items-center text-[10px] text-slate-300 uppercase tracking-widest font-medium">
+        <p>© 2026 Die kleine Börse. Alle Rechte vorbehalten.</p>
+        <div className="mt-4 md:mt-0 flex space-x-6">
+          <span>Ein Projekt von Jakob Welik</span>
+          <span className="text-slate-200">Powered by Speed.it Hosting</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
+```
+
+---
+
+### Warum dieser Code für dich funktioniert:
+
+1.  **Exklusivität (Header):** Als Admin siehst du sofort das "Admin Panel", während normale User ein sauberes, aufgeräumtes Menü sehen.
+2.  **SEO-Power (Footer):** Indem wir alle Kategorien im Footer auflisten, erzeugen wir auf jeder einzelnen Unterseite deiner Website einen internen Link zu diesen Kategorien. Das signalisiert Google: "Diese Themen sind wichtig".
+3.  **Ladezeit:** Der Code ist extrem schlank und verzichtet auf schwere Bibliotheken. Das ist perfekt für dein Hosting bei Speed.it, um maximale Performance zu erzielen.
+
+Soll ich dir nun zeigen, wie du die **Impressum- und AGB-Seiten** so vorbereitest, dass sie rechtssicher aussehen und zu deinem "Quiet Luxury" Stil passen?
