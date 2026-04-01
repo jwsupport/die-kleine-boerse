@@ -100,7 +100,7 @@ export function Admin() {
       { id, data: { status, reason } },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getAdminGetListingsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/listings"] });
           toast({ title: t.admin_updated, description: t.admin_updatedDesc });
           if (status === "rejected") { setRejectDialogItem(null); setRejectReason(""); }
           if (status === "deleted") { setDeleteDialogItem(null); }
@@ -131,7 +131,7 @@ export function Admin() {
       },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getAdminGetListingsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/listings"] });
           toast({ title: t.admin_edit_success });
           setEditDialogItem(null);
         },
