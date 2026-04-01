@@ -21,7 +21,7 @@ const router: IRouter = Router();
 
 const CATEGORY_FEES: Record<string, number> = {
   "Vehicles & Mobility": 5.49,
-  "Real Estate": 1.00,
+  "Real Estate": 9.49,
 };
 
 function mapListing(l: Listing) {

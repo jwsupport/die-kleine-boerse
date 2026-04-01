@@ -24,7 +24,7 @@ export const CATEGORIES: Category[] = [
   { id: "tech-electronics",    label: "Tech & Gadgets",         Icon: Cpu,         fee: 0.00 },
   { id: "leisure-hobbies",     label: "Leisure & Hobbies",      Icon: Coffee,      fee: 0.00 },
   { id: "vehicles-mobility",   label: "Vehicles & Mobility",    Icon: Car,         fee: 5.49 },
-  { id: "real-estate",         label: "Real Estate",            Icon: Home,        fee: 1.00 },
+  { id: "real-estate",         label: "Real Estate",            Icon: Home,        fee: 9.49 },
   { id: "services",            label: "Services",               Icon: Briefcase,   fee: 0.00 },
 ];
 
