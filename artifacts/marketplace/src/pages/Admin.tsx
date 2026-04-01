@@ -11,6 +11,7 @@ import {
   getAdminGetStatsQueryKey,
   useUpdateListing,
   useAdminGetRevenue,
+  useAdminGetPayments,
 } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,11 @@ export function Admin() {
 
   const revenueYearNum = parseInt(revenueYear);
   const { data: revenueRaw, isLoading: loadingRevenue, isError: revenueError } = useAdminGetRevenue(revenueYearNum);
+
+  // Payments tab
+  const [paymentsYear, setPaymentsYear] = useState(currentYear.toString());
+  const paymentsYearNum = parseInt(paymentsYear);
+  const { data: payments, isLoading: loadingPayments } = useAdminGetPayments(paymentsYearNum);
 
   const revenueChartData = useMemo(() => {
     const byMonth: Record<string, number> = {};
@@ -231,6 +237,12 @@ export function Admin() {
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900"
             >
               Umsätze
+            </TabsTrigger>
+            <TabsTrigger
+              value="payments"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900"
+            >
+              Zahlungen
             </TabsTrigger>
           </TabsList>
 
@@ -530,6 +542,96 @@ export function Admin() {
                       ))}
                     </TableBody>
                   </Table>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ─────────────── ZAHLUNGEN TAB ─────────────── */}
+          <TabsContent value="payments" className="space-y-8">
+            {/* Year selector */}
+            <div className="flex items-center gap-4 bg-white p-4 border border-slate-200 rounded-lg shadow-sm w-full md:w-fit">
+              <div>
+                <Label className="text-xs font-medium text-slate-500 mb-1.5 block">Jahr</Label>
+                <Select value={paymentsYear} onValueChange={setPaymentsYear}>
+                  <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {REVENUE_YEARS.map((y) => (
+                      <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {loadingPayments ? (
+              <div className="py-24 flex justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* KPI row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-white border border-slate-200 rounded-xl p-6">
+                    <p className="text-xs uppercase tracking-widest text-slate-400 mb-1">Aktive Monate</p>
+                    <p className="text-3xl font-light text-slate-900">
+                      {new Set((payments ?? []).map((p) => p.paidAt.slice(0, 7))).size}
+                    </p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-6">
+                    <p className="text-xs uppercase tracking-widest text-slate-400 mb-1">Zahlungen {paymentsYear}</p>
+                    <p className="text-3xl font-light text-slate-900">
+                      {(payments ?? []).length}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Payments table */}
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-100">
+                    <p className="text-sm font-medium text-slate-700">Einzelne Zahlungen — {paymentsYear}</p>
+                  </div>
+                  {(payments ?? []).length === 0 ? (
+                    <div className="py-16 text-center text-slate-400 text-sm">
+                      Keine Zahlungen in {paymentsYear}
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs uppercase tracking-wider text-slate-400 font-medium">Datum</TableHead>
+                          <TableHead className="text-xs uppercase tracking-wider text-slate-400 font-medium">Anzeige</TableHead>
+                          <TableHead className="text-xs uppercase tracking-wider text-slate-400 font-medium">Kategorie</TableHead>
+                          <TableHead className="text-xs uppercase tracking-wider text-slate-400 font-medium text-right">Betrag</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(payments ?? []).map((p) => (
+                          <TableRow key={p.id} className="hover:bg-slate-50">
+                            <TableCell className="text-sm text-slate-600 whitespace-nowrap">
+                              {format(new Date(p.paidAt), "dd.MM.yyyy")}
+                            </TableCell>
+                            <TableCell className="text-sm font-medium text-slate-900 max-w-xs truncate">
+                              {p.title}
+                            </TableCell>
+                            <TableCell className="text-sm text-slate-500">
+                              {getCatLabel(p.category)}
+                            </TableCell>
+                            <TableCell className="text-sm font-medium text-slate-900 text-right tabular-nums">
+                              €{p.amount.toFixed(2).replace(".", ",")}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                  {(payments ?? []).length > 0 && (
+                    <div className="px-6 py-3 border-t border-slate-100 flex justify-end">
+                      <span className="text-sm font-semibold text-slate-900">
+                        Gesamt: €{(payments ?? []).reduce((s, p) => s + p.amount, 0).toFixed(2).replace(".", ",")}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

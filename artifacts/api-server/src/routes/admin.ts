@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, gte, lt, sql } from "drizzle-orm";
+import { eq, and, gte, lt, sql, desc } from "drizzle-orm";
 import { db, listingsTable, profilesTable } from "@workspace/db";
 import {
   AdminGetListingsQueryParams,
@@ -11,6 +11,8 @@ import {
   AdminGetStatsResponse,
   AdminGetRevenueQueryParams,
   AdminGetRevenueResponse,
+  AdminGetPaymentsQueryParams,
+  AdminGetPaymentsResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -252,6 +254,50 @@ router.get("/admin/revenue", async (req, res): Promise<void> => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.setHeader("Pragma", "no-cache");
   res.json(AdminGetRevenueResponse.parse(data));
+});
+
+router.get("/admin/payments", async (req, res): Promise<void> => {
+  const query = AdminGetPaymentsQueryParams.safeParse(req.query);
+  if (!query.success) {
+    res.status(400).json({ error: query.error.message });
+    return;
+  }
+
+  const now = new Date();
+  const targetYear = query.data.year ?? now.getFullYear();
+  const yearStart = new Date(targetYear, 0, 1);
+  const yearEnd = new Date(targetYear + 1, 0, 1);
+
+  const rows = await db
+    .select({
+      id: listingsTable.id,
+      title: listingsTable.title,
+      category: listingsTable.category,
+      listingFee: listingsTable.listingFee,
+      paidAt: listingsTable.paidAt,
+      createdAt: listingsTable.createdAt,
+    })
+    .from(listingsTable)
+    .where(
+      and(
+        eq(listingsTable.paymentStatus, "completed"),
+        gte(listingsTable.createdAt, yearStart),
+        lt(listingsTable.createdAt, yearEnd),
+      ),
+    )
+    .orderBy(desc(listingsTable.paidAt));
+
+  const data = rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    category: r.category,
+    amount: parseFloat(r.listingFee as string),
+    paidAt: (r.paidAt ?? r.createdAt).toISOString(),
+  }));
+
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.json(AdminGetPaymentsResponse.parse(data));
 });
 
 export default router;

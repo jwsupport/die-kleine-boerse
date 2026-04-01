@@ -532,3 +532,17 @@ export const AdminRevenueItem = zod.object({
 });
 
 export const AdminGetRevenueResponse = zod.array(AdminRevenueItem);
+
+export const AdminGetPaymentsQueryParams = zod.object({
+  year: zod.coerce.number().optional(),
+});
+
+export const AdminPaymentItem = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  category: zod.string(),
+  amount: zod.number(),
+  paidAt: zod.string(),
+});
+
+export const AdminGetPaymentsResponse = zod.array(AdminPaymentItem);

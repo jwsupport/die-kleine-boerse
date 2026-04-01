@@ -239,6 +239,14 @@ export interface AdminRevenueItem {
   revenue: number;
 }
 
+export interface AdminPaymentItem {
+  id: string;
+  title: string;
+  category: string;
+  amount: number;
+  paidAt: string;
+}
+
 export interface AuthUser {
   id: string;
   /** @nullable */

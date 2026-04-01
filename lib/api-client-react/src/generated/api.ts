@@ -2481,6 +2481,58 @@ export const useUpdateProfile = <
   return useMutation(mutationOptions);
 };
 
+export const getAdminGetPaymentsUrl = (year?: number) =>
+  year ? `/api/admin/payments?year=${year}` : `/api/admin/payments`;
+
+export const adminGetPayments = async (
+  year?: number,
+  options?: SecondParameter<typeof customFetch>,
+) => {
+  return customFetch<AdminPaymentItem[]>(getAdminGetPaymentsUrl(year), {
+    method: "GET",
+    ...options,
+  });
+};
+
+export const getAdminGetPaymentsQueryKey = (year?: number) =>
+  [`/api/admin/payments`, ...(year != null ? [{ year }] : [])] as const;
+
+export const getAdminGetPaymentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminGetPayments>>,
+  TError = ErrorType<unknown>,
+>(
+  year?: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof adminGetPayments>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getAdminGetPaymentsQueryKey(year);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminGetPayments>>> = () =>
+    adminGetPayments(year, requestOptions);
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetPayments>>,
+    TError,
+    TData
+  >;
+};
+
+export function useAdminGetPayments<
+  TData = Awaited<ReturnType<typeof adminGetPayments>>,
+  TError = ErrorType<unknown>,
+>(
+  year?: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof adminGetPayments>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminGetPaymentsQueryOptions(year, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 export const getAdminGetRevenueUrl = (year?: number) =>
   year ? `/api/admin/revenue?year=${year}` : `/api/admin/revenue`;
 
