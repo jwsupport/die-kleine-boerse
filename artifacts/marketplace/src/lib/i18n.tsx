@@ -236,6 +236,10 @@ export const translations = {
     pay_stripe_button: "Jetzt mit Stripe bezahlen — €1,00",
     pay_stripe_done: "Zahlung bereits abgeschlossen?",
     pay_alt_title: "Alternative: Krypto",
+    pay_method_card: "Karte",
+    pay_method_crypto: "Krypto",
+    pay_crypto_choose: "Wähle eine Kryptowährung:",
+    pay_crypto_sent: "Ich habe die Zahlung gesendet",
     pay_error: "Fehler beim Bestätigen der Zahlung. Bitte versuche es erneut.",
   },
   en: {
@@ -471,6 +475,10 @@ export const translations = {
     pay_stripe_button: "Pay now with Stripe — €1.00",
     pay_stripe_done: "Payment already complete?",
     pay_alt_title: "Alternative: Crypto",
+    pay_method_card: "Card",
+    pay_method_crypto: "Crypto",
+    pay_crypto_choose: "Choose a cryptocurrency:",
+    pay_crypto_sent: "I have sent the payment",
     pay_error: "Error confirming payment. Please try again.",
   },
 } as const;
