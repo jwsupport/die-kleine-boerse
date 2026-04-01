@@ -163,6 +163,11 @@ router.get("/admin/stats", async (req, res): Promise<void> => {
   const periodStart = new Date(targetYear, targetMonth - 1, 1);
   const periodEnd = new Date(targetYear, targetMonth, 1);
 
+  const periodFilter = and(
+    gte(listingsTable.createdAt, periodStart),
+    lt(listingsTable.createdAt, periodEnd),
+  );
+
   const [totals] = await db
     .select({
       total: sql<number>`count(*)::int`,
@@ -173,29 +178,12 @@ router.get("/admin/stats", async (req, res): Promise<void> => {
       free: sql<number>`count(*) filter (where listing_type = 'free')::int`,
       paid: sql<number>`count(*) filter (where listing_type = 'paid')::int`,
     })
-    .from(listingsTable);
+    .from(listingsTable)
+    .where(periodFilter);
 
   const [profileTotals] = await db
     .select({
       total: sql<number>`count(*)::int`,
-    })
-    .from(profilesTable);
-
-  const [periodListings] = await db
-    .select({
-      count: sql<number>`count(*)::int`,
-    })
-    .from(listingsTable)
-    .where(
-      and(
-        gte(listingsTable.createdAt, periodStart),
-        lt(listingsTable.createdAt, periodEnd),
-      ),
-    );
-
-  const [periodProfiles] = await db
-    .select({
-      count: sql<number>`count(*)::int`,
     })
     .from(profilesTable)
     .where(
@@ -215,8 +203,8 @@ router.get("/admin/stats", async (req, res): Promise<void> => {
       freeListings: totals?.free ?? 0,
       paidListings: totals?.paid ?? 0,
       totalProfiles: profileTotals?.total ?? 0,
-      newProfilesThisPeriod: periodProfiles?.count ?? 0,
-      newListingsThisPeriod: periodListings?.count ?? 0,
+      newProfilesThisPeriod: profileTotals?.total ?? 0,
+      newListingsThisPeriod: totals?.total ?? 0,
     }),
   );
 });

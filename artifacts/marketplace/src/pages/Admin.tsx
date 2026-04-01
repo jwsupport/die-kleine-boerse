@@ -373,22 +373,24 @@ export function Admin() {
               </div>
             </div>
 
+            <p className="text-xs text-slate-500 -mt-4">
+              {format(new Date(parseInt(statsYear), parseInt(statsMonth) - 1, 1), "MMMM yyyy")}
+            </p>
+
             {loadingStats ? (
               <div className="py-24 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-slate-400" /></div>
             ) : stats ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard title={t.admin_stats_total}      value={stats.totalListings}        bg="bg-slate-100" />
-                <StatCard title={t.admin_stats_active}     value={stats.activeListings}       bg="bg-emerald-50"  text="text-emerald-900" />
-                <StatCard title={t.admin_stats_pending}    value={stats.pendingListings}      bg="bg-amber-50"    text="text-amber-900" />
-                <StatCard title={t.admin_stats_deleted}    value={stats.deletedListings}      bg="bg-slate-200" />
-                <StatCard title={t.admin_stats_reported}   value={stats.reportedListings}     bg="bg-red-50"      text="text-red-900" />
-                <StatCard title={t.admin_stats_free}       value={stats.freeListings}         bg="bg-white"       border="border border-slate-200" />
-                <StatCard title={t.admin_stats_paid}       value={stats.paidListings}         bg="bg-indigo-50"   text="text-indigo-900" />
-                <StatCard title={t.admin_stats_profiles}   value={stats.totalProfiles}        bg="bg-slate-100" />
-                <StatCard title={t.admin_stats_newProfiles} value={stats.newProfilesThisPeriod} bg="bg-slate-50" border="border border-dashed border-slate-300" />
-                <StatCard title={t.admin_stats_newListings} value={stats.newListingsThisPeriod} bg="bg-slate-50" border="border border-dashed border-slate-300" />
+                <StatCard title={t.admin_stats_total}    value={stats.totalListings}    bg="bg-slate-100" />
+                <StatCard title={t.admin_stats_active}   value={stats.activeListings}   bg="bg-emerald-50"  text="text-emerald-900" />
+                <StatCard title={t.admin_stats_pending}  value={stats.pendingListings}  bg="bg-amber-50"    text="text-amber-900" />
+                <StatCard title={t.admin_stats_deleted}  value={stats.deletedListings}  bg="bg-slate-200" />
+                <StatCard title={t.admin_stats_reported} value={stats.reportedListings} bg="bg-red-50"      text="text-red-900" />
+                <StatCard title={t.admin_stats_free}     value={stats.freeListings}     bg="bg-white"       border="border border-slate-200" />
+                <StatCard title={t.admin_stats_paid}     value={stats.paidListings}     bg="bg-indigo-50"   text="text-indigo-900" />
+                <StatCard title={t.admin_stats_profiles} value={stats.newProfilesThisPeriod} bg="bg-slate-100" />
 
-                <div className="col-span-1 md:col-span-2 lg:col-span-2 bg-white border border-slate-200 rounded-xl p-6 flex flex-col justify-center">
+                <div className="col-span-1 md:col-span-2 lg:col-span-4 bg-white border border-slate-200 rounded-xl p-6 flex flex-col justify-center">
                   <h3 className="text-sm font-medium text-slate-500 mb-4">{t.admin_stats_split}</h3>
                   <div className="flex h-4 rounded-full overflow-hidden w-full bg-slate-100">
                     <div className="bg-slate-400 h-full transition-all" style={{ width: `${stats.totalListings ? (stats.freeListings / stats.totalListings) * 100 : 0}%` }} title={t.admin_badge_free} />
