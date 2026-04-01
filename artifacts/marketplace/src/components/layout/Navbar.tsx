@@ -3,35 +3,41 @@ import { MessageSquare, User, Plus, Shield, LogIn, LogOut, LayoutList } from "lu
 import { useAuth } from "@workspace/replit-auth-web";
 import { Button } from "@/components/ui/button";
 import { isAdminEmail } from "@/lib/admin";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useT } from "@/lib/i18n";
+import logo from "@assets/Gemini_Generated_Image_4xfe034xfe034xfe_1775075272376.png";
 
 export function Navbar() {
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
+  const t = useT();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/90 backdrop-blur-md">
       <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="text-xl font-semibold tracking-tight text-slate-900">
-          CURATED.
+        <Link href="/">
+          <img src={logo} alt="kleine boerse" className="h-10 w-auto object-contain" />
         </Link>
 
         <nav className="flex items-center gap-5">
+          <LanguageSwitcher />
+
           {isAuthenticated && isAdminEmail(user?.email) && (
             <Link href="/admin" className="text-sm font-medium flex items-center gap-1.5 text-slate-400 hover:text-slate-900 transition-colors">
               <Shield className="w-4 h-4" />
-              <span className="hidden md:inline">Admin</span>
+              <span className="hidden md:inline">{t.nav_admin}</span>
             </Link>
           )}
 
           {isAuthenticated && (
             <Link href="/my-ads" className="text-sm font-medium flex items-center gap-1.5 text-slate-500 hover:text-slate-900 transition-colors">
               <LayoutList className="w-4 h-4" />
-              <span className="hidden md:inline">My Ads</span>
+              <span className="hidden md:inline">{t.nav_myAds}</span>
             </Link>
           )}
 
           <Link href="/listings/create" className="text-sm font-medium flex items-center gap-1.5 hover:text-slate-600 transition-colors">
             <Plus className="w-4 h-4" />
-            <span className="hidden md:inline">Sell</span>
+            <span className="hidden md:inline">{t.nav_sell}</span>
           </Link>
 
           <Link href="/messages" className="text-slate-500 hover:text-slate-900 transition-colors">
@@ -58,7 +64,7 @@ export function Navbar() {
               <button
                 onClick={logout}
                 className="text-slate-400 hover:text-slate-900 transition-colors"
-                title="Sign out"
+                title={t.nav_signOut}
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -71,7 +77,7 @@ export function Navbar() {
               className="gap-1.5 text-slate-700 border-slate-200 hover:bg-slate-50"
             >
               <LogIn className="w-4 h-4" />
-              <span>Sign in</span>
+              <span>{t.nav_signIn}</span>
             </Button>
           ) : null}
         </nav>

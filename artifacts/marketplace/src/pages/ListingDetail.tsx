@@ -19,9 +19,11 @@ import { formatDistanceToNow } from "date-fns";
 import { ListingCard } from "@/components/ListingCard";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/seo/SEO";
+import { useT } from "@/lib/i18n";
 import { ListingSchema, BreadcrumbSchema } from "@/components/seo/schemas";
 
 export function ListingDetail() {
+  const t = useT();
   const params = useParams();
   const id = params.id as string;
   const { toast } = useToast();
@@ -41,7 +43,7 @@ export function ListingDetail() {
         const data = await res.json();
         if (data.status === "completed") {
           await queryClient.invalidateQueries({ queryKey: getGetListingQueryKey(id) });
-          toast({ title: "Zahlung erfolgreich!", description: "Deine Anzeige ist jetzt live und für 30 Tage aktiv." });
+          toast({ title: t.detail_paymentSuccess, description: t.detail_paymentSuccessDesc });
           window.history.replaceState({}, "", window.location.pathname);
         }
       } catch {
@@ -86,7 +88,7 @@ export function ListingDetail() {
       }
     }, {
       onSuccess: () => {
-        toast({ title: "Message sent", description: "The seller will get back to you soon." });
+        toast({ title: t.detail_messageSent, description: t.detail_messageSentDesc });
         setMessage("");
         setIsMessaging(false);
       }
@@ -100,7 +102,7 @@ export function ListingDetail() {
       data: { reason: reportReason }
     }, {
       onSuccess: () => {
-        toast({ title: "Listing reported", description: "Our team will review this listing shortly.", variant: "destructive" });
+        toast({ title: t.detail_reportSent, description: t.detail_reportSentDesc, variant: "destructive" });
         setReportReason("");
         setPopoverOpen(false);
       }
@@ -183,23 +185,22 @@ export function ListingDetail() {
                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                   <PopoverTrigger asChild>
                     <button className="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1.5 transition-colors">
-                      <Flag className="w-3 h-3" /> Report
+                      <Flag className="w-3 h-3" /> {t.detail_report}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-80 p-4">
                     <div className="space-y-3">
-                      <h4 className="font-medium text-sm text-slate-900">Report this listing</h4>
-                      <p className="text-xs text-slate-500">Let us know why you think this listing violates our guidelines.</p>
+                      <h4 className="font-medium text-sm text-slate-900">{t.detail_report}</h4>
                       <Input 
-                        placeholder="Reason for reporting..." 
+                        placeholder={t.detail_reportPlaceholder}
                         value={reportReason}
                         onChange={(e) => setReportReason(e.target.value)}
                         className="text-sm h-9"
                       />
                       <div className="flex justify-end gap-2 pt-1">
-                        <Button variant="ghost" size="sm" className="h-8" onClick={() => setPopoverOpen(false)}>Cancel</Button>
+                        <Button variant="ghost" size="sm" className="h-8" onClick={() => setPopoverOpen(false)}>{t.profile_cancel}</Button>
                         <Button variant="destructive" size="sm" className="h-8" onClick={handleReport} disabled={reportListing.isPending || !reportReason.trim()}>
-                          {reportListing.isPending ? 'Submitting...' : 'Submit Report'}
+                          {t.detail_reportSubmit}
                         </Button>
                       </div>
                     </div>
@@ -213,7 +214,7 @@ export function ListingDetail() {
               
               <div className="text-2xl md:text-3xl font-medium text-slate-900 mb-8">
                 €{listing.price.toLocaleString()}
-                {listing.isNegotiable && <span className="text-lg text-slate-500 ml-2 font-normal">VB</span>}
+                {listing.isNegotiable && <span className="text-lg text-slate-500 ml-2 font-normal">{t.detail_negotiable}</span>}
               </div>
 
               <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mb-12">
@@ -257,7 +258,7 @@ export function ListingDetail() {
                     <div>
                       <div className="font-medium text-slate-900 group-hover:underline decoration-slate-300 underline-offset-4">{listing.seller.fullName || 'Anonymous'}</div>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-sm text-slate-500">Joined {new Date(listing.seller.createdAt).getFullYear()}</span>
+                        <span className="text-sm text-slate-500">{t.profile_memberSince} {new Date(listing.seller.createdAt).getFullYear()}</span>
                         {sellerRatings && sellerRatings.totalRatings > 0 && (
                           <>
                             <span className="text-slate-300">•</span>
@@ -277,7 +278,7 @@ export function ListingDetail() {
                     className="w-full h-14 text-base rounded-sm"
                     onClick={() => setIsMessaging(true)}
                   >
-                    Message Seller
+                    {t.detail_contact}
                   </Button>
                 ) : (
                   <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
@@ -293,16 +294,14 @@ export function ListingDetail() {
                         className="flex-1 rounded-sm"
                         onClick={() => setIsMessaging(false)}
                       >
-                        Cancel
+                        {t.profile_cancel}
                       </Button>
                       <Button 
                         className="flex-1 rounded-sm gap-2"
                         onClick={handleSendMessage}
                         disabled={sendMessage.isPending || !message.trim()}
                       >
-                        {sendMessage.isPending ? 'Sending...' : (
-                          <>Send Message <ArrowRight className="w-4 h-4" /></>
-                        )}
+                        {t.detail_send} <ArrowRight className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -316,7 +315,7 @@ export function ListingDetail() {
         {recentListings && recentListings.filter(l => l.id !== listing.id).length > 0 && (
           <section className="border-t border-slate-200 bg-slate-50/50">
             <div className="container mx-auto px-4 md:px-8 py-16 max-w-7xl">
-              <h2 className="text-2xl font-medium text-slate-900 mb-8">Recently added</h2>
+              <h2 className="text-2xl font-medium text-slate-900 mb-8">{t.detail_similar}</h2>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 {recentListings.filter(l => l.id !== listing.id).slice(0, 4).map((listing, index) => (
                   <ListingCard key={listing.id} listing={listing} index={index} />

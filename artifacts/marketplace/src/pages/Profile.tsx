@@ -16,8 +16,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useT } from "@/lib/i18n";
 
 export function Profile() {
+  const t = useT();
   const params = useParams();
   const id = params.id as string;
   const { toast } = useToast();
@@ -52,7 +54,7 @@ export function Profile() {
 
   const handleSubmitRating = () => {
     if (ratingVal === 0) {
-      toast({ title: "Select a rating", description: "Please select 1 to 5 stars.", variant: "destructive" });
+      toast({ title: t.profile_selectRating, description: t.profile_selectRating, variant: "destructive" });
       return;
     }
     
@@ -65,14 +67,14 @@ export function Profile() {
       }
     }, {
       onSuccess: () => {
-        toast({ title: "Rating submitted", description: "Thank you for your feedback." });
+        toast({ title: t.profile_ratingSuccess, description: t.profile_ratingThanks });
         queryClient.invalidateQueries({ queryKey: getGetProfileRatingsQueryKey(id) });
         setRatingVal(0);
         setRatingComment("");
         setShowRatingForm(false);
       },
       onError: () => {
-        toast({ title: "Error", description: "Could not submit rating.", variant: "destructive" });
+        toast({ title: t.profile_ratingError, description: t.profile_ratingErrorDesc, variant: "destructive" });
       }
     });
   };
@@ -107,7 +109,7 @@ export function Profile() {
           {/* Main Listings Area */}
           <div className="lg:col-span-8 order-2 lg:order-1">
             <h2 className="text-xl font-medium text-slate-900 border-b border-slate-200 pb-4 mb-6">
-              Active Listings <span className="text-slate-400 text-sm ml-2 font-normal">{listings?.length || 0}</span>
+              {t.profile_listings} <span className="text-slate-400 text-sm ml-2 font-normal">{listings?.length || 0}</span>
             </h2>
             
             {loadingListings ? (
@@ -131,7 +133,7 @@ export function Profile() {
               </div>
             ) : (
               <div className="py-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-lg">
-                No active listings found for this user.
+                {t.profile_noListings}
               </div>
             )}
           </div>
@@ -165,17 +167,17 @@ export function Profile() {
               )}
 
               <p className="text-sm text-slate-400 pt-4 border-t border-slate-200/60 w-full">
-                Joined {format(new Date(profile.createdAt), "MMMM yyyy")}
+                {t.profile_memberSince} {format(new Date(profile.createdAt), "MMMM yyyy")}
               </p>
             </header>
 
             {/* Ratings Section */}
             <div>
               <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
-                <h2 className="text-lg font-medium text-slate-900">Reviews</h2>
+                <h2 className="text-lg font-medium text-slate-900">{t.profile_reviews}</h2>
                 {!showRatingForm && (
                   <Button variant="ghost" size="sm" onClick={() => setShowRatingForm(true)} className="text-sm text-slate-500 hover:text-slate-900">
-                    Write a review
+                    {t.profile_writeReview}
                   </Button>
                 )}
               </div>
@@ -200,16 +202,16 @@ export function Profile() {
                   <Textarea 
                     value={ratingComment}
                     onChange={e => setRatingComment(e.target.value)}
-                    placeholder="Tell others about your experience (optional)"
+                    placeholder={t.profile_ratingComment}
                     className="min-h-[80px] bg-white resize-none mb-4 text-sm"
                   />
                   <div className="flex gap-2 justify-end">
                     <Button variant="outline" size="sm" onClick={() => {
                       setShowRatingForm(false);
                       setRatingVal(0);
-                    }}>Cancel</Button>
+                    }}>{t.profile_cancel}</Button>
                     <Button size="sm" onClick={handleSubmitRating} disabled={submitRating.isPending}>
-                      {submitRating.isPending ? 'Submitting...' : 'Submit Rating'}
+                      {t.profile_submitReview}
                     </Button>
                   </div>
                 </div>
@@ -260,7 +262,7 @@ export function Profile() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-slate-500 text-sm bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
-                  No written reviews yet.
+                  {t.profile_noReviews}
                 </div>
               )}
             </div>

@@ -9,8 +9,10 @@ import { SEO } from "@/components/seo/SEO";
 import { CATEGORIES, categoryByLabel } from "@/lib/categories";
 import { ShieldCheck, Zap } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
+import { useT } from "@/lib/i18n";
 
 export function CreateListing() {
+  const t = useT();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const createListing = useCreateListing();
@@ -47,8 +49,8 @@ export function CreateListing() {
 
     if (!formData.title || !formData.price || !formData.category || !formData.location) {
       toast({
-        title: "Pflichtfelder fehlen",
-        description: "Bitte fülle alle Pflichtfelder aus.",
+        title: t.create_required,
+        description: t.create_requiredDesc,
         variant: "destructive",
       });
       return;
@@ -77,17 +79,17 @@ export function CreateListing() {
                   if (checkout.url) window.location.href = checkout.url;
                 },
                 onError: () => {
-                  toast({ title: "Fehler beim Checkout", variant: "destructive" });
+                  toast({ title: t.create_checkoutError, variant: "destructive" });
                 },
               }
             );
           } else {
-            toast({ title: "Anzeige veröffentlicht!", description: "Deine Anzeige ist jetzt live." });
+            toast({ title: t.create_success, description: t.create_successDesc });
             setLocation(`/listings/${newListing.id}`);
           }
         },
         onError: () => {
-          toast({ title: "Fehler", description: "Anzeige konnte nicht erstellt werden.", variant: "destructive" });
+          toast({ title: t.create_error, description: t.create_errorDesc, variant: "destructive" });
         },
       }
     );
@@ -102,23 +104,21 @@ export function CreateListing() {
 
       <main className="flex-1 container mx-auto px-4 py-12 max-w-2xl">
         <div className="mb-10">
-          <h1 className="text-3xl font-light text-slate-900 mb-2">Anzeige aufgeben</h1>
-          <p className="text-slate-500 text-sm">
-            Kostenlos inserieren — 10 Tage aktiv. Upgrade auf Premium für 30 Tage.
-          </p>
+          <h1 className="text-3xl font-light text-slate-900 mb-2">{t.create_pageTitle}</h1>
+          <p className="text-slate-500 text-sm">{t.create_pageSubtitle}</p>
         </div>
 
         <div className="bg-white border border-slate-100 rounded-3xl shadow-sm p-8 md:p-10">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
-                Titel der Anzeige *
+                {t.create_titleLabel} *
               </label>
               <input
                 type="text"
                 required
                 className="w-full p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none transition-all text-slate-900 placeholder:text-slate-400"
-                placeholder="z.B. Design Klassiker Sessel"
+                placeholder={t.create_titlePlaceholder}
                 {...field("title")}
               />
             </div>
@@ -126,7 +126,7 @@ export function CreateListing() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
-                  Preis (€) *
+                  {t.create_priceLabel} *
                 </label>
                 <input
                   type="number"
@@ -140,7 +140,7 @@ export function CreateListing() {
               </div>
               <div>
                 <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
-                  Kategorie *
+                  {t.create_categoryLabel} *
                 </label>
                 <select
                   required
@@ -148,7 +148,7 @@ export function CreateListing() {
                   value={formData.category}
                   onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))}
                 >
-                  <option value="" disabled>Auswählen…</option>
+                  <option value="" disabled>{t.create_categorySelect}</option>
                   {CATEGORIES.map((c) => (
                     <option key={c.id} value={c.label}>
                       {c.label}{c.fee > 0 ? ` — €${c.fee.toFixed(2)}` : ""}
@@ -161,13 +161,13 @@ export function CreateListing() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
-                  Ort *
+                  {t.create_locationLabel} *
                 </label>
                 <input
                   type="text"
                   required
                   className="w-full p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none text-slate-900 placeholder:text-slate-400"
-                  placeholder="z.B. Berlin Mitte"
+                  placeholder={t.create_locationPlaceholder}
                   {...field("location")}
                 />
               </div>
@@ -178,19 +178,19 @@ export function CreateListing() {
                   onCheckedChange={(checked) => setFormData((p) => ({ ...p, isNegotiable: checked }))}
                 />
                 <label htmlFor="negotiable" className="text-sm text-slate-600 cursor-pointer select-none">
-                  Preis verhandelbar (VB)
+                  {t.create_negotiable}
                 </label>
               </div>
             </div>
 
             <div>
               <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
-                Beschreibung
+                {t.create_descriptionLabel}
               </label>
               <textarea
                 rows={5}
                 className="w-full p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none resize-none text-slate-900 placeholder:text-slate-400"
-                placeholder="Erzähle die Geschichte dieses Objekts — Zustand, Maße, Besonderheiten…"
+                placeholder={t.create_descriptionPlaceholder}
                 {...field("description")}
               />
             </div>
@@ -212,12 +212,10 @@ export function CreateListing() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
-                        {requiresPayment ? "Inseratsgebühr" : "Kostenlos inserieren"}
+                        {requiresPayment ? t.create_feeLabel : t.create_freeListing}
                       </p>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        {requiresPayment
-                          ? `Premium-Platzierung für ${formData.category} — 30 Tage aktiv`
-                          : "Standard-Anzeige — 10 Tage aktiv"}
+                        {requiresPayment ? t.create_paidValid : t.create_freeValid}
                       </p>
                     </div>
                   </div>
@@ -234,16 +232,16 @@ export function CreateListing() {
                 onClick={() => setLocation("/")}
                 className="flex-1 py-4 rounded-2xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-all text-sm"
               >
-                Abbrechen
+                {t.create_cancel}
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="flex-1 py-4 rounded-2xl bg-slate-900 text-white font-medium hover:bg-slate-800 transition-all disabled:bg-slate-300 text-sm"
               >
-                {isSubmitting
-                  ? requiresPayment ? "Weiterleitung zur Zahlung…" : "Wird veröffentlicht…"
-                  : requiresPayment ? `Jetzt zahlen & schalten — €${fee.toFixed(2)}` : "Anzeige jetzt schalten"}
+                {requiresPayment
+                  ? `${t.create_submit} — €${fee.toFixed(2)}`
+                  : t.create_submit}
               </button>
             </div>
           </form>

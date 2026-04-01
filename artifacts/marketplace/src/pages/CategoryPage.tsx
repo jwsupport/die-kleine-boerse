@@ -7,8 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "@/components/seo/SEO";
 import { CATEGORIES } from "@/lib/categories";
 import { ChevronLeft, Plus } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 export function CategoryPage() {
+  const t = useT();
   const [, params] = useRoute("/category/:id");
   const categoryId = params?.id ?? "";
 
@@ -25,7 +27,7 @@ export function CategoryPage() {
       <div className="min-h-[100dvh] flex flex-col bg-background">
         <Navbar />
         <main className="flex-1 container mx-auto px-4 max-w-7xl py-24 text-center">
-          <p className="text-slate-500">Kategorie nicht gefunden.</p>
+          <p className="text-slate-500">{t.detail_notFound}</p>
         </main>
       </div>
     );
@@ -42,7 +44,7 @@ export function CategoryPage() {
       <main className="flex-1 container mx-auto px-4 md:px-8 py-10 max-w-7xl">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-900 transition-colors mb-8">
           <ChevronLeft className="w-4 h-4" />
-          Alle Kategorien
+          {t.categoryPage_back}
         </Link>
 
         <header className="mb-10 flex items-end justify-between gap-4">
@@ -51,7 +53,7 @@ export function CategoryPage() {
             <div>
               <h1 className="text-3xl font-medium tracking-tight text-slate-900">{cat.label}</h1>
               {cat.fee > 0 && (
-                <p className="text-sm text-slate-400 mt-0.5">Inserierungsgebühr: €{cat.fee.toFixed(2)}</p>
+                <p className="text-sm text-slate-400 mt-0.5">{t.categoryPage_listingFee}: €{cat.fee.toFixed(2)}</p>
               )}
             </div>
           </div>
@@ -60,7 +62,7 @@ export function CategoryPage() {
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-slate-800 transition-colors shrink-0"
           >
             <Plus className="w-4 h-4" />
-            Anzeige aufgeben
+            {t.categoryPage_createListing}
           </Link>
         </header>
 
@@ -88,16 +90,16 @@ export function CategoryPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-2">
               {Icon && <Icon className="w-7 h-7 text-slate-300" strokeWidth={1.5} />}
             </div>
-            <h3 className="text-xl font-medium text-slate-900">Noch keine Anzeigen</h3>
+            <h3 className="text-xl font-medium text-slate-900">{t.categoryPage_noListings}</h3>
             <p className="text-slate-500 max-w-sm mx-auto text-sm">
-              Sei der Erste, der etwas in dieser Kategorie anbietet — und profitiere von maximaler Sichtbarkeit.
+              {t.categoryPage_noListingsDesc}
             </p>
             <Link
               href="/listings/create"
               className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-slate-800 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Jetzt inserieren
+              {t.categoryPage_listNow}
             </Link>
           </div>
         )}

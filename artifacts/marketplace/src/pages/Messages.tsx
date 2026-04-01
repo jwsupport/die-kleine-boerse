@@ -7,8 +7,10 @@ import { formatDistanceToNow } from "date-fns";
 import { Send } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
+import { useT } from "@/lib/i18n";
 
 export function Messages() {
+  const t = useT();
   const currentUserId = "user-demo-1";
   const queryClient = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -76,7 +78,7 @@ export function Messages() {
           {/* Sidebar */}
           <div className="w-1/3 border-r border-slate-200 flex flex-col bg-white">
             <div className="p-4 border-b border-slate-200 bg-slate-50/50">
-              <h2 className="font-medium text-slate-900">Conversations</h2>
+              <h2 className="font-medium text-slate-900">{t.messages_conversations}</h2>
             </div>
             
             <div className="flex-1 overflow-y-auto">
@@ -111,7 +113,7 @@ export function Messages() {
                 </div>
               ) : (
                 <div className="p-8 text-center text-sm text-slate-500">
-                  No conversations yet.
+                  {t.messages_noConversations}
                 </div>
               )}
             </div>
@@ -157,7 +159,7 @@ export function Messages() {
                     <Input 
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
-                      placeholder="Type a message..."
+                      placeholder={t.messages_placeholder}
                       className="flex-1 focus-visible:ring-slate-300"
                     />
                     <Button type="submit" disabled={sendMessage.isPending || !newMessage.trim()} size="icon" className="rounded-sm shrink-0">
@@ -171,7 +173,7 @@ export function Messages() {
                 <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
                   <Send className="w-6 h-6 text-slate-300" />
                 </div>
-                <p>Select a conversation to start messaging</p>
+                <p>{t.messages_selectConversation}</p>
               </div>
             )}
           </div>

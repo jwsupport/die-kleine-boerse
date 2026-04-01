@@ -5,10 +5,12 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Clock, Zap } from "lucide-react";
+import { useT } from "@/lib/i18n";
 import { formatDistanceToNow, isPast } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
 export function MyAds() {
+  const t = useT();
   const { user, isLoading: authLoading, isAuthenticated, login } = useAuth();
   const { toast } = useToast();
 
@@ -84,15 +86,15 @@ export function MyAds() {
       <main className="flex-1 container mx-auto px-4 md:px-8 py-10 max-w-4xl">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-medium tracking-tight text-slate-900">Meine Anzeigen</h1>
+            <h1 className="text-3xl font-medium tracking-tight text-slate-900">{t.myAds_title}</h1>
             <p className="text-slate-500 text-sm mt-1">
-              {myListings.length} Anzeige{myListings.length !== 1 ? "n" : ""}
+              {myListings.length} {myListings.length !== 1 ? t.myAds_listings : t.myAds_listing}
             </p>
           </div>
           <Link href="/listings/create">
             <Button className="bg-slate-900 hover:bg-slate-800 text-white gap-2">
               <Plus className="w-4 h-4" />
-              Neue Anzeige
+              {t.myAds_newListing}
             </Button>
           </Link>
         </div>
@@ -101,10 +103,10 @@ export function MyAds() {
         <div className="mb-8 p-5 bg-white border border-slate-100 rounded-2xl shadow-sm">
           <div className="flex justify-between items-baseline mb-2">
             <span className="text-xs uppercase tracking-widest font-semibold text-slate-400">
-              Anzeigen-Slots
+              {t.myAds_slotsLabel}
             </span>
             <span className="text-sm font-medium text-slate-900">
-              {activeCount} <span className="text-slate-400 font-normal">von {MAX_LISTINGS}</span>
+              {activeCount} <span className="text-slate-400 font-normal">{t.myAds_of} {MAX_LISTINGS}</span>
             </span>
           </div>
           <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -115,8 +117,8 @@ export function MyAds() {
           </div>
           <p className="text-[11px] text-slate-400 mt-2">
             {activeCount < MAX_LISTINGS
-              ? `Du nutzt ${activeCount} von deinen ${MAX_LISTINGS} freien Slots.`
-              : "Du hast dein Limit von 200 aktiven Anzeigen erreicht."}
+              ? t.myAds_slotsUsage.replace("{n}", String(activeCount)).replace("{max}", String(MAX_LISTINGS))
+              : t.myAds_slotsMaxReached}
           </p>
         </div>
 
@@ -126,8 +128,8 @@ export function MyAds() {
           </div>
         ) : myListings.length === 0 ? (
           <div className="text-center py-20 text-slate-400">
-            <p className="text-lg">No listings yet.</p>
-            <p className="text-sm mt-2">Create your first listing to get started.</p>
+            <p className="text-lg">{t.myAds_noListings}</p>
+            <p className="text-sm mt-2">{t.myAds_noListingsDesc}</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -183,7 +185,7 @@ export function MyAds() {
                       </span>
                       {expiresAt && (
                         <span className={expired ? "text-red-500" : ""}>
-                          {expired ? "Expired" : `Expires ${formatDistanceToNow(expiresAt, { addSuffix: true })}`}
+                          {expired ? t.myAds_expired : `${t.myAds_expires} ${formatDistanceToNow(expiresAt, { addSuffix: true })}`}
                         </span>
                       )}
                     </div>
@@ -195,7 +197,7 @@ export function MyAds() {
                           className="text-xs font-medium text-slate-500 hover:text-slate-900 flex items-center gap-1 transition-colors"
                         >
                           <Zap className="w-3 h-3" />
-                          Boost to Premium — €1.00 / 30 days
+                          {t.myAds_boost} — €1.00 / 30 days
                         </button>
                       </div>
                     )}

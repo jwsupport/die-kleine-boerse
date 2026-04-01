@@ -9,8 +9,10 @@ import { SEO } from "@/components/seo/SEO";
 import { MarketplaceSchema } from "@/components/seo/schemas";
 import { categoryByLabel } from "@/lib/categories";
 import { CategoryGrid } from "@/components/CategoryGrid";
+import { useT } from "@/lib/i18n";
 
 export function Home() {
+  const t = useT();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>();
   const [location, setLocation] = useState("");
@@ -49,14 +51,14 @@ export function Home() {
       <main className="flex-1 container mx-auto px-4 md:px-8 py-8 md:py-12 max-w-7xl">
         <header className="mb-12 space-y-8">
           <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-slate-900">
-            Find something special.
+            {t.home_headline}
           </h1>
           
           <div className="flex flex-col md:flex-row gap-4 max-w-2xl">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input 
-                placeholder="Search items..." 
+                placeholder={t.home_searchPlaceholder}
                 className="pl-10 bg-white border-slate-200 focus-visible:ring-slate-300"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -65,7 +67,7 @@ export function Home() {
             <div className="relative md:w-64">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input 
-                placeholder="Location" 
+                placeholder={t.home_locationPlaceholder}
                 className="pl-10 bg-white border-slate-200 focus-visible:ring-slate-300"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -78,7 +80,7 @@ export function Home() {
               onClick={() => setCategory(undefined)}
               className={`whitespace-nowrap text-sm font-medium transition-colors px-4 py-2 rounded-full ${!category ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
             >
-              Alle
+              {t.home_allFilter}
             </button>
             {stats?.map((stat) => {
               const meta = categoryByLabel[stat.category];
@@ -120,8 +122,8 @@ export function Home() {
             </div>
           ) : (
             <div className="py-24 text-center">
-              <h3 className="text-xl font-medium text-slate-900 mb-2">No items found</h3>
-              <p className="text-slate-500">We couldn't find any listings matching your search.</p>
+              <h3 className="text-xl font-medium text-slate-900 mb-2">{t.home_noItems}</h3>
+              <p className="text-slate-500">{t.home_noItemsDesc}</p>
             </div>
           )}
         </section>
@@ -135,8 +137,8 @@ export function Home() {
         <div className="container mx-auto px-4 md:px-8 max-w-7xl flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <p>© {new Date().getFullYear()} Die kleine Börse. Curated Marketplace Excellence.</p>
           <nav aria-label="Footer" className="flex gap-6">
-            <a href="/listings/create" className="hover:text-slate-900 transition-colors">Anzeige aufgeben</a>
-            <a href="/messages" className="hover:text-slate-900 transition-colors">Nachrichten</a>
+            <a href="/listings/create" className="hover:text-slate-900 transition-colors">{t.home_footerSell}</a>
+            <a href="/messages" className="hover:text-slate-900 transition-colors">{t.home_footerMessages}</a>
           </nav>
         </div>
       </footer>

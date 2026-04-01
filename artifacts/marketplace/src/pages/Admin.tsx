@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@workspace/replit-auth-web";
+import { useT } from "@/lib/i18n";
 import { isAdminEmail } from "@/lib/admin";
 import { 
   useAdminGetListings, 
@@ -24,6 +25,7 @@ import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 
 export function Admin() {
+  const t = useT();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
@@ -106,8 +108,8 @@ export function Admin() {
             <div className="inline-flex w-14 h-14 rounded-full bg-slate-100 items-center justify-center mb-2">
               <Loader2 className="w-6 h-6 text-slate-300" />
             </div>
-            <h1 className="text-xl font-medium text-slate-900">Kein Zugriff</h1>
-            <p className="text-sm text-slate-500">Diese Seite ist nur für autorisierte Administratoren zugänglich.</p>
+            <h1 className="text-xl font-medium text-slate-900">{t.admin_noAccess}</h1>
+            <p className="text-sm text-slate-500">{t.admin_noAccessDesc}</p>
           </div>
         </main>
       </div>

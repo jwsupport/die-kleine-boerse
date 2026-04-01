@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { X, Plus } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface ImageUploaderProps {
   value: string[];
@@ -9,6 +10,7 @@ interface ImageUploaderProps {
 const MAX_IMAGES = 4;
 
 export function ImageUploader({ value, onChange }: ImageUploaderProps) {
+  const t = useT();
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -45,7 +47,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
   return (
     <div>
       <label className="block text-xs uppercase tracking-widest text-slate-400 mb-3 font-semibold">
-        Galerie ({value.length} / {MAX_IMAGES})
+        {t.uploader_gallery} ({value.length} / {MAX_IMAGES})
       </label>
 
       <div className="grid grid-cols-4 gap-3">
@@ -67,7 +69,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
               type="button"
               onClick={() => removeImage(idx)}
               className="absolute top-1.5 right-1.5 w-5 h-5 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-              aria-label="Bild entfernen"
+              aria-label={t.uploader_removeAlt}
             >
               <X className="w-3 h-3 text-slate-700" />
             </button>
@@ -81,7 +83,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
             className="aspect-square border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 hover:border-slate-300 transition-all text-slate-400"
           >
             <Plus className="w-5 h-5" />
-            <span className="text-[10px] font-medium">URL</span>
+            <span className="text-[10px] font-medium">{t.uploader_addUrl}</span>
           </button>
         )}
       </div>
@@ -94,7 +96,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="https://… Bild-URL einfügen"
+            placeholder={t.uploader_placeholder}
             className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-slate-200"
           />
           <button
@@ -102,7 +104,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
             onClick={addUrl}
             className="px-4 py-2 bg-slate-900 text-white text-sm rounded-xl font-medium hover:bg-slate-800 transition-colors"
           >
-            Hinzufügen
+            {t.uploader_add}
           </button>
           <button
             type="button"
@@ -115,7 +117,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
       )}
 
       <p className="text-[10px] text-slate-400 mt-2 italic">
-        Hochauflösende Bilder bevorzugt — bessere Sichtbarkeit in Suchergebnissen.
+        {t.uploader_hint}
       </p>
     </div>
   );
