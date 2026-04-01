@@ -17,6 +17,8 @@ import { MapPin, Clock, ArrowRight, Star, Flag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ListingCard } from "@/components/ListingCard";
 import { useToast } from "@/hooks/use-toast";
+import { SEO } from "@/components/seo/SEO";
+import { ListingSchema, BreadcrumbSchema } from "@/components/seo/schemas";
 
 export function ListingDetail() {
   const params = useParams();
@@ -91,10 +93,39 @@ export function ListingDetail() {
     return <div className="min-h-screen bg-background flex items-center justify-center">Listing not found</div>;
   }
 
+  const seoDescription = listing.description
+    ? listing.description.slice(0, 155)
+    : `${listing.title} — €${listing.price.toLocaleString()} in ${listing.location}. Available on Die kleine Börse.`;
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
+      <SEO
+        title={listing.title}
+        description={seoDescription}
+        image={listing.imageUrls?.[0] ?? undefined}
+        url={`/listings/${listing.id}`}
+        type="product"
+      />
+      <ListingSchema
+        id={listing.id}
+        title={listing.title}
+        description={listing.description}
+        price={listing.price}
+        imageUrl={listing.imageUrls?.[0]}
+        seller={listing.seller.fullName ?? listing.seller.username ?? undefined}
+        location={listing.location}
+        url={`/listings/${listing.id}`}
+      />
+      <BreadcrumbSchema
+        items={[
+          { name: "Home", url: "/" },
+          { name: listing.category, url: `/?category=${encodeURIComponent(listing.category)}` },
+          { name: listing.title, url: `/listings/${listing.id}` },
+        ]}
+      />
+
       <Navbar />
-      
+
       <main className="flex-1">
         <article className="container mx-auto px-4 md:px-8 py-8 md:py-16 max-w-7xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24">
@@ -159,7 +190,7 @@ export function ListingDetail() {
               </h1>
               
               <div className="text-2xl md:text-3xl font-medium text-slate-900 mb-8">
-                ${listing.price.toLocaleString()}
+                €{listing.price.toLocaleString()}
                 {listing.isNegotiable && <span className="text-lg text-slate-500 ml-2 font-normal">VB</span>}
               </div>
 

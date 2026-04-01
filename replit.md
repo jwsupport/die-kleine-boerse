@@ -18,6 +18,7 @@
 - **Auto-delete cron** — runs hourly in `index.ts`, marks listings `deleted` where `expiryDate < now`
 - **My Ads page** — user dashboard showing own listings with age counter, expiry, and "Boost to Premium" CTA
 - Age counter on listing detail (days since listing created)
+- **SEO layer** — `react-helmet-async` with `<SEO>` component (meta, og, twitter), Schema.org JSON-LD (`MarketplaceSchema`, `ListingSchema`, `BreadcrumbSchema`) on Home + ListingDetail; `<article>` semantic HTML with inline microdata on listing cards; footer with site attribution; `€` currency throughout
 
 ## Overview
 

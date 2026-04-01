@@ -5,6 +5,8 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SEO } from "@/components/seo/SEO";
+import { MarketplaceSchema } from "@/components/seo/schemas";
 
 export function Home() {
   const [search, setSearch] = useState("");
@@ -29,10 +31,19 @@ export function Home() {
     }
   });
 
+  const pageTitle = category
+    ? `${category} — Local Listings`
+    : "Local Marketplace for Unique Finds";
+  const pageDesc = category
+    ? `Browse pre-owned ${category.toLowerCase()} items near you on Die kleine Börse — quality over quantity.`
+    : "Buy and sell pre-owned treasures at Die kleine Börse. Your local, secure, and minimalist community marketplace for unique finds.";
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
+      <SEO title={pageTitle} description={pageDesc} />
+      <MarketplaceSchema />
       <Navbar />
-      
+
       <main className="flex-1 container mx-auto px-4 md:px-8 py-8 md:py-12 max-w-7xl">
         <header className="mb-12 space-y-8">
           <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-slate-900">
@@ -80,32 +91,44 @@ export function Home() {
           </div>
         </header>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 gap-y-12">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="space-y-4">
-                <Skeleton className="aspect-[4/5] w-full rounded-sm" />
-                <div className="space-y-2">
-                  <Skeleton className="h-3 w-1/3" />
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-5 w-1/4" />
+        <section aria-label="Listings">
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 gap-y-12">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <div key={i} className="space-y-4">
+                  <Skeleton className="aspect-[4/5] w-full rounded-sm" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-1/3" />
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-5 w-1/4" />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : listings && listings.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 gap-y-12">
-            {listings.map((listing, index) => (
-              <ListingCard key={listing.id} listing={listing} index={index} />
-            ))}
-          </div>
-        ) : (
-          <div className="py-24 text-center">
-            <h3 className="text-xl font-medium text-slate-900 mb-2">No items found</h3>
-            <p className="text-slate-500">We couldn't find any listings matching your search.</p>
-          </div>
-        )}
+              ))}
+            </div>
+          ) : listings && listings.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 gap-y-12">
+              {listings.map((listing, index) => (
+                <ListingCard key={listing.id} listing={listing} index={index} />
+              ))}
+            </div>
+          ) : (
+            <div className="py-24 text-center">
+              <h3 className="text-xl font-medium text-slate-900 mb-2">No items found</h3>
+              <p className="text-slate-500">We couldn't find any listings matching your search.</p>
+            </div>
+          )}
+        </section>
       </main>
+
+      <footer className="border-t border-slate-100 py-10 mt-16">
+        <div className="container mx-auto px-4 md:px-8 max-w-7xl flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+          <p>© {new Date().getFullYear()} Die kleine Börse. Curated Marketplace Excellence.</p>
+          <nav aria-label="Footer" className="flex gap-6">
+            <a href="/admin" className="hover:text-slate-900 transition-colors">Admin</a>
+            <a href="/listings/create" className="hover:text-slate-900 transition-colors">Sell an item</a>
+          </nav>
+        </div>
+      </footer>
     </div>
   );
 }
