@@ -5,10 +5,22 @@ import { getUncachableStripeClient, getStripeSync } from "../stripeClient";
 
 const router: IRouter = Router();
 
+const BOOST_TIERS: Record<string, { days: number; amountCents: number; label: string }> = {
+  "1d":  { days: 1,  amountCents: 249, label: "Power 1 Tag"    },
+  "2d":  { days: 2,  amountCents: 559, label: "Power 2 Tage"   },
+  "30d": { days: 30, amountCents: 100, label: "Boost 30 Tage"  },
+};
+
 router.post("/stripe/checkout", async (req, res): Promise<void> => {
-  const { listingId } = req.body;
+  const { listingId, boostTier = "30d" } = req.body;
   if (!listingId) {
     res.status(400).json({ error: "listingId is required" });
+    return;
+  }
+
+  const tier = BOOST_TIERS[boostTier as string];
+  if (!tier) {
+    res.status(400).json({ error: "Invalid boostTier" });
     return;
   }
 
@@ -23,34 +35,28 @@ router.post("/stripe/checkout", async (req, res): Promise<void> => {
   }
 
   const stripe = await getUncachableStripeClient();
-
-  const domain =
-    process.env.REPLIT_DOMAINS?.split(",")[0] || req.headers.host;
+  const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || req.headers.host;
   const baseUrl = `https://${domain}`;
-
-  const priceRows = await db.execute(sql`
-    SELECT pr.id as price_id
-    FROM stripe.products p
-    JOIN stripe.prices pr ON pr.product = p.id AND pr.active = true
-    WHERE p.name = 'Premium Listing' AND p.active = true
-    LIMIT 1
-  `);
-
-  const priceId = (priceRows.rows[0] as { price_id: string } | undefined)
-    ?.price_id;
-
-  if (!priceId) {
-    res.status(500).json({ error: "Premium listing price not configured" });
-    return;
-  }
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
-    line_items: [{ price: priceId, quantity: 1 }],
+    line_items: [
+      {
+        price_data: {
+          currency: "eur",
+          unit_amount: tier.amountCents,
+          product_data: {
+            name: tier.label,
+            description: `Deine Anzeige wird ${tier.days} Tag${tier.days > 1 ? "e" : ""} lang hervorgehoben`,
+          },
+        },
+        quantity: 1,
+      },
+    ],
     mode: "payment",
-    success_url: `${baseUrl}/listings/${listingId}?payment=success`,
-    cancel_url: `${baseUrl}/listings/create?payment=cancelled`,
-    metadata: { listingId },
+    success_url: `${baseUrl}/my-ads?boost=success`,
+    cancel_url: `${baseUrl}/my-ads`,
+    metadata: { listingId, boostDays: String(tier.days), type: "boost" },
   });
 
   await db
@@ -145,14 +151,16 @@ router.get("/stripe/session-status/:listingId", async (req, res): Promise<void> 
     const session = await stripe.checkout.sessions.retrieve(listing.stripeSessionId);
 
     if (session.payment_status === "paid") {
+      const boostDays = parseInt(session.metadata?.boostDays ?? "30", 10);
       const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + 30);
+      expiryDate.setDate(expiryDate.getDate() + boostDays);
 
       await db
         .update(listingsTable)
         .set({
           status: "active",
           paymentStatus: "completed",
+          listingType: "paid",
           paidAt: new Date(),
           expiryDate,
         })
@@ -168,14 +176,15 @@ router.get("/stripe/session-status/:listingId", async (req, res): Promise<void> 
 });
 
 router.post("/stripe/webhook-listing", async (req, res): Promise<void> => {
-  const { listingId } = req.body;
+  const { listingId, days = 30 } = req.body;
   if (!listingId) {
     res.status(400).json({ error: "listingId required" });
     return;
   }
 
+  const boostDays = Math.max(1, parseInt(String(days), 10) || 30);
   const expiryDate = new Date();
-  expiryDate.setDate(expiryDate.getDate() + 30);
+  expiryDate.setDate(expiryDate.getDate() + boostDays);
 
   await db
     .update(listingsTable)

@@ -22,6 +22,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -82,23 +87,29 @@ export function MyAds() {
   const deleteMutation = useDeleteListing();
   const updateMutation = useUpdateListing();
 
-  const handleBoost = async (listingId: string) => {
+  const BOOST_TIERS = [
+    { key: "1d",  label: "Power 1 Tag",   price: "€2,49", days: 1  },
+    { key: "2d",  label: "Power 2 Tage",  price: "€5,59", days: 2  },
+    { key: "30d", label: "Boost 30 Tage", price: "€1,00", days: 30 },
+  ] as const;
+
+  const handleBoost = async (listingId: string, boostTier: string) => {
     try {
       const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
       const res = await fetch(`${base}/api/stripe/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ listingId }),
+        body: JSON.stringify({ listingId, boostTier }),
       });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
       } else {
-        toast({ title: "Stripe not configured", description: "Payment is not available yet.", variant: "destructive" });
+        toast({ title: "Stripe nicht konfiguriert", description: "Zahlung ist noch nicht verfügbar.", variant: "destructive" });
       }
     } catch {
-      toast({ title: "Error", description: "Could not start checkout.", variant: "destructive" });
+      toast({ title: "Fehler", description: "Checkout konnte nicht gestartet werden.", variant: "destructive" });
     }
   };
 
@@ -305,13 +316,32 @@ export function MyAds() {
 
                     <div className="flex items-center gap-3 mt-2">
                       {!isPaid && listing.status === "active" && (
-                        <button
-                          onClick={() => handleBoost(listing.id)}
-                          className="text-xs font-medium text-slate-500 hover:text-slate-900 flex items-center gap-1 transition-colors"
-                        >
-                          <Zap className="w-3 h-3" />
-                          {t.myAds_boost} — €1.00 / 30 days
-                        </button>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="text-xs font-medium text-slate-500 hover:text-slate-900 flex items-center gap-1 transition-colors">
+                              <Zap className="w-3 h-3" />
+                              {t.myAds_boost}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent align="start" className="w-64 p-3">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Boost wählen</p>
+                            <div className="space-y-1.5">
+                              {BOOST_TIERS.map((tier) => (
+                                <button
+                                  key={tier.key}
+                                  onClick={() => handleBoost(listing.id, tier.key)}
+                                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-slate-200 hover:border-slate-900 hover:bg-slate-50 transition-all group text-left"
+                                >
+                                  <div>
+                                    <p className="text-sm font-medium text-slate-900">{tier.label}</p>
+                                    <p className="text-[11px] text-slate-400">{tier.days} Tag{tier.days > 1 ? "e" : ""} sichtbar</p>
+                                  </div>
+                                  <span className="text-sm font-semibold text-slate-900 tabular-nums">{tier.price}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                       )}
 
                       {!isDeleted && (
