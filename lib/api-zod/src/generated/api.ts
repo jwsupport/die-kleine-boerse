@@ -233,6 +233,7 @@ export const CreateListingBody = zod.object({
   listingType: zod.string().optional(),
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
+  boostTier: zod.string().optional(),
 });
 
 export const GetListingParams = zod.object({

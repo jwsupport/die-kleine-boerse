@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/seo/SEO";
 import { CATEGORIES, categoryByLabel } from "@/lib/categories";
-import { ShieldCheck, Zap } from "lucide-react";
+import { ShieldCheck, Zap, Check } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import { useT, getCatLabel } from "@/lib/i18n";
 
@@ -29,9 +29,14 @@ export function CreateListing() {
     imageUrls: [] as string[],
   });
 
+  const [selectedTier, setSelectedTier] = useState<"free" | "boost">("free");
+
   const selectedCategory = categoryByLabel[formData.category];
-  const fee = selectedCategory?.fee ?? 0;
+  const categoryFee = selectedCategory?.fee ?? 0;
+  const isBoost = selectedTier === "boost" && categoryFee === 0;
+  const fee = isBoost ? 1.00 : categoryFee;
   const requiresPayment = fee > 0;
+  const showTierPicker = formData.category !== "" && categoryFee === 0;
 
   const field = <K extends keyof typeof formData>(key: K) => ({
     value: formData[key] as string,
@@ -67,6 +72,7 @@ export function CreateListing() {
           location: formData.location,
           description: formData.description || null,
           imageUrls: formData.imageUrls,
+          boostTier: isBoost ? "boost" : undefined,
         },
       },
       {
@@ -190,30 +196,85 @@ export function CreateListing() {
               onChange={(urls) => setFormData((p) => ({ ...p, imageUrls: urls }))}
             />
 
-            {/* Dynamic fee summary — only shown when a category is selected */}
+            {/* Tier picker — free categories get the two-option selector */}
             {formData.category && (
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-start gap-3">
-                    <div className={`mt-0.5 rounded-full p-1.5 ${requiresPayment ? "bg-amber-100" : "bg-green-100"}`}>
-                      {requiresPayment
-                        ? <Zap className="w-3.5 h-3.5 text-amber-600" />
-                        : <ShieldCheck className="w-3.5 h-3.5 text-green-600" />}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
-                        {requiresPayment ? t.create_feeLabel : t.create_freeListing}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {requiresPayment ? t.create_paidValid : t.create_freeValid}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-2xl font-light text-slate-900">
-                    {requiresPayment ? `€${fee.toFixed(2)}` : "Gratis"}
+              showTierPicker ? (
+                <div className="space-y-3">
+                  <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">
+                    {t.create_tierHeading}
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Free tier */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTier("free")}
+                      className={`relative p-5 rounded-2xl border-2 text-left transition-all ${
+                        selectedTier === "free"
+                          ? "border-slate-900 bg-slate-50"
+                          : "border-slate-100 bg-white hover:border-slate-200"
+                      }`}
+                    >
+                      {selectedTier === "free" && (
+                        <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </span>
+                      )}
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mb-3">
+                        <ShieldCheck className="w-4 h-4 text-green-600" />
+                      </div>
+                      <p className="font-semibold text-slate-900 text-sm">{t.create_tierFreeTitle}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{t.create_tierFreeDesc}</p>
+                      <p className="text-xl font-light text-slate-900 mt-2">Gratis</p>
+                    </button>
+
+                    {/* Boost tier */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTier("boost")}
+                      className={`relative p-5 rounded-2xl border-2 text-left transition-all ${
+                        selectedTier === "boost"
+                          ? "border-slate-900 bg-slate-50"
+                          : "border-slate-100 bg-white hover:border-slate-200"
+                      }`}
+                    >
+                      <span className="absolute top-3 left-3 text-[9px] uppercase tracking-widest font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                        {t.create_tierBoostBadge}
+                      </span>
+                      {selectedTier === "boost" && (
+                        <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </span>
+                      )}
+                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center mb-3 mt-5">
+                        <Zap className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <p className="font-semibold text-slate-900 text-sm">{t.create_tierBoostTitle}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{t.create_tierBoostDesc}</p>
+                      <p className="text-xl font-light text-slate-900 mt-2">€1,00</p>
+                    </button>
                   </div>
                 </div>
-              </div>
+              ) : (
+                /* Category already has a fee — show the fixed fee summary */
+                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 rounded-full p-1.5 bg-amber-100">
+                        <Zap className="w-3.5 h-3.5 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                          {t.create_feeLabel}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5">{t.create_paidValid}</p>
+                      </div>
+                    </div>
+                    <div className="text-2xl font-light text-slate-900">
+                      €{fee.toFixed(2).replace(".", ",")}
+                    </div>
+                  </div>
+                </div>
+              )
             )}
 
             <div className="flex gap-3 pt-2">

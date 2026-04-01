@@ -93,7 +93,7 @@ router.post("/listings", async (req, res): Promise<void> => {
     return;
   }
 
-  const { sellerId, title, description, price, isNegotiable, category, location, imageUrls, listingType, lat, lng } =
+  const { sellerId, title, description, price, isNegotiable, category, location, imageUrls, listingType, lat, lng, boostTier } =
     parsed.data;
 
   const [existingProfile] = await db
@@ -122,11 +122,13 @@ router.post("/listings", async (req, res): Promise<void> => {
     return;
   }
 
-  const fee = CATEGORY_FEES[category] ?? 0;
+  const categoryFee = CATEGORY_FEES[category] ?? 0;
+  const isBoost = boostTier === "boost";
+  const fee = isBoost && categoryFee === 0 ? 1.00 : categoryFee;
   const requiresPayment = fee > 0;
   const type = (listingType as string) ?? "free";
-  const freeExpiryMs = 10 * 24 * 60 * 60 * 1000;
-  const expiryDate = new Date(Date.now() + freeExpiryMs);
+  const durationMs = (isBoost || requiresPayment) ? 30 * 24 * 60 * 60 * 1000 : 10 * 24 * 60 * 60 * 1000;
+  const expiryDate = new Date(Date.now() + durationMs);
 
   const [listing] = await db
     .insert(listingsTable)
