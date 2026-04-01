@@ -71,6 +71,17 @@ export const CreateStripeCheckoutResponse = zod.object({
 });
 
 /**
+ * @summary Create a Stripe checkout session for a paid-category listing fee
+ */
+export const CreateCategoryCheckoutBody = zod.object({
+  listingId: zod.string(),
+});
+
+export const CreateCategoryCheckoutResponse = zod.object({
+  url: zod.string().nullable(),
+});
+
+/**
  * @summary Get the current premium listing price info
  */
 export const GetListingPriceResponse = zod.object({
@@ -113,6 +124,8 @@ export const GetProfileListingsResponseItem = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
 });
@@ -184,6 +197,8 @@ export const GetListingsResponseItem = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
 });
@@ -225,6 +240,8 @@ export const GetListingResponse = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
   seller: zod.object({
@@ -270,6 +287,8 @@ export const UpdateListingResponse = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
 });
@@ -307,6 +326,8 @@ export const ReportListingResponse = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
 });
@@ -384,6 +405,8 @@ export const GetRecentListingsResponseItem = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
 });

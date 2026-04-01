@@ -48,6 +48,8 @@ export interface Listing {
   expiryDate?: string | null;
   /** @nullable */
   paidAt?: string | null;
+  paymentStatus: string;
+  listingFee: number;
   daysAge: number;
   createdAt: string;
 }
@@ -76,6 +78,8 @@ export interface ListingWithSeller {
   expiryDate?: string | null;
   /** @nullable */
   paidAt?: string | null;
+  paymentStatus: string;
+  listingFee: number;
   daysAge: number;
   createdAt: string;
   seller: Profile;

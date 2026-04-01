@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useCreateListing } from "@workspace/api-client-react";
+import { useCreateListing, useCreateCategoryCheckout } from "@workspace/api-client-react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { Navbar } from "@/components/layout/Navbar";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/seo/SEO";
-import { CATEGORIES } from "@/lib/categories";
+import { CATEGORIES, categoryByLabel } from "@/lib/categories";
+import { ShieldCheck, Zap } from "lucide-react";
 
 export function CreateListing() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const createListing = useCreateListing();
+  const createCategoryCheckout = useCreateCategoryCheckout();
   const { user, isAuthenticated, login } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -23,6 +25,10 @@ export function CreateListing() {
     description: "",
     imageUrls: "",
   });
+
+  const selectedCategory = categoryByLabel[formData.category];
+  const fee = selectedCategory?.fee ?? 0;
+  const requiresPayment = fee > 0;
 
   const field = <K extends keyof typeof formData>(key: K) => ({
     value: formData[key] as string,
@@ -64,19 +70,31 @@ export function CreateListing() {
       },
       {
         onSuccess: (newListing) => {
-          toast({ title: "Anzeige veröffentlicht!", description: "Deine Anzeige ist jetzt live." });
-          setLocation(`/listings/${newListing.id}`);
+          if (newListing.paymentStatus === "pending") {
+            createCategoryCheckout.mutate(
+              { data: { listingId: newListing.id } },
+              {
+                onSuccess: (checkout) => {
+                  if (checkout.url) window.location.href = checkout.url;
+                },
+                onError: () => {
+                  toast({ title: "Fehler beim Checkout", variant: "destructive" });
+                },
+              }
+            );
+          } else {
+            toast({ title: "Anzeige veröffentlicht!", description: "Deine Anzeige ist jetzt live." });
+            setLocation(`/listings/${newListing.id}`);
+          }
         },
         onError: () => {
-          toast({
-            title: "Fehler",
-            description: "Anzeige konnte nicht erstellt werden.",
-            variant: "destructive",
-          });
+          toast({ title: "Fehler", description: "Anzeige konnte nicht erstellt werden.", variant: "destructive" });
         },
       }
     );
   };
+
+  const isSubmitting = createListing.isPending || createCategoryCheckout.isPending;
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
@@ -133,7 +151,9 @@ export function CreateListing() {
                 >
                   <option value="" disabled>Auswählen…</option>
                   {CATEGORIES.map((c) => (
-                    <option key={c.id} value={c.label}>{c.label}</option>
+                    <option key={c.id} value={c.label}>
+                      {c.label}{c.fee > 0 ? ` — €${c.fee.toFixed(2)}` : ""}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -186,10 +206,36 @@ export function CreateListing() {
                 placeholder="Bild-URLs kommagetrennt eingeben"
                 {...field("imageUrls")}
               />
-              <p className="text-xs text-slate-400 mt-1.5">
-                Direkte Bild-Links, durch Komma getrennt.
-              </p>
+              <p className="text-xs text-slate-400 mt-1.5">Direkte Bild-Links, durch Komma getrennt.</p>
             </div>
+
+            {/* Dynamic fee summary — only shown when a category is selected */}
+            {formData.category && (
+              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-0.5 rounded-full p-1.5 ${requiresPayment ? "bg-amber-100" : "bg-green-100"}`}>
+                      {requiresPayment
+                        ? <Zap className="w-3.5 h-3.5 text-amber-600" />
+                        : <ShieldCheck className="w-3.5 h-3.5 text-green-600" />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                        {requiresPayment ? "Inseratsgebühr" : "Kostenlos inserieren"}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {requiresPayment
+                          ? `Premium-Platzierung für ${formData.category} — 30 Tage aktiv`
+                          : "Standard-Anzeige — 10 Tage aktiv"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-light text-slate-900">
+                    {requiresPayment ? `€${fee.toFixed(2)}` : "Gratis"}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-2">
               <button
@@ -201,10 +247,12 @@ export function CreateListing() {
               </button>
               <button
                 type="submit"
-                disabled={createListing.isPending}
+                disabled={isSubmitting}
                 className="flex-1 py-4 rounded-2xl bg-slate-900 text-white font-medium hover:bg-slate-800 transition-all disabled:bg-slate-300 text-sm"
               >
-                {createListing.isPending ? "Wird veröffentlicht…" : "Anzeige jetzt schalten"}
+                {isSubmitting
+                  ? requiresPayment ? "Weiterleitung zur Zahlung…" : "Wird veröffentlicht…"
+                  : requiresPayment ? `Jetzt zahlen & schalten — €${fee.toFixed(2)}` : "Anzeige jetzt schalten"}
               </button>
             </div>
           </form>

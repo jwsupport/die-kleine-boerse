@@ -19,6 +19,7 @@
 - **My Ads page** — user dashboard showing own listings with age counter, expiry, and "Boost to Premium" CTA
 - Age counter on listing detail (days since listing created)
 - **SEO layer** — `react-helmet-async` with `<SEO>` component (meta, og, twitter), Schema.org JSON-LD (`MarketplaceSchema`, `ListingSchema`, `BreadcrumbSchema`) on Home + ListingDetail; `<article>` semantic HTML with inline microdata on listing cards; footer with site attribution; `€` currency throughout
+- **Dynamic pricing** — `Vehicles & Mobility` (€5.49) and `Real Estate` (€9.49) require a one-time Stripe listing fee; other categories free. Paid listings created as `status='pending'` until Stripe confirms; `paymentStatus` + `listingFee` columns on DB; `/stripe/checkout-category` creates ad-hoc Stripe session with `price_data`; `/stripe/session-status/:listingId` verifies payment on return and activates listing; live fee summary card in the create form updates as category changes
 
 ## Overview
 

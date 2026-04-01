@@ -22,6 +22,8 @@ export const listingsTable = pgTable("listings", {
   expiryDate: timestamp("expiry_date", { withTimezone: true }),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   stripeSessionId: text("stripe_session_id"),
+  paymentStatus: text("payment_status").notNull().default("not_required"),
+  listingFee: numeric("listing_fee", { precision: 10, scale: 2 }).notNull().default("0.00"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

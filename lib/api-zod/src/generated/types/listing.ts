@@ -30,6 +30,8 @@ export interface Listing {
   expiryDate?: string | null;
   /** @nullable */
   paidAt?: string | null;
+  paymentStatus: string;
+  listingFee: number;
   daysAge: number;
   createdAt: string;
 }

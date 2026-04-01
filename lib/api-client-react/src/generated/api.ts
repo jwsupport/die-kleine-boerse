@@ -719,6 +719,92 @@ export const useCreateStripeCheckout = <
 };
 
 /**
+ * @summary Create a Stripe checkout session for a paid-category listing fee
+ */
+export const getCreateCategoryCheckoutUrl = () => {
+  return `/api/stripe/checkout-category`;
+};
+
+export const createCategoryCheckout = async (
+  createCheckoutBody: CreateCheckoutBody,
+  options?: RequestInit,
+): Promise<CreateCheckoutResponse> => {
+  return customFetch<CreateCheckoutResponse>(getCreateCategoryCheckoutUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createCheckoutBody),
+  });
+};
+
+export const getCreateCategoryCheckoutMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCategoryCheckout>>,
+    TError,
+    { data: BodyType<CreateCheckoutBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCategoryCheckout>>,
+  TError,
+  { data: BodyType<CreateCheckoutBody> },
+  TContext
+> => {
+  const mutationKey = ["createCategoryCheckout"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createCategoryCheckout>>,
+    { data: BodyType<CreateCheckoutBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createCategoryCheckout(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCategoryCheckoutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createCategoryCheckout>>
+>;
+export type CreateCategoryCheckoutMutationBody = BodyType<CreateCheckoutBody>;
+export type CreateCategoryCheckoutMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a Stripe checkout session for a paid-category listing fee
+ */
+export const useCreateCategoryCheckout = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCategoryCheckout>>,
+    TError,
+    { data: BodyType<CreateCheckoutBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createCategoryCheckout>>,
+  TError,
+  { data: BodyType<CreateCheckoutBody> },
+  TContext
+> => {
+  return useMutation(getCreateCategoryCheckoutMutationOptions(options));
+};
+
+/**
  * @summary Get the current premium listing price info
  */
 export const getGetListingPriceUrl = () => {

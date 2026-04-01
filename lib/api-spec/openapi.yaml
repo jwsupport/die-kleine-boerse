@@ -148,6 +148,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /stripe/checkout-category:
+    post:
+      tags: [stripe]
+      operationId: createCategoryCheckout
+      summary: Create a Stripe checkout session for a paid-category listing fee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCheckoutBody"
+      responses:
+        "200":
+          description: Checkout session URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateCheckoutResponse"
+        "404":
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /stripe/listing-price:
     get:
       tags: [stripe]
@@ -674,11 +699,15 @@ components:
           type: ["string", "null"]
         paidAt:
           type: ["string", "null"]
+        paymentStatus:
+          type: string
+        listingFee:
+          type: number
         daysAge:
           type: integer
         createdAt:
           type: string
-      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, daysAge, createdAt]
+      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, paymentStatus, listingFee, daysAge, createdAt]
 
     ListingWithSeller:
       type: object
@@ -719,13 +748,17 @@ components:
           type: ["string", "null"]
         paidAt:
           type: ["string", "null"]
+        paymentStatus:
+          type: string
+        listingFee:
+          type: number
         daysAge:
           type: integer
         createdAt:
           type: string
         seller:
           $ref: "#/components/schemas/Profile"
-      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, daysAge, createdAt, seller]
+      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, paymentStatus, listingFee, daysAge, createdAt, seller]
 
     AdminListing:
       type: object

@@ -1,5 +1,6 @@
 import { useParams, Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   useGetListing, getGetListingQueryKey, 
   useGetRecentListings, getGetRecentListingsQueryKey, 
@@ -24,10 +25,31 @@ export function ListingDetail() {
   const params = useParams();
   const id = params.id as string;
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const [message, setMessage] = useState("");
   const [isMessaging, setIsMessaging] = useState(false);
   const [reportReason, setReportReason] = useState("");
+
+  useEffect(() => {
+    const search = new URLSearchParams(window.location.search);
+    if (search.get("payment") !== "success" || !id) return;
+
+    const verify = async () => {
+      try {
+        const res = await fetch(`/api/stripe/session-status/${id}`);
+        const data = await res.json();
+        if (data.status === "completed") {
+          await queryClient.invalidateQueries({ queryKey: getGetListingQueryKey(id) });
+          toast({ title: "Zahlung erfolgreich!", description: "Deine Anzeige ist jetzt live und für 30 Tage aktiv." });
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    verify();
+  }, [id]);
   const [popoverOpen, setPopoverOpen] = useState(false);
   
   const { data: listing, isLoading } = useGetListing(id, {

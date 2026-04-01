@@ -19,6 +19,11 @@ import {
 
 const router: IRouter = Router();
 
+const CATEGORY_FEES: Record<string, number> = {
+  "Vehicles & Mobility": 5.49,
+  "Real Estate": 9.49,
+};
+
 function mapListing(l: Listing) {
   const now = Date.now();
   const createdMs = l.createdAt instanceof Date ? l.createdAt.getTime() : new Date(l.createdAt).getTime();
@@ -41,6 +46,8 @@ function mapListing(l: Listing) {
     lng: l.lng != null ? Number(l.lng) : null,
     expiryDate: l.expiryDate ? new Date(l.expiryDate).toISOString() : null,
     paidAt: l.paidAt ? new Date(l.paidAt).toISOString() : null,
+    paymentStatus: l.paymentStatus,
+    listingFee: Number(l.listingFee),
     daysAge,
     createdAt: l.createdAt instanceof Date ? l.createdAt.toISOString() : new Date(l.createdAt).toISOString(),
   };
@@ -98,6 +105,8 @@ router.post("/listings", async (req, res): Promise<void> => {
     await db.insert(profilesTable).values({ id: sellerId });
   }
 
+  const fee = CATEGORY_FEES[category] ?? 0;
+  const requiresPayment = fee > 0;
   const type = (listingType as string) ?? "free";
   const freeExpiryMs = 10 * 24 * 60 * 60 * 1000;
   const expiryDate = new Date(Date.now() + freeExpiryMs);
@@ -117,6 +126,9 @@ router.post("/listings", async (req, res): Promise<void> => {
       lat: lat != null ? String(lat) : null,
       lng: lng != null ? String(lng) : null,
       expiryDate,
+      status: requiresPayment ? "pending" : "active",
+      paymentStatus: requiresPayment ? "pending" : "not_required",
+      listingFee: String(fee),
     } as any)
     .returning();
 
