@@ -225,6 +225,11 @@ export const translations = {
     pay_successDesc: "Deine Zahlung wurde erfasst und deine Anzeige wird innerhalb von 24 Stunden geprüft und aktiviert.",
     pay_myAds: "Meine Anzeigen ansehen",
     pay_goHome: "Zur Hauptseite",
+    pay_stripe_title: "Mit Stripe bezahlen",
+    pay_stripe_desc: "Sichere Kartenzahlung über Stripe — schnell und einfach.",
+    pay_stripe_button: "Jetzt mit Stripe bezahlen — €1,00",
+    pay_stripe_done: "Zahlung bereits abgeschlossen?",
+    pay_alt_title: "Alternative: Krypto",
     pay_error: "Fehler beim Bestätigen der Zahlung. Bitte versuche es erneut.",
   },
   en: {
@@ -449,6 +454,11 @@ export const translations = {
     pay_successDesc: "Your payment has been recorded and your listing will be reviewed and activated within 24 hours.",
     pay_myAds: "View My Listings",
     pay_goHome: "Go to Home",
+    pay_stripe_title: "Pay with Stripe",
+    pay_stripe_desc: "Secure card payment via Stripe — fast and simple.",
+    pay_stripe_button: "Pay now with Stripe — €1.00",
+    pay_stripe_done: "Payment already complete?",
+    pay_alt_title: "Alternative: Crypto",
     pay_error: "Error confirming payment. Please try again.",
   },
 } as const;

@@ -5,9 +5,10 @@ import { useGetListing } from "@workspace/api-client-react";
 import { useT } from "@/lib/i18n";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, Copy, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, Copy, AlertCircle, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/8x29AT1dR6EH58P3or4wM00";
 const USDT_ADDRESS = "TEoXrL4bSj7adM6CbdYowTrdDp6RNuuXZL";
 const SOL_ADDRESS = "J7ptr4kryRKb51cSqE66C6qBeUYxHZwmU9q7xCKubCW2";
 const QR_BASE = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=";
@@ -44,6 +45,7 @@ export default function CryptoPayment() {
   const t = useT();
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
+  const [showCrypto, setShowCrypto] = useState(false);
 
   const { data: listing, isLoading } = useGetListing(id ?? "", {
     enabled: !!id,
@@ -65,6 +67,11 @@ export default function CryptoPayment() {
       toast({ title: t.pay_error, variant: "destructive" });
     },
   });
+
+  const handleStripeClick = () => {
+    const url = `${STRIPE_PAYMENT_LINK}?client_reference_id=${id}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   if (submitted) {
     return (
@@ -126,7 +133,7 @@ export default function CryptoPayment() {
     <div className="min-h-[100dvh] flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-10 max-w-lg">
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div className="space-y-1">
             <p className="text-xs uppercase tracking-widest text-slate-400 font-medium">{t.pay_step}</p>
             <h1 className="text-2xl font-medium text-slate-900">{t.pay_title}</h1>
@@ -145,30 +152,31 @@ export default function CryptoPayment() {
             <p className="text-xs text-slate-400">{t.pay_listingFee}</p>
           </div>
 
-          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-            <p className="text-xs text-amber-700 leading-relaxed">{t.pay_warning}</p>
+          {/* ── Primary: Stripe ── */}
+          <div className="border border-slate-200 rounded-2xl overflow-hidden">
+            <div className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-slate-700" />
+                <h2 className="font-medium text-slate-900">{t.pay_stripe_title}</h2>
+                <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                  Empfohlen
+                </span>
+              </div>
+              <p className="text-sm text-slate-500">{t.pay_stripe_desc}</p>
+              <Button
+                className="w-full h-12 bg-[#635BFF] hover:bg-[#4B44CC] text-white font-medium tracking-wide gap-2"
+                onClick={handleStripeClick}
+              >
+                <CreditCard className="w-4 h-4" />
+                {t.pay_stripe_button}
+              </Button>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            <WalletCard
-              label="USDT (TRC-20)"
-              address={USDT_ADDRESS}
-              color="text-emerald-600"
-              bg="bg-emerald-50"
-              border="border-emerald-200"
-            />
-            <WalletCard
-              label="SOL (Solana)"
-              address={SOL_ADDRESS}
-              color="text-violet-600"
-              bg="bg-violet-50"
-              border="border-violet-200"
-            />
-          </div>
-
-          <div className="border-t border-slate-100 pt-6 space-y-3">
-            <p className="text-xs text-slate-500 leading-relaxed">{t.pay_instructions}</p>
+          {/* ── Confirmation after Stripe ── */}
+          <div className="border-t border-slate-100 pt-4 space-y-3">
+            <p className="text-sm font-medium text-slate-700 text-center">{t.pay_stripe_done}</p>
+            <p className="text-xs text-slate-500 text-center leading-relaxed">{t.pay_instructions}</p>
             <Button
               className="w-full bg-slate-900 hover:bg-slate-800 text-white h-12 tracking-wide"
               onClick={() => notifyPayment.mutate()}
@@ -180,6 +188,41 @@ export default function CryptoPayment() {
               {t.pay_confirm}
             </Button>
             <p className="text-xs text-slate-400 text-center">{t.pay_confirmNote}</p>
+          </div>
+
+          {/* ── Secondary: Crypto (collapsible) ── */}
+          <div className="border border-slate-100 rounded-2xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowCrypto((v) => !v)}
+              className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+            >
+              <span>{t.pay_alt_title}</span>
+              {showCrypto ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+
+            {showCrypto && (
+              <div className="px-5 pb-5 space-y-4 border-t border-slate-100">
+                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
+                  <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                  <p className="text-xs text-amber-700 leading-relaxed">{t.pay_warning}</p>
+                </div>
+                <WalletCard
+                  label="USDT (TRC-20)"
+                  address={USDT_ADDRESS}
+                  color="text-emerald-600"
+                  bg="bg-emerald-50"
+                  border="border-emerald-200"
+                />
+                <WalletCard
+                  label="SOL (Solana)"
+                  address={SOL_ADDRESS}
+                  color="text-violet-600"
+                  bg="bg-violet-50"
+                  border="border-violet-200"
+                />
+              </div>
+            )}
           </div>
         </div>
       </main>
