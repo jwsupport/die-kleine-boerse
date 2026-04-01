@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "@/components/seo/SEO";
 import { MarketplaceSchema } from "@/components/seo/schemas";
 import { categoryByLabel } from "@/lib/categories";
+import { CategoryGrid } from "@/components/CategoryGrid";
 
 export function Home() {
   const [search, setSearch] = useState("");
@@ -126,12 +127,16 @@ export function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-slate-100 py-10 mt-16">
+      <div className="container mx-auto px-4 md:px-8 max-w-7xl">
+        <CategoryGrid />
+      </div>
+
+      <footer className="border-t border-slate-100 py-10 mt-4">
         <div className="container mx-auto px-4 md:px-8 max-w-7xl flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <p>© {new Date().getFullYear()} Die kleine Börse. Curated Marketplace Excellence.</p>
           <nav aria-label="Footer" className="flex gap-6">
-            <a href="/admin" className="hover:text-slate-900 transition-colors">Admin</a>
-            <a href="/listings/create" className="hover:text-slate-900 transition-colors">Sell an item</a>
+            <a href="/listings/create" className="hover:text-slate-900 transition-colors">Anzeige aufgeben</a>
+            <a href="/messages" className="hover:text-slate-900 transition-colors">Nachrichten</a>
           </nav>
         </div>
       </footer>

@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { MessageSquare, User, Plus, Shield, LogIn, LogOut, LayoutList } from "lucide-react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { Button } from "@/components/ui/button";
+import { isAdminEmail } from "@/lib/admin";
 
 export function Navbar() {
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
@@ -14,10 +15,12 @@ export function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-5">
-          <Link href="/admin" className="text-sm font-medium flex items-center gap-1.5 text-slate-400 hover:text-slate-900 transition-colors">
-            <Shield className="w-4 h-4" />
-            <span className="hidden md:inline">Admin</span>
-          </Link>
+          {isAuthenticated && isAdminEmail(user?.email) && (
+            <Link href="/admin" className="text-sm font-medium flex items-center gap-1.5 text-slate-400 hover:text-slate-900 transition-colors">
+              <Shield className="w-4 h-4" />
+              <span className="hidden md:inline">Admin</span>
+            </Link>
+          )}
 
           {isAuthenticated && (
             <Link href="/my-ads" className="text-sm font-medium flex items-center gap-1.5 text-slate-500 hover:text-slate-900 transition-colors">

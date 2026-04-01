@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@workspace/replit-auth-web";
+import { isAdminEmail } from "@/lib/admin";
 import { 
   useAdminGetListings, 
   getAdminGetListingsQueryKey,
@@ -24,6 +26,7 @@ import { Loader2 } from "lucide-react";
 export function Admin() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
 
   const [activeTab, setActiveTab] = useState("listings");
   
@@ -92,6 +95,24 @@ export function Admin() {
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  // Access gate — only the super-admin email may enter
+  if (!authLoading && (!isAuthenticated || !isAdminEmail(user?.email))) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-3 max-w-xs">
+            <div className="inline-flex w-14 h-14 rounded-full bg-slate-100 items-center justify-center mb-2">
+              <Loader2 className="w-6 h-6 text-slate-300" />
+            </div>
+            <h1 className="text-xl font-medium text-slate-900">Kein Zugriff</h1>
+            <p className="text-sm text-slate-500">Diese Seite ist nur für autorisierte Administratoren zugänglich.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-slate-50">

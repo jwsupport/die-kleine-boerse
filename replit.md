@@ -5,6 +5,9 @@
 **CURATED.** is a localized marketplace application with a Quiet Luxury aesthetic (slate-900 palette, Inter font, generous whitespace).
 
 ### Feature Set
+- **Admin RBAC**: `welik.jakob@gmail.com` is the sole super-admin. Admin nav link hidden from all others. `/admin` route shows "Kein Zugriff" to any non-admin. Defined in `lib/admin.ts` (`ADMIN_EMAIL`, `isAdminEmail()`).
+- **Static category grid**: `CategoryGrid.tsx` renders all 8 categories as a permanent link grid on the homepage for SEO internal linking. Each links to `/category/:id`.
+- **Category pages** (`/category/:id`): Dedicated page per category with filtered listings, category header, fee badge, and "Be the first" empty state with CTA. SEO title/description per category.
 - 4-slot image gallery uploader in CreateListing (URL-based, live previews, hover-remove, keyboard shortcuts)
 - 200 active listings per user limit enforced at backend + DB CHECK constraint (cardinality ≤ 4 images)
 - MyAds slot progress bar showing active listings / 200 with color escalation

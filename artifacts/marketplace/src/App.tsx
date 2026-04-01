@@ -12,6 +12,7 @@ import { Messages } from "@/pages/Messages";
 import { Profile } from "@/pages/Profile";
 import { Admin } from "@/pages/Admin";
 import { MyAds } from "@/pages/MyAds";
+import { CategoryPage } from "@/pages/CategoryPage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/listings/:id" component={ListingDetail} />
       <Route path="/messages" component={Messages} />
       <Route path="/profile/:id" component={Profile} />
+      <Route path="/category/:id" component={CategoryPage} />
       <Route component={NotFound} />
     </Switch>
   );
