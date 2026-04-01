@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { MessageSquare, User, Plus, Shield, LogIn, LogOut, LayoutList } from "lucide-react";
+import { MessageSquare, User, Plus, Shield, LogIn, LogOut, LayoutList, Star } from "lucide-react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { Button } from "@/components/ui/button";
 import { isAdminEmail } from "@/lib/admin";
@@ -39,6 +39,12 @@ export function Navbar() {
             <Plus className="w-4 h-4" />
             <span className="hidden md:inline">{t.nav_sell}</span>
           </Link>
+
+          {isAuthenticated && (
+            <Link href="/favourites" className="text-slate-500 hover:text-slate-900 transition-colors" title={t.nav_favourites}>
+              <Star className="w-5 h-5 stroke-[1.5]" />
+            </Link>
+          )}
 
           {isAuthenticated && (
             <Link href="/messages" className="text-slate-500 hover:text-slate-900 transition-colors">

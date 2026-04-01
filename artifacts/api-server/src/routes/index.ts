@@ -9,6 +9,7 @@ import ratingsRouter from "./ratings";
 import adminRouter from "./admin";
 import stripeRouter from "./stripe";
 import notifyRouter from "./notify";
+import favouritesRouter from "./favourites";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(ratingsRouter);
 router.use(adminRouter);
 router.use(stripeRouter);
 router.use(notifyRouter);
+router.use(favouritesRouter);
 
 export default router;

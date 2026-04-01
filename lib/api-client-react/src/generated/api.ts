@@ -2584,3 +2584,62 @@ export function useAdminGetRevenue<
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+// ─── Favourites ───────────────────────────────────────────────────────────────
+
+export const getFavouritesUrl = () => `/api/favourites`;
+export const getFavouriteIdsUrl = () => `/api/favourites/ids`;
+
+export const getFavourites = async (options?: SecondParameter<typeof customFetch>) =>
+  customFetch<Listing[]>(getFavouritesUrl(), { method: "GET", ...options });
+
+export const getFavouriteIds = async (options?: SecondParameter<typeof customFetch>) =>
+  customFetch<string[]>(getFavouriteIdsUrl(), { method: "GET", ...options });
+
+export const addFavourite = async (listingId: string, options?: SecondParameter<typeof customFetch>) =>
+  customFetch<void>(`/api/favourites`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ listingId }),
+    ...options,
+  });
+
+export const removeFavourite = async (listingId: string, options?: SecondParameter<typeof customFetch>) =>
+  customFetch<void>(`/api/favourites/${listingId}`, { method: "DELETE", ...options });
+
+export const getFavouritesQueryKey = () => [`/api/favourites`] as const;
+export const getFavouriteIdsQueryKey = () => [`/api/favourites/ids`] as const;
+
+export function useGetFavourites<TData = Awaited<ReturnType<typeof getFavourites>>, TError = ErrorType<unknown>>(
+  options?: { query?: UseQueryOptions<Awaited<ReturnType<typeof getFavourites>>, TError, TData>; request?: SecondParameter<typeof customFetch> }
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getFavouritesQueryKey();
+  const q = useQuery({ queryKey, queryFn: () => getFavourites(requestOptions), ...queryOptions }) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  q.queryKey = queryKey;
+  return q;
+}
+
+export function useGetFavouriteIds<TData = Awaited<ReturnType<typeof getFavouriteIds>>, TError = ErrorType<unknown>>(
+  options?: { query?: UseQueryOptions<Awaited<ReturnType<typeof getFavouriteIds>>, TError, TData>; request?: SecondParameter<typeof customFetch> }
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getFavouriteIdsQueryKey();
+  const q = useQuery({ queryKey, queryFn: () => getFavouriteIds(requestOptions), ...queryOptions }) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  q.queryKey = queryKey;
+  return q;
+}
+
+export const useAddFavourite = <TError = ErrorType<unknown>, TContext = unknown>(
+  options?: { mutation?: UseMutationOptions<Awaited<ReturnType<typeof addFavourite>>, TError, string, TContext>; request?: SecondParameter<typeof customFetch> }
+) => {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  return useMutation({ mutationFn: (listingId: string) => addFavourite(listingId, requestOptions), ...mutationOptions });
+};
+
+export const useRemoveFavourite = <TError = ErrorType<unknown>, TContext = unknown>(
+  options?: { mutation?: UseMutationOptions<Awaited<ReturnType<typeof removeFavourite>>, TError, string, TContext>; request?: SecondParameter<typeof customFetch> }
+) => {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  return useMutation({ mutationFn: (listingId: string) => removeFavourite(listingId, requestOptions), ...mutationOptions });
+};

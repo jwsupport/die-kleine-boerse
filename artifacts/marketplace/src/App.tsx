@@ -13,6 +13,7 @@ import { Messages } from "@/pages/Messages";
 import { Profile } from "@/pages/Profile";
 import { Admin } from "@/pages/Admin";
 import { MyAds } from "@/pages/MyAds";
+import { Favourites } from "@/pages/Favourites";
 import { CategoryPage } from "@/pages/CategoryPage";
 import CryptoPayment from "@/pages/CryptoPayment";
 
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/admin" component={Admin} />
       <Route path="/my-ads" component={MyAds} />
+      <Route path="/favourites" component={Favourites} />
       <Route path="/listings/create" component={CreateListing} />
       <Route path="/listings/:id" component={ListingDetail} />
       <Route path="/pay/:id" component={CryptoPayment} />

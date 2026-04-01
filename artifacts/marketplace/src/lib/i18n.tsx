@@ -6,9 +6,14 @@ export const translations = {
   de: {
     nav_sell: "Verkaufen",
     nav_myAds: "Meine Anzeigen",
+    nav_favourites: "Merkliste",
     nav_signIn: "Anmelden",
     nav_signOut: "Abmelden",
     nav_admin: "Admin",
+
+    favourites_title: "Meine Merkliste",
+    favourites_empty: "Noch keine gespeicherten Artikel",
+    favourites_emptyDesc: "Klicke den Stern bei einer Anzeige, um sie hier zu speichern.",
 
     home_headline: "Finde etwas Besonderes.",
     home_searchPlaceholder: "Artikel suchen…",
@@ -243,9 +248,14 @@ export const translations = {
   en: {
     nav_sell: "Sell",
     nav_myAds: "My Ads",
+    nav_favourites: "Saved",
     nav_signIn: "Sign in",
     nav_signOut: "Sign out",
     nav_admin: "Admin",
+
+    favourites_title: "My Saved Items",
+    favourites_empty: "No saved items yet",
+    favourites_emptyDesc: "Click the star on a listing to save it here.",
 
     home_headline: "Find something special.",
     home_searchPlaceholder: "Search items…",

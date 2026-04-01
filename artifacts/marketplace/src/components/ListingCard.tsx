@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Listing } from "@workspace/api-client-react";
 import { motion } from "framer-motion";
 import { useT, getCatLabel } from "@/lib/i18n";
+import { FavouriteButton } from "./FavouriteButton";
 
 interface ListingCardProps {
   listing: Listing;
@@ -35,6 +36,9 @@ export function ListingCard({ listing, index = 0 }: ListingCardProps) {
               No image
             </div>
           )}
+          <div className="absolute top-2 right-2">
+            <FavouriteButton listingId={listing.id} />
+          </div>
         </div>
         
         <div className="space-y-1.5 flex flex-col flex-1">
