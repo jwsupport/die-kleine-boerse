@@ -72,17 +72,7 @@ export function CreateListing() {
       {
         onSuccess: (newListing) => {
           if (newListing.paymentStatus === "pending") {
-            createCategoryCheckout.mutate(
-              { data: { listingId: newListing.id } },
-              {
-                onSuccess: (checkout) => {
-                  if (checkout.url) window.location.href = checkout.url;
-                },
-                onError: () => {
-                  toast({ title: t.create_checkoutError, variant: "destructive" });
-                },
-              }
-            );
+            setLocation(`/pay/${newListing.id}`);
           } else {
             toast({ title: t.create_success, description: t.create_successDesc });
             setLocation(`/listings/${newListing.id}`);

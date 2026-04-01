@@ -201,11 +201,18 @@ export function Admin() {
                           </TableCell>
                           <TableCell className="text-slate-600">{listing.sellerName || 'Unknown'}</TableCell>
                           <TableCell>
-                            {listing.listingType === 'paid' ? (
-                              <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50">Paid</Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-slate-600 border-slate-200 bg-slate-50">Free</Badge>
-                            )}
+                            <div className="flex flex-col gap-1">
+                              {listing.listingType === 'paid' ? (
+                                <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50">Paid</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-slate-600 border-slate-200 bg-slate-50">Free</Badge>
+                              )}
+                              {listing.paymentStatus === 'pending' && (
+                                <Badge variant="outline" className="text-orange-700 border-orange-300 bg-orange-50 text-[10px] px-1.5">
+                                  💰 Crypto Pending
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>{getStatusBadge(listing.status)}</TableCell>
                           <TableCell className="text-sm text-slate-500 max-w-[200px] truncate" title={listing.reportReason || ""}>

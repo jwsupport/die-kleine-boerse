@@ -127,6 +127,21 @@ export const translations = {
 
     admin_noAccess: "Kein Zugriff",
     admin_noAccessDesc: "Diese Seite ist nur für autorisierte Administratoren zugänglich.",
+
+    pay_step: "Bezahlung",
+    pay_title: "Krypto-Zahlung",
+    pay_subtitle: "Sende den genauen Betrag an eine der folgenden Adressen und klicke anschließend auf \"Ich habe bezahlt\".",
+    pay_listing: "Anzeige",
+    pay_amountDue: "Zu bezahlender Betrag",
+    pay_listingFee: "Einmalgebühr für Premium-Listing",
+    pay_warning: "Sende ausschließlich USDT (TRC-20) oder SOL an die jeweilige Adresse. Falsch gesendete Beträge können nicht zurückerstattet werden.",
+    pay_instructions: "Nach der Bestätigung wird deine Anzeige manuell geprüft und innerhalb von 24 Stunden freigeschaltet.",
+    pay_confirm: "Ich habe bezahlt",
+    pay_confirmNote: "Du bestätigst hiermit, dass du die Zahlung abgeschlossen hast.",
+    pay_successTitle: "Zahlung bestätigt",
+    pay_successDesc: "Deine Zahlung wurde erfasst und deine Anzeige wird innerhalb von 24 Stunden geprüft und aktiviert.",
+    pay_viewListing: "Anzeige ansehen",
+    pay_error: "Fehler beim Bestätigen der Zahlung. Bitte versuche es erneut.",
   },
   en: {
     nav_sell: "Sell",
@@ -252,6 +267,21 @@ export const translations = {
 
     admin_noAccess: "No Access",
     admin_noAccessDesc: "This page is only accessible to authorized administrators.",
+
+    pay_step: "Payment",
+    pay_title: "Crypto Payment",
+    pay_subtitle: "Send the exact amount to one of the addresses below, then click \"I have paid\".",
+    pay_listing: "Listing",
+    pay_amountDue: "Amount Due",
+    pay_listingFee: "One-time premium listing fee",
+    pay_warning: "Send only USDT (TRC-20) or SOL to the respective address. Incorrectly sent amounts cannot be refunded.",
+    pay_instructions: "After confirmation, your listing will be manually reviewed and activated within 24 hours.",
+    pay_confirm: "I have paid",
+    pay_confirmNote: "By clicking you confirm that you have completed the payment.",
+    pay_successTitle: "Payment Confirmed",
+    pay_successDesc: "Your payment has been recorded and your listing will be reviewed and activated within 24 hours.",
+    pay_viewListing: "View Listing",
+    pay_error: "Error confirming payment. Please try again.",
   },
 } as const;
 

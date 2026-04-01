@@ -14,6 +14,7 @@ import { Profile } from "@/pages/Profile";
 import { Admin } from "@/pages/Admin";
 import { MyAds } from "@/pages/MyAds";
 import { CategoryPage } from "@/pages/CategoryPage";
+import CryptoPayment from "@/pages/CryptoPayment";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/my-ads" component={MyAds} />
       <Route path="/listings/create" component={CreateListing} />
       <Route path="/listings/:id" component={ListingDetail} />
+      <Route path="/pay/:id" component={CryptoPayment} />
       <Route path="/messages" component={Messages} />
       <Route path="/profile/:id" component={Profile} />
       <Route path="/category/:id" component={CategoryPage} />

@@ -53,6 +53,8 @@ router.get("/admin/listings", async (req, res): Promise<void> => {
         imageUrls: listing.imageUrls,
         status: listing.status,
         listingType: listing.listingType,
+        paymentStatus: listing.paymentStatus,
+        listingFee: Number(listing.listingFee),
         isReported: listing.isReported,
         reportReason: listing.reportReason,
         expiryDate: listing.expiryDate ? listing.expiryDate.toISOString() : null,
@@ -85,6 +87,21 @@ router.patch("/admin/listings/:id/status", async (req, res): Promise<void> => {
   if (parsed.data.status === "active") {
     updates.isReported = false;
     updates.reportReason = null;
+
+    // If listing has a pending crypto payment, mark it as completed
+    const [current] = await db
+      .select({ paymentStatus: listingsTable.paymentStatus, listingFee: listingsTable.listingFee })
+      .from(listingsTable)
+      .where(eq(listingsTable.id, params.data.id));
+
+    if (current?.paymentStatus === "pending") {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+      updates.paymentStatus = "completed";
+      updates.listingType = "paid";
+      updates.paidAt = new Date();
+      updates.expiryDate = expiryDate;
+    }
   }
 
   const [listing] = await db
@@ -117,6 +134,8 @@ router.patch("/admin/listings/:id/status", async (req, res): Promise<void> => {
       imageUrls: listing.imageUrls,
       status: listing.status,
       listingType: listing.listingType,
+      paymentStatus: listing.paymentStatus,
+      listingFee: Number(listing.listingFee),
       isReported: listing.isReported,
       reportReason: listing.reportReason,
       expiryDate: listing.expiryDate ? listing.expiryDate.toISOString() : null,
