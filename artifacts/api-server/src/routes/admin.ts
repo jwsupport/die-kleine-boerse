@@ -255,7 +255,8 @@ router.get("/admin/revenue", async (req, res): Promise<void> => {
         `
   );
 
-  const data = (rows as any[]).map((r) => ({
+  const rowArray: any[] = Array.isArray(rows) ? rows : (rows as any).rows ?? [];
+  const data = rowArray.map((r) => ({
     month: String(r.month),
     revenue: Number(r.revenue),
   }));

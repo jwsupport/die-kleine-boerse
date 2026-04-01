@@ -518,7 +518,26 @@ export function useT(): Translations {
   return translations[lang] as Translations;
 }
 
-export function getCatLabel(categoryId: string, t: Translations): string {
-  const key = `cat_${categoryId.replace(/-/g, "_")}` as keyof Translations;
-  return (t[key] as string | undefined) ?? categoryId;
+export function getCatLabel(categoryIdOrLabel: string, t: Translations): string {
+  // Try direct ID lookup (e.g., "living-interior")
+  const key = `cat_${categoryIdOrLabel.replace(/-/g, "_")}` as keyof Translations;
+  const byId = t[key] as string | undefined;
+  if (byId) return byId;
+
+  // Fall back: input might be a stored label (e.g., "Living & Interior") — map to ID first
+  // Build a label→id map on the fly using the EN translations
+  const labelToKey: Record<string, keyof Translations> = {
+    "Living & Interior":     "cat_living_interior",
+    "Fashion & Accessories": "cat_fashion_accessories",
+    "Art & Collectibles":    "cat_art_collectibles",
+    "Tech & Gadgets":        "cat_tech_electronics",
+    "Leisure & Hobbies":     "cat_leisure_hobbies",
+    "Vehicles & Mobility":   "cat_vehicles_mobility",
+    "Real Estate":           "cat_real_estate",
+    "Services":              "cat_services",
+  };
+  const mapped = labelToKey[categoryIdOrLabel];
+  if (mapped) return (t[mapped] as string | undefined) ?? categoryIdOrLabel;
+
+  return categoryIdOrLabel;
 }

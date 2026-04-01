@@ -10,7 +10,7 @@ import { SEO } from "@/components/seo/SEO";
 import { MarketplaceSchema } from "@/components/seo/schemas";
 import { categoryByLabel } from "@/lib/categories";
 import { CategoryGrid } from "@/components/CategoryGrid";
-import { useT } from "@/lib/i18n";
+import { useT, getCatLabel } from "@/lib/i18n";
 
 export function Home() {
   const t = useT();
@@ -93,7 +93,7 @@ export function Home() {
                   className={`whitespace-nowrap text-sm font-medium transition-colors flex items-center gap-1.5 px-4 py-2 rounded-full ${category === stat.category ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
                 >
                   {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
-                  {stat.category}
+                  {getCatLabel(stat.category, t)}
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${category === stat.category ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>{stat.count}</span>
                 </button>
               );

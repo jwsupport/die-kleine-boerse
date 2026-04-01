@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Listing } from "@workspace/api-client-react";
 import { motion } from "framer-motion";
+import { useT, getCatLabel } from "@/lib/i18n";
 
 interface ListingCardProps {
   listing: Listing;
@@ -8,6 +9,7 @@ interface ListingCardProps {
 }
 
 export function ListingCard({ listing, index = 0 }: ListingCardProps) {
+  const t = useT();
   return (
     <motion.article
       initial={{ opacity: 0, y: 20 }}
@@ -38,7 +40,7 @@ export function ListingCard({ listing, index = 0 }: ListingCardProps) {
         <div className="space-y-1.5 flex flex-col flex-1">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-widest font-medium text-slate-500" itemProp="category">
-              {listing.category}
+              {getCatLabel(listing.category, t)}
             </span>
             <span className="text-xs text-slate-400 truncate ml-2">{listing.location}</span>
           </div>

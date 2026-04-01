@@ -19,7 +19,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ListingCard } from "@/components/ListingCard";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/seo/SEO";
-import { useT } from "@/lib/i18n";
+import { useT, getCatLabel } from "@/lib/i18n";
 import { ListingSchema, BreadcrumbSchema } from "@/components/seo/schemas";
 
 export function ListingDetail() {
@@ -143,7 +143,7 @@ export function ListingDetail() {
       <BreadcrumbSchema
         items={[
           { name: "Home", url: "/" },
-          { name: listing.category, url: `/?category=${encodeURIComponent(listing.category)}` },
+          { name: getCatLabel(listing.category, t), url: `/?category=${encodeURIComponent(listing.category)}` },
           { name: listing.title, url: `/listings/${listing.id}` },
         ]}
       />
@@ -179,7 +179,7 @@ export function ListingDetail() {
             <div className="flex flex-col pt-4 md:pt-12">
               <div className="flex justify-between items-start mb-4">
                 <span className="text-xs uppercase tracking-widest font-medium text-slate-500">
-                  {listing.category}
+                  {getCatLabel(listing.category, t)}
                 </span>
                 
                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>

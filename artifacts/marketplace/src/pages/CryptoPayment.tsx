@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { useGetListing } from "@workspace/api-client-react";
-import { useT } from "@/lib/i18n";
+import { useT, getCatLabel } from "@/lib/i18n";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, Copy, AlertCircle, CreditCard } from "lucide-react";
@@ -155,7 +155,7 @@ export default function CryptoPayment() {
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-1">
             <p className="text-xs text-slate-400 uppercase tracking-wider">{t.pay_listing}</p>
             <p className="font-medium text-slate-900">{listing.title}</p>
-            <p className="text-xs text-slate-500">{listing.category}</p>
+            <p className="text-xs text-slate-500">{getCatLabel(listing.category, t)}</p>
           </div>
 
           {/* Amount */}

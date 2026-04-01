@@ -5,7 +5,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Clock, Zap } from "lucide-react";
-import { useT } from "@/lib/i18n";
+import { useT, getCatLabel } from "@/lib/i18n";
 import { formatDistanceToNow, isPast } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -178,7 +178,7 @@ export function MyAds() {
 
                     <div className="flex items-center gap-4 text-xs text-slate-400 mt-1">
                       <span className="font-medium text-slate-700">€{Number(listing.price).toFixed(2)}</span>
-                      <span>{listing.category}</span>
+                      <span>{getCatLabel(listing.category, t)}</span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {listing.daysAge === 0 ? "Today" : `${listing.daysAge}d old`}
