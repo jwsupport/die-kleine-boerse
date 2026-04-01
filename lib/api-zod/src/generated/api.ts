@@ -521,3 +521,14 @@ export const AdminGetStatsResponse = zod.object({
   newProfilesThisPeriod: zod.number(),
   newListingsThisPeriod: zod.number(),
 });
+
+export const AdminGetRevenueQueryParams = zod.object({
+  year: zod.coerce.number().optional(),
+});
+
+export const AdminRevenueItem = zod.object({
+  month: zod.string(),
+  revenue: zod.number(),
+});
+
+export const AdminGetRevenueResponse = zod.array(AdminRevenueItem);

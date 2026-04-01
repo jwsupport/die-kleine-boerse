@@ -9,6 +9,8 @@ import {
   AdminUpdateListingStatusResponse,
   AdminGetStatsQueryParams,
   AdminGetStatsResponse,
+  AdminGetRevenueQueryParams,
+  AdminGetRevenueResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -217,6 +219,48 @@ router.get("/admin/stats", async (req, res): Promise<void> => {
       newListingsThisPeriod: periodListings?.count ?? 0,
     }),
   );
+});
+
+router.get("/admin/revenue", async (req, res): Promise<void> => {
+  const query = AdminGetRevenueQueryParams.safeParse(req.query);
+  if (!query.success) {
+    res.status(400).json({ error: query.error.message });
+    return;
+  }
+
+  const { year } = query.data;
+
+  const rows = await db.execute(
+    year
+      ? sql`
+          SELECT
+            to_char(created_at, 'YYYY-MM') AS month,
+            COALESCE(SUM(listing_fee::numeric), 0)::float AS revenue
+          FROM listings
+          WHERE payment_status = 'completed'
+            AND EXTRACT(YEAR FROM created_at) = ${year}
+          GROUP BY month
+          ORDER BY month
+        `
+      : sql`
+          SELECT
+            to_char(created_at, 'YYYY-MM') AS month,
+            COALESCE(SUM(listing_fee::numeric), 0)::float AS revenue
+          FROM listings
+          WHERE payment_status = 'completed'
+            AND created_at >= '2026-01-01'
+            AND created_at < '2051-01-01'
+          GROUP BY month
+          ORDER BY month
+        `
+  );
+
+  const data = (rows as any[]).map((r) => ({
+    month: String(r.month),
+    revenue: Number(r.revenue),
+  }));
+
+  res.json(AdminGetRevenueResponse.parse(data));
 });
 
 export default router;

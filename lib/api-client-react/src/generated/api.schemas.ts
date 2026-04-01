@@ -234,6 +234,11 @@ export interface AdminStats {
   newListingsThisPeriod: number;
 }
 
+export interface AdminRevenueItem {
+  month: string;
+  revenue: number;
+}
+
 export interface AuthUser {
   id: string;
   /** @nullable */

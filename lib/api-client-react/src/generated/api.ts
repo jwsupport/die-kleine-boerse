@@ -20,6 +20,7 @@ import type {
   AdminGetListingsParams,
   AdminGetStatsParams,
   AdminListing,
+  AdminRevenueItem,
   AdminStats,
   AdminUpdateStatusBody,
   AuthUserEnvelope,
@@ -2479,3 +2480,55 @@ export const useUpdateProfile = <
   const mutationOptions = getUpdateProfileMutationOptions(options);
   return useMutation(mutationOptions);
 };
+
+export const getAdminGetRevenueUrl = (year?: number) =>
+  year ? `/api/admin/revenue?year=${year}` : `/api/admin/revenue`;
+
+export const adminGetRevenue = async (
+  year?: number,
+  options?: SecondParameter<typeof customFetch>,
+) => {
+  return customFetch<AdminRevenueItem[]>(getAdminGetRevenueUrl(year), {
+    method: "GET",
+    ...options,
+  });
+};
+
+export const getAdminGetRevenueQueryKey = (year?: number) =>
+  [`/api/admin/revenue`, ...(year != null ? [{ year }] : [])] as const;
+
+export const getAdminGetRevenueQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminGetRevenue>>,
+  TError = ErrorType<unknown>,
+>(
+  year?: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof adminGetRevenue>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getAdminGetRevenueQueryKey(year);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminGetRevenue>>> = () =>
+    adminGetRevenue(year, requestOptions);
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetRevenue>>,
+    TError,
+    TData
+  >;
+};
+
+export function useAdminGetRevenue<
+  TData = Awaited<ReturnType<typeof adminGetRevenue>>,
+  TError = ErrorType<unknown>,
+>(
+  year?: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof adminGetRevenue>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminGetRevenueQueryOptions(year, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}

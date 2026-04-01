@@ -10,6 +10,7 @@ import {
   useAdminGetStats,
   getAdminGetStatsQueryKey,
   useUpdateListing,
+  useAdminGetRevenue,
 } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
@@ -25,8 +26,11 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2, Pencil, TrendingUp } from "lucide-react";
 import { CATEGORIES } from "@/lib/categories";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+} from "recharts";
 
 interface EditForm {
   title: string;
@@ -55,6 +59,11 @@ export function Admin() {
   const [statsMonth, setStatsMonth] = useState(currentMonth.toString());
   const [statsYear, setStatsYear] = useState(currentYear.toString());
 
+  // Revenue
+  const [revenueYear, setRevenueYear] = useState(currentYear.toString());
+  const REVENUE_YEARS = Array.from({ length: 2050 - 2026 + 1 }, (_, i) => 2026 + i);
+  const MONTH_LABELS = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+
   const listingsParams = useMemo(() => {
     const params: any = {};
     if (statusFilter !== "All") params.status = statusFilter.toLowerCase();
@@ -70,6 +79,26 @@ export function Admin() {
   const { data: stats, isLoading: loadingStats } = useAdminGetStats(statsParams, {
     query: { queryKey: getAdminGetStatsQueryKey(statsParams) }
   });
+
+  const revenueYearNum = parseInt(revenueYear);
+  const { data: revenueRaw, isLoading: loadingRevenue } = useAdminGetRevenue(revenueYearNum);
+
+  const revenueChartData = useMemo(() => {
+    const byMonth: Record<string, number> = {};
+    (revenueRaw ?? []).forEach((r) => {
+      const m = r.month.slice(5, 7);
+      byMonth[m] = r.revenue;
+    });
+    return MONTH_LABELS.map((label, i) => {
+      const key = String(i + 1).padStart(2, "0");
+      return { label, revenue: byMonth[key] ?? 0 };
+    });
+  }, [revenueRaw, MONTH_LABELS]);
+
+  const totalRevenue = useMemo(
+    () => revenueChartData.reduce((s, d) => s + d.revenue, 0),
+    [revenueChartData],
+  );
 
   const updateStatus = useAdminUpdateListingStatus();
   const updateListing = useUpdateListing();
@@ -195,6 +224,12 @@ export function Admin() {
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900"
             >
               {t.admin_tab_stats}
+            </TabsTrigger>
+            <TabsTrigger
+              value="revenue"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900"
+            >
+              Umsätze
             </TabsTrigger>
           </TabsList>
 
@@ -366,6 +401,130 @@ export function Admin() {
               </div>
             ) : (
               <div className="py-24 text-center text-slate-500">{t.admin_stats_failed}</div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="revenue" className="space-y-8">
+            {/* Year selector */}
+            <div className="flex items-center gap-4 bg-white p-4 border border-slate-200 rounded-lg shadow-sm w-full md:w-fit">
+              <TrendingUp className="w-4 h-4 text-slate-400" />
+              <div>
+                <Label className="text-xs font-medium text-slate-500 mb-1.5 block">Jahr</Label>
+                <Select value={revenueYear} onValueChange={setRevenueYear}>
+                  <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {REVENUE_YEARS.map((y) => (
+                      <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {loadingRevenue ? (
+              <div className="py-24 flex justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* KPI row */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-white border border-slate-200 rounded-xl p-6">
+                    <p className="text-xs uppercase tracking-widest text-slate-400 mb-1">Jahresumsatz {revenueYear}</p>
+                    <p className="text-3xl font-light text-slate-900">
+                      €{totalRevenue.toFixed(2).replace(".", ",")}
+                    </p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-6">
+                    <p className="text-xs uppercase tracking-widest text-slate-400 mb-1">Aktive Monate</p>
+                    <p className="text-3xl font-light text-slate-900">
+                      {revenueChartData.filter((d) => d.revenue > 0).length}
+                    </p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-6">
+                    <p className="text-xs uppercase tracking-widest text-slate-400 mb-1">Ø pro Monat</p>
+                    <p className="text-3xl font-light text-slate-900">
+                      €{revenueChartData.filter((d) => d.revenue > 0).length > 0
+                          ? (totalRevenue / revenueChartData.filter((d) => d.revenue > 0).length).toFixed(2).replace(".", ",")
+                          : "0,00"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bar chart */}
+                <div className="bg-white border border-slate-200 rounded-xl p-6">
+                  <p className="text-sm font-medium text-slate-700 mb-6">
+                    Monatliche Umsätze — {revenueYear}
+                  </p>
+                  {totalRevenue === 0 ? (
+                    <div className="py-16 text-center text-slate-400 text-sm">
+                      Keine Umsätze in {revenueYear}
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart data={revenueChartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                        <XAxis
+                          dataKey="label"
+                          tick={{ fontSize: 11, fill: "#94a3b8" }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tickFormatter={(v) => `€${v}`}
+                          tick={{ fontSize: 11, fill: "#94a3b8" }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={52}
+                        />
+                        <Tooltip
+                          formatter={(value: number) => [`€${value.toFixed(2).replace(".", ",")}`, "Umsatz"]}
+                          contentStyle={{
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "12px",
+                            fontSize: "12px",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                          }}
+                          cursor={{ fill: "#f8fafc" }}
+                        />
+                        <Bar dataKey="revenue" radius={[6, 6, 0, 0]} maxBarSize={48}>
+                          {revenueChartData.map((entry, index) => (
+                            <Cell
+                              key={index}
+                              fill={entry.revenue > 0 ? "#1e293b" : "#e2e8f0"}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+
+                {/* Monthly breakdown table */}
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-100">
+                    <p className="text-sm font-medium text-slate-700">Aufschlüsselung nach Monat</p>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs uppercase tracking-wider text-slate-400">Monat</TableHead>
+                        <TableHead className="text-xs uppercase tracking-wider text-slate-400 text-right">Umsatz</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {revenueChartData.map((row) => (
+                        <TableRow key={row.label} className={row.revenue === 0 ? "opacity-40" : ""}>
+                          <TableCell className="font-medium text-slate-700">{row.label} {revenueYear}</TableCell>
+                          <TableCell className="text-right text-slate-900 font-mono">
+                            €{row.revenue.toFixed(2).replace(".", ",")}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
             )}
           </TabsContent>
         </Tabs>
