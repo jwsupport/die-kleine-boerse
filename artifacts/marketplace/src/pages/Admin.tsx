@@ -32,6 +32,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
 
+const MONTH_LABELS = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+const REVENUE_YEARS = Array.from({ length: 2050 - 2026 + 1 }, (_, i) => 2026 + i);
+
 interface EditForm {
   title: string;
   description: string;
@@ -61,8 +64,6 @@ export function Admin() {
 
   // Revenue
   const [revenueYear, setRevenueYear] = useState(currentYear.toString());
-  const REVENUE_YEARS = Array.from({ length: 2050 - 2026 + 1 }, (_, i) => 2026 + i);
-  const MONTH_LABELS = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
 
   const listingsParams = useMemo(() => {
     const params: any = {};
@@ -81,7 +82,7 @@ export function Admin() {
   });
 
   const revenueYearNum = parseInt(revenueYear);
-  const { data: revenueRaw, isLoading: loadingRevenue } = useAdminGetRevenue(revenueYearNum);
+  const { data: revenueRaw, isLoading: loadingRevenue, isError: revenueError } = useAdminGetRevenue(revenueYearNum);
 
   const revenueChartData = useMemo(() => {
     const byMonth: Record<string, number> = {};
@@ -93,7 +94,7 @@ export function Admin() {
       const key = String(i + 1).padStart(2, "0");
       return { label, revenue: byMonth[key] ?? 0 };
     });
-  }, [revenueRaw, MONTH_LABELS]);
+  }, [revenueRaw]);
 
   const totalRevenue = useMemo(
     () => revenueChartData.reduce((s, d) => s + d.revenue, 0),
@@ -424,6 +425,10 @@ export function Admin() {
             {loadingRevenue ? (
               <div className="py-24 flex justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              </div>
+            ) : revenueError ? (
+              <div className="py-16 text-center text-red-400 text-sm">
+                Fehler beim Laden der Umsatzdaten. Bitte Seite neu laden.
               </div>
             ) : (
               <div className="space-y-6">

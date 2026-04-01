@@ -131,8 +131,8 @@ router.get("/messages/conversations", async (req, res): Promise<void> => {
     .select({
       listingId: messagesTable.listingId,
       otherUserId: sql<string>`case when ${messagesTable.senderId} = ${userId} then ${messagesTable.receiverId} else ${messagesTable.senderId} end`,
-      lastMessage: sql<string>`last_value(${messagesTable.content}) over (partition by ${messagesTable.listing_id}, case when ${messagesTable.sender_id} = ${userId} then ${messagesTable.receiver_id} else ${messagesTable.sender_id} end order by ${messagesTable.created_at} rows between unbounded preceding and unbounded following)`,
-      lastMessageAt: sql<Date>`last_value(${messagesTable.created_at}) over (partition by ${messagesTable.listing_id}, case when ${messagesTable.sender_id} = ${userId} then ${messagesTable.receiver_id} else ${messagesTable.sender_id} end order by ${messagesTable.created_at} rows between unbounded preceding and unbounded following)`,
+      lastMessage: sql<string>`last_value(${messagesTable.content}) over (partition by ${messagesTable.listingId}, case when ${messagesTable.senderId} = ${userId} then ${messagesTable.receiverId} else ${messagesTable.senderId} end order by ${messagesTable.createdAt} rows between unbounded preceding and unbounded following)`,
+      lastMessageAt: sql<Date>`last_value(${messagesTable.createdAt}) over (partition by ${messagesTable.listingId}, case when ${messagesTable.senderId} = ${userId} then ${messagesTable.receiverId} else ${messagesTable.senderId} end order by ${messagesTable.createdAt} rows between unbounded preceding and unbounded following)`,
     })
     .from(messagesTable)
     .where(or(eq(messagesTable.senderId, userId), eq(messagesTable.receiverId, userId)));
