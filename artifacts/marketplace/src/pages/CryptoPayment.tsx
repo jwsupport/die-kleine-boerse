@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 const STRIPE_LINKS: { maxFee: number; url: string }[] = [
   { maxFee: 1.00, url: "https://buy.stripe.com/8x29AT1dR6EH58P3or4wM00" },
   { maxFee: 5.49, url: "https://buy.stripe.com/4gM00j2hV8MP1WD9MP4wM02" },
+  { maxFee: 9.49, url: "https://buy.stripe.com/aFa00jf4H3svbxde354wM03" },
 ];
 
 function getStripeLink(fee: number): string {
