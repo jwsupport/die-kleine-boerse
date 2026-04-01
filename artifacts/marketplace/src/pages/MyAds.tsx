@@ -90,7 +90,7 @@ export function MyAds() {
   const BOOST_TIERS = [
     { key: "1d",  label: "Power 1 Tag",   price: "€2,49", days: 1  },
     { key: "2d",  label: "Power 2 Tage",  price: "€5,59", days: 2  },
-    { key: "30d", label: "Boost 30 Tage", price: "€1,00", days: 30 },
+    { key: "30d", label: "Boost 30 Tage", price: "€15,95", days: 30 },
   ] as const;
 
   const handleBoost = async (listingId: string, boostTier: string) => {

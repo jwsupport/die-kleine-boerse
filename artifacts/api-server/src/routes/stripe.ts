@@ -8,7 +8,7 @@ const router: IRouter = Router();
 const BOOST_TIERS: Record<string, { days: number; amountCents: number; label: string }> = {
   "1d":  { days: 1,  amountCents: 249, label: "Power 1 Tag"    },
   "2d":  { days: 2,  amountCents: 559, label: "Power 2 Tage"   },
-  "30d": { days: 30, amountCents: 100, label: "Boost 30 Tage"  },
+  "30d": { days: 30, amountCents: 1595, label: "Boost 30 Tage"  },
 };
 
 router.post("/stripe/checkout", async (req, res): Promise<void> => {
