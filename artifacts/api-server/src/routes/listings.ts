@@ -192,6 +192,11 @@ router.get("/listings/:id", async (req, res): Promise<void> => {
 });
 
 router.patch("/listings/:id", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const params = UpdateListingParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -201,6 +206,21 @@ router.patch("/listings/:id", async (req, res): Promise<void> => {
   const parsed = UpdateListingBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [existing] = await db
+    .select({ sellerId: listingsTable.sellerId })
+    .from(listingsTable)
+    .where(eq(listingsTable.id, params.data.id));
+
+  if (!existing) {
+    res.status(404).json({ error: "Listing not found" });
+    return;
+  }
+
+  if (existing.sellerId !== req.user.id) {
+    res.status(403).json({ error: "Forbidden" });
     return;
   }
 
@@ -230,9 +250,29 @@ router.patch("/listings/:id", async (req, res): Promise<void> => {
 });
 
 router.delete("/listings/:id", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const params = DeleteListingParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [existing] = await db
+    .select({ sellerId: listingsTable.sellerId })
+    .from(listingsTable)
+    .where(eq(listingsTable.id, params.data.id));
+
+  if (!existing) {
+    res.status(404).json({ error: "Listing not found" });
+    return;
+  }
+
+  if (existing.sellerId !== req.user.id) {
+    res.status(403).json({ error: "Forbidden" });
     return;
   }
 

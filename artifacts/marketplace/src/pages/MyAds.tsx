@@ -1,18 +1,73 @@
+import { useState } from "react";
 import { useAuth } from "@workspace/replit-auth-web";
-import { useGetProfileListings, getGetProfileListingsQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useGetProfileListings,
+  getGetProfileListingsQueryKey,
+  useDeleteListing,
+  useUpdateListing,
+} from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Clock, Zap } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Clock, Zap, Pencil, Trash2, Loader2 } from "lucide-react";
 import { useT, getCatLabel } from "@/lib/i18n";
 import { formatDistanceToNow, isPast } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { CATEGORIES } from "@/lib/categories";
+
+type ProfileListing = {
+  id: string;
+  title: string;
+  price: number;
+  category: string;
+  location: string;
+  description?: string | null;
+  isNegotiable: boolean;
+  imageUrls?: string[] | null;
+  status: string;
+  listingType: string;
+  daysAge: number;
+  expiryDate?: string | null;
+};
 
 export function MyAds() {
   const t = useT();
   const { user, isLoading: authLoading, isAuthenticated, login } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editListing, setEditListing] = useState<ProfileListing | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    price: "",
+    category: "",
+    location: "",
+    description: "",
+    isNegotiable: false,
+  });
 
   const { data: listings, isLoading: listingsLoading } = useGetProfileListings(
     user?.id ?? "",
@@ -23,6 +78,9 @@ export function MyAds() {
       },
     }
   );
+
+  const deleteMutation = useDeleteListing();
+  const updateMutation = useUpdateListing();
 
   const handleBoost = async (listingId: string) => {
     try {
@@ -42,6 +100,60 @@ export function MyAds() {
     } catch {
       toast({ title: "Error", description: "Could not start checkout.", variant: "destructive" });
     }
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteId) return;
+    deleteMutation.mutate({ id: deleteId }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetProfileListingsQueryKey(user?.id ?? "") });
+        toast({ title: t.myAds_deleteSuccess ?? "Anzeige gelöscht" });
+        setDeleteId(null);
+      },
+      onError: () => {
+        toast({ title: "Fehler", description: "Anzeige konnte nicht gelöscht werden.", variant: "destructive" });
+        setDeleteId(null);
+      },
+    });
+  };
+
+  const openEdit = (listing: ProfileListing) => {
+    setEditListing(listing);
+    setEditForm({
+      title: listing.title,
+      price: String(listing.price),
+      category: listing.category,
+      location: listing.location,
+      description: listing.description ?? "",
+      isNegotiable: listing.isNegotiable,
+    });
+  };
+
+  const handleEditSave = () => {
+    if (!editListing) return;
+    updateMutation.mutate(
+      {
+        id: editListing.id,
+        data: {
+          title: editForm.title,
+          price: parseFloat(editForm.price),
+          category: editForm.category,
+          location: editForm.location,
+          description: editForm.description,
+          isNegotiable: editForm.isNegotiable,
+        },
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getGetProfileListingsQueryKey(user?.id ?? "") });
+          toast({ title: t.admin_edit_success ?? "Anzeige aktualisiert" });
+          setEditListing(null);
+        },
+        onError: () => {
+          toast({ title: "Fehler", description: "Änderungen konnten nicht gespeichert werden.", variant: "destructive" });
+        },
+      }
+    );
   };
 
   if (authLoading) {
@@ -137,6 +249,7 @@ export function MyAds() {
               const expiresAt = listing.expiryDate ? new Date(listing.expiryDate) : null;
               const expired = expiresAt ? isPast(expiresAt) : false;
               const isPaid = listing.listingType === "paid";
+              const isDeleted = listing.status === "deleted";
 
               return (
                 <div key={listing.id} className="flex gap-4 py-5 group">
@@ -190,8 +303,8 @@ export function MyAds() {
                       )}
                     </div>
 
-                    {!isPaid && listing.status === "active" && (
-                      <div className="mt-2">
+                    <div className="flex items-center gap-3 mt-2">
+                      {!isPaid && listing.status === "active" && (
                         <button
                           onClick={() => handleBoost(listing.id)}
                           className="text-xs font-medium text-slate-500 hover:text-slate-900 flex items-center gap-1 transition-colors"
@@ -199,8 +312,27 @@ export function MyAds() {
                           <Zap className="w-3 h-3" />
                           {t.myAds_boost} — €1.00 / 30 days
                         </button>
-                      </div>
-                    )}
+                      )}
+
+                      {!isDeleted && (
+                        <>
+                          <button
+                            onClick={() => openEdit(listing as ProfileListing)}
+                            className="text-xs font-medium text-slate-400 hover:text-slate-900 flex items-center gap-1 transition-colors"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            {t.admin_action_edit ?? "Bearbeiten"}
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(listing.id)}
+                            className="text-xs font-medium text-slate-400 hover:text-red-600 flex items-center gap-1 transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            {t.admin_action_delete ?? "Löschen"}
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -208,6 +340,108 @@ export function MyAds() {
           </div>
         )}
       </main>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.admin_delete_title}</AlertDialogTitle>
+            <AlertDialogDescription>{t.admin_delete_desc}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.profile_cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending && <Loader2 className="w-3 h-3 animate-spin mr-2" />}
+              {t.admin_delete_confirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editListing} onOpenChange={(open) => !open && setEditListing(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t.admin_edit_title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs text-slate-500 mb-1.5 block">{t.admin_edit_fieldTitle}</Label>
+              <Input
+                value={editForm.title}
+                onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-slate-500 mb-1.5 block">{t.admin_edit_fieldPrice}</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editForm.price}
+                  onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-slate-500 mb-1.5 block">{t.admin_edit_fieldCategory}</Label>
+                <select
+                  value={editForm.category}
+                  onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c.id} value={c.label}>{getCatLabel(c.label, t)}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs text-slate-500 mb-1.5 block">{t.admin_edit_fieldLocation}</Label>
+              <Input
+                value={editForm.location}
+                onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-slate-500 mb-1.5 block">{t.admin_edit_fieldDesc}</Label>
+              <Textarea
+                rows={4}
+                className="resize-none"
+                value={editForm.description}
+                onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="negotiable"
+                checked={editForm.isNegotiable}
+                onChange={(e) => setEditForm((f) => ({ ...f, isNegotiable: e.target.checked }))}
+                className="rounded border-slate-300"
+              />
+              <Label htmlFor="negotiable" className="text-sm text-slate-700 cursor-pointer">
+                {t.admin_edit_fieldNegotiable}
+              </Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditListing(null)}>{t.profile_cancel}</Button>
+            <Button
+              onClick={handleEditSave}
+              disabled={updateMutation.isPending || !editForm.title.trim()}
+              className="bg-slate-900 hover:bg-slate-800 text-white"
+            >
+              {updateMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {t.admin_edit_save}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

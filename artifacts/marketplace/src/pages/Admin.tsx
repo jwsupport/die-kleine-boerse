@@ -615,7 +615,7 @@ export function Admin() {
                               {p.title}
                             </TableCell>
                             <TableCell className="text-sm text-slate-500">
-                              {getCatLabel(p.category)}
+                              {getCatLabel(p.category, t)}
                             </TableCell>
                             <TableCell className="text-sm font-medium text-slate-900 text-right tabular-nums">
                               €{p.amount.toFixed(2).replace(".", ",")}
