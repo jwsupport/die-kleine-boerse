@@ -35,6 +35,15 @@ export interface Listing {
   category: string;
   location: string;
   imageUrls: string[];
+  status: string;
+  listingType: string;
+  isReported: boolean;
+  /** @nullable */
+  reportReason?: string | null;
+  /** @nullable */
+  lat?: number | null;
+  /** @nullable */
+  lng?: number | null;
   createdAt: string;
 }
 
@@ -49,8 +58,38 @@ export interface ListingWithSeller {
   category: string;
   location: string;
   imageUrls: string[];
+  status: string;
+  listingType: string;
+  isReported: boolean;
+  /** @nullable */
+  reportReason?: string | null;
+  /** @nullable */
+  lat?: number | null;
+  /** @nullable */
+  lng?: number | null;
   createdAt: string;
   seller: Profile;
+}
+
+export interface AdminListing {
+  id: string;
+  sellerId: string;
+  /** @nullable */
+  sellerName?: string | null;
+  title: string;
+  /** @nullable */
+  description?: string | null;
+  price: number;
+  isNegotiable: boolean;
+  category: string;
+  location: string;
+  imageUrls: string[];
+  status: string;
+  listingType: string;
+  isReported: boolean;
+  /** @nullable */
+  reportReason?: string | null;
+  createdAt: string;
 }
 
 export interface CreateListingBody {
@@ -63,6 +102,11 @@ export interface CreateListingBody {
   category: string;
   location: string;
   imageUrls?: string[];
+  listingType?: string;
+  /** @nullable */
+  lat?: number | null;
+  /** @nullable */
+  lng?: number | null;
 }
 
 export interface UpdateListingBody {
@@ -74,6 +118,20 @@ export interface UpdateListingBody {
   category?: string;
   location?: string;
   imageUrls?: string[];
+  /** @nullable */
+  lat?: number | null;
+  /** @nullable */
+  lng?: number | null;
+}
+
+export interface ReportListingBody {
+  reason: string;
+}
+
+export interface AdminUpdateStatusBody {
+  status: string;
+  /** @nullable */
+  reason?: string | null;
 }
 
 export interface Message {
@@ -111,6 +169,45 @@ export interface CategoryStat {
   count: number;
 }
 
+export interface RatingItem {
+  id: string;
+  raterId: string;
+  ratedId: string;
+  rating: number;
+  /** @nullable */
+  comment?: string | null;
+  /** @nullable */
+  raterName?: string | null;
+  createdAt: string;
+}
+
+export interface ProfileRatings {
+  /** @nullable */
+  averageRating?: number | null;
+  totalRatings: number;
+  ratings: RatingItem[];
+}
+
+export interface SubmitRatingBody {
+  raterId: string;
+  rating: number;
+  /** @nullable */
+  comment?: string | null;
+}
+
+export interface AdminStats {
+  totalListings: number;
+  activeListings: number;
+  deletedListings: number;
+  reportedListings: number;
+  pendingListings: number;
+  freeListings: number;
+  paidListings: number;
+  totalProfiles: number;
+  newProfilesThisPeriod: number;
+  newListingsThisPeriod: number;
+}
+
 export type GetListingsParams = {
   category?: string;
   location?: string;
@@ -131,4 +228,16 @@ export type GetConversationsParams = {
 
 export type GetRecentListingsParams = {
   limit?: number;
+};
+
+export type AdminGetListingsParams = {
+  status?: string;
+  isReported?: boolean;
+  limit?: number;
+  offset?: number;
+};
+
+export type AdminGetStatsParams = {
+  month?: number;
+  year?: number;
 };

@@ -15,4 +15,8 @@ export interface UpdateListingBody {
   category?: string;
   location?: string;
   imageUrls?: string[];
+  /** @nullable */
+  lat?: number | null;
+  /** @nullable */
+  lng?: number | null;
 }

@@ -13,6 +13,12 @@ export const listingsTable = pgTable("listings", {
   category: text("category").notNull(),
   location: text("location").notNull(),
   imageUrls: text("image_urls").array().notNull().default([]),
+  status: text("status").notNull().default("active"),
+  listingType: text("listing_type").notNull().default("free"),
+  isReported: boolean("is_reported").notNull().default(false),
+  reportReason: text("report_reason"),
+  lat: numeric("lat", { precision: 10, scale: 7 }),
+  lng: numeric("lng", { precision: 10, scale: 7 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

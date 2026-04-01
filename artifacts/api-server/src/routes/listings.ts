@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, ilike, and, gte, lte, sql } from "drizzle-orm";
 import { db, listingsTable, profilesTable } from "@workspace/db";
+import type { Listing } from "@workspace/db";
 import {
   GetListingsQueryParams,
   GetListingsResponse,
@@ -11,9 +12,33 @@ import {
   UpdateListingBody,
   UpdateListingResponse,
   DeleteListingParams,
+  ReportListingParams,
+  ReportListingBody,
+  ReportListingResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+function mapListing(l: Listing) {
+  return {
+    id: l.id,
+    sellerId: l.sellerId,
+    title: l.title,
+    description: l.description,
+    price: Number(l.price),
+    isNegotiable: l.isNegotiable,
+    category: l.category,
+    location: l.location,
+    imageUrls: l.imageUrls,
+    status: l.status,
+    listingType: l.listingType,
+    isReported: l.isReported,
+    reportReason: l.reportReason,
+    lat: l.lat != null ? Number(l.lat) : null,
+    lng: l.lng != null ? Number(l.lng) : null,
+    createdAt: l.createdAt.toISOString(),
+  };
+}
 
 router.get("/listings", async (req, res): Promise<void> => {
   const query = GetListingsQueryParams.safeParse(req.query);
@@ -25,11 +50,13 @@ router.get("/listings", async (req, res): Promise<void> => {
   const { category, location, search, minPrice, maxPrice, limit, offset } = query.data;
 
   const conditions = [];
+  // Only show active listings on the public feed
+  conditions.push(eq(listingsTable.status, "active"));
   if (category) conditions.push(eq(listingsTable.category, category));
   if (location) conditions.push(ilike(listingsTable.location, `%${location}%`));
   if (search) {
     conditions.push(
-      sql`(${listingsTable.title} ilike ${'%' + search + '%'} or ${listingsTable.description} ilike ${'%' + search + '%'})`,
+      sql`(${listingsTable.title} ilike ${"%" + search + "%"} or ${listingsTable.description} ilike ${"%" + search + "%"})`,
     );
   }
   if (minPrice != null) conditions.push(gte(listingsTable.price, String(minPrice)));
@@ -38,27 +65,12 @@ router.get("/listings", async (req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(listingsTable)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(sql`${listingsTable.createdAt} desc`)
     .limit(limit ?? 50)
     .offset(offset ?? 0);
 
-  res.json(
-    GetListingsResponse.parse(
-      rows.map((l) => ({
-        id: l.id,
-        sellerId: l.sellerId,
-        title: l.title,
-        description: l.description,
-        price: Number(l.price),
-        isNegotiable: l.isNegotiable,
-        category: l.category,
-        location: l.location,
-        imageUrls: l.imageUrls,
-        createdAt: l.createdAt.toISOString(),
-      })),
-    ),
-  );
+  res.json(GetListingsResponse.parse(rows.map(mapListing)));
 });
 
 router.post("/listings", async (req, res): Promise<void> => {
@@ -68,10 +80,9 @@ router.post("/listings", async (req, res): Promise<void> => {
     return;
   }
 
-  const { sellerId, title, description, price, isNegotiable, category, location, imageUrls } =
+  const { sellerId, title, description, price, isNegotiable, category, location, imageUrls, listingType, lat, lng } =
     parsed.data;
 
-  // Ensure seller profile exists
   const [existingProfile] = await db
     .select()
     .from(profilesTable)
@@ -92,21 +103,13 @@ router.post("/listings", async (req, res): Promise<void> => {
       category,
       location,
       imageUrls: imageUrls ?? [],
+      listingType: listingType ?? "free",
+      lat: lat != null ? String(lat) : null,
+      lng: lng != null ? String(lng) : null,
     })
     .returning();
 
-  res.status(201).json({
-    id: listing.id,
-    sellerId: listing.sellerId,
-    title: listing.title,
-    description: listing.description,
-    price: Number(listing.price),
-    isNegotiable: listing.isNegotiable,
-    category: listing.category,
-    location: listing.location,
-    imageUrls: listing.imageUrls,
-    createdAt: listing.createdAt.toISOString(),
-  });
+  res.status(201).json(mapListing(listing));
 });
 
 router.get("/listings/:id", async (req, res): Promise<void> => {
@@ -134,16 +137,7 @@ router.get("/listings/:id", async (req, res): Promise<void> => {
 
   res.json(
     GetListingResponse.parse({
-      id: listing.id,
-      sellerId: listing.sellerId,
-      title: listing.title,
-      description: listing.description,
-      price: Number(listing.price),
-      isNegotiable: listing.isNegotiable,
-      category: listing.category,
-      location: listing.location,
-      imageUrls: listing.imageUrls,
-      createdAt: listing.createdAt.toISOString(),
+      ...mapListing(listing),
       seller: {
         id: seller?.id ?? listing.sellerId,
         username: seller?.username ?? null,
@@ -176,6 +170,8 @@ router.patch("/listings/:id", async (req, res): Promise<void> => {
   if (parsed.data.category != null) updates.category = parsed.data.category;
   if (parsed.data.location != null) updates.location = parsed.data.location;
   if (parsed.data.imageUrls != null) updates.imageUrls = parsed.data.imageUrls;
+  if (parsed.data.lat !== undefined) updates.lat = parsed.data.lat != null ? String(parsed.data.lat) : null;
+  if (parsed.data.lng !== undefined) updates.lng = parsed.data.lng != null ? String(parsed.data.lng) : null;
 
   const [listing] = await db
     .update(listingsTable)
@@ -188,20 +184,7 @@ router.patch("/listings/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(
-    UpdateListingResponse.parse({
-      id: listing.id,
-      sellerId: listing.sellerId,
-      title: listing.title,
-      description: listing.description,
-      price: Number(listing.price),
-      isNegotiable: listing.isNegotiable,
-      category: listing.category,
-      location: listing.location,
-      imageUrls: listing.imageUrls,
-      createdAt: listing.createdAt.toISOString(),
-    }),
-  );
+  res.json(UpdateListingResponse.parse(mapListing(listing)));
 });
 
 router.delete("/listings/:id", async (req, res): Promise<void> => {
@@ -222,6 +205,33 @@ router.delete("/listings/:id", async (req, res): Promise<void> => {
   }
 
   res.sendStatus(204);
+});
+
+router.post("/listings/:id/report", async (req, res): Promise<void> => {
+  const params = ReportListingParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const parsed = ReportListingBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [listing] = await db
+    .update(listingsTable)
+    .set({ isReported: true, reportReason: parsed.data.reason })
+    .where(eq(listingsTable.id, params.data.id))
+    .returning();
+
+  if (!listing) {
+    res.status(404).json({ error: "Listing not found" });
+    return;
+  }
+
+  res.json(ReportListingResponse.parse(mapListing(listing)));
 });
 
 export default router;

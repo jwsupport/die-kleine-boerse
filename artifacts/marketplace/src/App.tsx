@@ -9,6 +9,7 @@ import { ListingDetail } from "@/pages/ListingDetail";
 import { CreateListing } from "@/pages/CreateListing";
 import { Messages } from "@/pages/Messages";
 import { Profile } from "@/pages/Profile";
+import { Admin } from "@/pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +17,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/admin" component={Admin} />
       <Route path="/listings/create" component={CreateListing} />
       <Route path="/listings/:id" component={ListingDetail} />
       <Route path="/messages" component={Messages} />

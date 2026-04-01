@@ -8,16 +8,12 @@
 import * as zod from "zod";
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
 
-/**
- * @summary Get user profile
- */
 export const GetProfileParams = zod.object({
   id: zod.coerce.string(),
 });
@@ -30,9 +26,6 @@ export const GetProfileResponse = zod.object({
   createdAt: zod.string(),
 });
 
-/**
- * @summary Get listings by profile
- */
 export const GetProfileListingsParams = zod.object({
   id: zod.coerce.string(),
 });
@@ -47,6 +40,12 @@ export const GetProfileListingsResponseItem = zod.object({
   category: zod.string(),
   location: zod.string(),
   imageUrls: zod.array(zod.string()),
+  status: zod.string(),
+  listingType: zod.string(),
+  isReported: zod.boolean(),
+  reportReason: zod.string().nullish(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
   createdAt: zod.string(),
 });
 export const GetProfileListingsResponse = zod.array(
@@ -54,8 +53,41 @@ export const GetProfileListingsResponse = zod.array(
 );
 
 /**
- * @summary Get all listings
+ * @summary Get ratings for a profile
  */
+export const GetProfileRatingsParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetProfileRatingsResponse = zod.object({
+  averageRating: zod.number().nullish(),
+  totalRatings: zod.number(),
+  ratings: zod.array(
+    zod.object({
+      id: zod.string(),
+      raterId: zod.string(),
+      ratedId: zod.string(),
+      rating: zod.number(),
+      comment: zod.string().nullish(),
+      raterName: zod.string().nullish(),
+      createdAt: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * @summary Submit a rating for a profile
+ */
+export const SubmitRatingParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const SubmitRatingBody = zod.object({
+  raterId: zod.string(),
+  rating: zod.number(),
+  comment: zod.string().nullish(),
+});
+
 export const GetListingsQueryParams = zod.object({
   category: zod.coerce.string().optional(),
   location: zod.coerce.string().optional(),
@@ -76,13 +108,16 @@ export const GetListingsResponseItem = zod.object({
   category: zod.string(),
   location: zod.string(),
   imageUrls: zod.array(zod.string()),
+  status: zod.string(),
+  listingType: zod.string(),
+  isReported: zod.boolean(),
+  reportReason: zod.string().nullish(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
   createdAt: zod.string(),
 });
 export const GetListingsResponse = zod.array(GetListingsResponseItem);
 
-/**
- * @summary Create a new listing
- */
 export const CreateListingBody = zod.object({
   sellerId: zod.string(),
   title: zod.string(),
@@ -92,11 +127,11 @@ export const CreateListingBody = zod.object({
   category: zod.string(),
   location: zod.string(),
   imageUrls: zod.array(zod.string()).optional(),
+  listingType: zod.string().optional(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
 });
 
-/**
- * @summary Get a listing by ID
- */
 export const GetListingParams = zod.object({
   id: zod.coerce.string(),
 });
@@ -111,6 +146,12 @@ export const GetListingResponse = zod.object({
   category: zod.string(),
   location: zod.string(),
   imageUrls: zod.array(zod.string()),
+  status: zod.string(),
+  listingType: zod.string(),
+  isReported: zod.boolean(),
+  reportReason: zod.string().nullish(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
   createdAt: zod.string(),
   seller: zod.object({
     id: zod.string(),
@@ -121,9 +162,6 @@ export const GetListingResponse = zod.object({
   }),
 });
 
-/**
- * @summary Update a listing
- */
 export const UpdateListingParams = zod.object({
   id: zod.coerce.string(),
 });
@@ -136,6 +174,8 @@ export const UpdateListingBody = zod.object({
   category: zod.string().optional(),
   location: zod.string().optional(),
   imageUrls: zod.array(zod.string()).optional(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
 });
 
 export const UpdateListingResponse = zod.object({
@@ -148,19 +188,49 @@ export const UpdateListingResponse = zod.object({
   category: zod.string(),
   location: zod.string(),
   imageUrls: zod.array(zod.string()),
+  status: zod.string(),
+  listingType: zod.string(),
+  isReported: zod.boolean(),
+  reportReason: zod.string().nullish(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
   createdAt: zod.string(),
 });
 
-/**
- * @summary Delete a listing
- */
 export const DeleteListingParams = zod.object({
   id: zod.coerce.string(),
 });
 
 /**
- * @summary Get messages for a listing
+ * @summary Report a listing
  */
+export const ReportListingParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const ReportListingBody = zod.object({
+  reason: zod.string(),
+});
+
+export const ReportListingResponse = zod.object({
+  id: zod.string(),
+  sellerId: zod.string(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  price: zod.number(),
+  isNegotiable: zod.boolean(),
+  category: zod.string(),
+  location: zod.string(),
+  imageUrls: zod.array(zod.string()),
+  status: zod.string(),
+  listingType: zod.string(),
+  isReported: zod.boolean(),
+  reportReason: zod.string().nullish(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
+  createdAt: zod.string(),
+});
+
 export const GetMessagesParams = zod.object({
   id: zod.coerce.string(),
 });
@@ -180,9 +250,6 @@ export const GetMessagesResponseItem = zod.object({
 });
 export const GetMessagesResponse = zod.array(GetMessagesResponseItem);
 
-/**
- * @summary Send a message about a listing
- */
 export const SendMessageParams = zod.object({
   id: zod.coerce.string(),
 });
@@ -193,9 +260,6 @@ export const SendMessageBody = zod.object({
   content: zod.string(),
 });
 
-/**
- * @summary Get all conversations for a user
- */
 export const GetConversationsQueryParams = zod.object({
   userId: zod.coerce.string(),
 });
@@ -212,18 +276,12 @@ export const GetConversationsResponseItem = zod.object({
 });
 export const GetConversationsResponse = zod.array(GetConversationsResponseItem);
 
-/**
- * @summary Get listing counts by category
- */
 export const GetCategoryStatsResponseItem = zod.object({
   category: zod.string(),
   count: zod.number(),
 });
 export const GetCategoryStatsResponse = zod.array(GetCategoryStatsResponseItem);
 
-/**
- * @summary Get recently added listings
- */
 export const GetRecentListingsQueryParams = zod.object({
   limit: zod.coerce.number().optional(),
 });
@@ -238,8 +296,94 @@ export const GetRecentListingsResponseItem = zod.object({
   category: zod.string(),
   location: zod.string(),
   imageUrls: zod.array(zod.string()),
+  status: zod.string(),
+  listingType: zod.string(),
+  isReported: zod.boolean(),
+  reportReason: zod.string().nullish(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
   createdAt: zod.string(),
 });
 export const GetRecentListingsResponse = zod.array(
   GetRecentListingsResponseItem,
 );
+
+/**
+ * @summary Get all listings for admin management
+ */
+export const AdminGetListingsQueryParams = zod.object({
+  status: zod.coerce.string().optional(),
+  isReported: zod.coerce.boolean().optional(),
+  limit: zod.coerce.number().optional(),
+  offset: zod.coerce.number().optional(),
+});
+
+export const AdminGetListingsResponseItem = zod.object({
+  id: zod.string(),
+  sellerId: zod.string(),
+  sellerName: zod.string().nullish(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  price: zod.number(),
+  isNegotiable: zod.boolean(),
+  category: zod.string(),
+  location: zod.string(),
+  imageUrls: zod.array(zod.string()),
+  status: zod.string(),
+  listingType: zod.string(),
+  isReported: zod.boolean(),
+  reportReason: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+export const AdminGetListingsResponse = zod.array(AdminGetListingsResponseItem);
+
+/**
+ * @summary Approve, reject, or delete a listing
+ */
+export const AdminUpdateListingStatusParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const AdminUpdateListingStatusBody = zod.object({
+  status: zod.string(),
+  reason: zod.string().nullish(),
+});
+
+export const AdminUpdateListingStatusResponse = zod.object({
+  id: zod.string(),
+  sellerId: zod.string(),
+  sellerName: zod.string().nullish(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  price: zod.number(),
+  isNegotiable: zod.boolean(),
+  category: zod.string(),
+  location: zod.string(),
+  imageUrls: zod.array(zod.string()),
+  status: zod.string(),
+  listingType: zod.string(),
+  isReported: zod.boolean(),
+  reportReason: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Get platform statistics
+ */
+export const AdminGetStatsQueryParams = zod.object({
+  month: zod.coerce.number().optional(),
+  year: zod.coerce.number().optional(),
+});
+
+export const AdminGetStatsResponse = zod.object({
+  totalListings: zod.number(),
+  activeListings: zod.number(),
+  deletedListings: zod.number(),
+  reportedListings: zod.number(),
+  pendingListings: zod.number(),
+  freeListings: zod.number(),
+  paidListings: zod.number(),
+  totalProfiles: zod.number(),
+  newProfilesThisPeriod: zod.number(),
+  newListingsThisPeriod: zod.number(),
+});

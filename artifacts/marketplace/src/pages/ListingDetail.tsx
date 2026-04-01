@@ -1,11 +1,19 @@
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import { useState } from "react";
-import { useGetListing, getGetListingQueryKey, useGetRecentListings, getGetRecentListingsQueryKey, useSendMessage } from "@workspace/api-client-react";
+import { 
+  useGetListing, getGetListingQueryKey, 
+  useGetRecentListings, getGetRecentListingsQueryKey, 
+  useSendMessage,
+  useGetProfileRatings, getGetProfileRatingsQueryKey,
+  useReportListing
+} from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Clock, ArrowRight } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { MapPin, Clock, ArrowRight, Star, Flag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ListingCard } from "@/components/ListingCard";
 import { useToast } from "@/hooks/use-toast";
@@ -17,11 +25,20 @@ export function ListingDetail() {
   
   const [message, setMessage] = useState("");
   const [isMessaging, setIsMessaging] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [popoverOpen, setPopoverOpen] = useState(false);
   
   const { data: listing, isLoading } = useGetListing(id, {
     query: {
       enabled: !!id,
       queryKey: getGetListingQueryKey(id)
+    }
+  });
+
+  const { data: sellerRatings } = useGetProfileRatings(listing?.sellerId || "", {
+    query: {
+      enabled: !!listing?.sellerId,
+      queryKey: getGetProfileRatingsQueryKey(listing?.sellerId || "")
     }
   });
 
@@ -32,6 +49,7 @@ export function ListingDetail() {
   });
 
   const sendMessage = useSendMessage();
+  const reportListing = useReportListing();
 
   const handleSendMessage = () => {
     if (!message.trim() || !listing) return;
@@ -47,6 +65,20 @@ export function ListingDetail() {
         toast({ title: "Message sent", description: "The seller will get back to you soon." });
         setMessage("");
         setIsMessaging(false);
+      }
+    });
+  };
+
+  const handleReport = () => {
+    if (!reportReason.trim() || !listing) return;
+    reportListing.mutate({
+      id,
+      data: { reason: reportReason }
+    }, {
+      onSuccess: () => {
+        toast({ title: "Listing reported", description: "Our team will review this listing shortly.", variant: "destructive" });
+        setReportReason("");
+        setPopoverOpen(false);
       }
     });
   };
@@ -90,9 +122,37 @@ export function ListingDetail() {
 
             {/* Details */}
             <div className="flex flex-col pt-4 md:pt-12">
-              <span className="text-xs uppercase tracking-widest font-medium text-slate-500 mb-4">
-                {listing.category}
-              </span>
+              <div className="flex justify-between items-start mb-4">
+                <span className="text-xs uppercase tracking-widest font-medium text-slate-500">
+                  {listing.category}
+                </span>
+                
+                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <button className="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1.5 transition-colors">
+                      <Flag className="w-3 h-3" /> Report
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-80 p-4">
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-sm text-slate-900">Report this listing</h4>
+                      <p className="text-xs text-slate-500">Let us know why you think this listing violates our guidelines.</p>
+                      <Input 
+                        placeholder="Reason for reporting..." 
+                        value={reportReason}
+                        onChange={(e) => setReportReason(e.target.value)}
+                        className="text-sm h-9"
+                      />
+                      <div className="flex justify-end gap-2 pt-1">
+                        <Button variant="ghost" size="sm" className="h-8" onClick={() => setPopoverOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" size="sm" className="h-8" onClick={handleReport} disabled={reportListing.isPending || !reportReason.trim()}>
+                          {reportListing.isPending ? 'Submitting...' : 'Submit Report'}
+                        </Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
               
               <h1 className="text-3xl md:text-5xl font-medium text-slate-900 mb-6 leading-tight">
                 {listing.title}
@@ -121,18 +181,31 @@ export function ListingDetail() {
               </div>
 
               <div className="border-t border-slate-200 pt-8 mt-auto">
-                <div className="flex items-center gap-4 mb-8">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={listing.seller.avatarUrl || undefined} />
-                    <AvatarFallback className="bg-slate-100 text-slate-600">
-                      {listing.seller.fullName?.[0] || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium text-slate-900">{listing.seller.fullName || 'Anonymous'}</div>
-                    <div className="text-sm text-slate-500">Joined {new Date(listing.seller.createdAt).getFullYear()}</div>
+                <Link href={`/profile/${listing.sellerId}`} className="block group mb-8">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-12 h-12 ring-2 ring-transparent group-hover:ring-slate-100 transition-all">
+                      <AvatarImage src={listing.seller.avatarUrl || undefined} />
+                      <AvatarFallback className="bg-slate-100 text-slate-600">
+                        {listing.seller.fullName?.[0] || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium text-slate-900 group-hover:underline decoration-slate-300 underline-offset-4">{listing.seller.fullName || 'Anonymous'}</div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-sm text-slate-500">Joined {new Date(listing.seller.createdAt).getFullYear()}</span>
+                        {sellerRatings && sellerRatings.totalRatings > 0 && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="flex items-center text-sm font-medium text-amber-500">
+                              <Star className="w-3.5 h-3.5 fill-current mr-1" />
+                              {sellerRatings.averageRating?.toFixed(1)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </Link>
 
                 {!isMessaging ? (
                   <Button 

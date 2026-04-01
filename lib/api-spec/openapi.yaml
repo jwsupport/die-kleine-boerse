@@ -17,13 +17,16 @@ tags:
     description: Real-time messaging
   - name: stats
     description: Aggregated statistics
+  - name: ratings
+    description: Profile ratings
+  - name: admin
+    description: Admin operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -36,7 +39,6 @@ paths:
     get:
       operationId: getProfile
       tags: [profiles]
-      summary: Get user profile
       parameters:
         - name: id
           in: path
@@ -51,7 +53,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Profile"
         "404":
-          description: Profile not found
+          description: Not found
           content:
             application/json:
               schema:
@@ -61,7 +63,6 @@ paths:
     get:
       operationId: getProfileListings
       tags: [profiles]
-      summary: Get listings by profile
       parameters:
         - name: id
           in: path
@@ -70,7 +71,7 @@ paths:
             type: string
       responses:
         "200":
-          description: List of listings by this seller
+          description: Listings by seller
           content:
             application/json:
               schema:
@@ -78,11 +79,58 @@ paths:
                 items:
                   $ref: "#/components/schemas/Listing"
 
+  /profiles/{id}/ratings:
+    get:
+      operationId: getProfileRatings
+      tags: [ratings]
+      summary: Get ratings for a profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Profile ratings summary and list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileRatings"
+    post:
+      operationId: submitRating
+      tags: [ratings]
+      summary: Submit a rating for a profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitRatingBody"
+      responses:
+        "201":
+          description: Rating submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingItem"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /listings:
     get:
       operationId: getListings
       tags: [listings]
-      summary: Get all listings
       parameters:
         - name: category
           in: query
@@ -124,7 +172,6 @@ paths:
     post:
       operationId: createListing
       tags: [listings]
-      summary: Create a new listing
       requestBody:
         required: true
         content:
@@ -149,7 +196,6 @@ paths:
     get:
       operationId: getListing
       tags: [listings]
-      summary: Get a listing by ID
       parameters:
         - name: id
           in: path
@@ -164,7 +210,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListingWithSeller"
         "404":
-          description: Listing not found
+          description: Not found
           content:
             application/json:
               schema:
@@ -172,7 +218,6 @@ paths:
     patch:
       operationId: updateListing
       tags: [listings]
-      summary: Update a listing
       parameters:
         - name: id
           in: path
@@ -187,7 +232,7 @@ paths:
               $ref: "#/components/schemas/UpdateListingBody"
       responses:
         "200":
-          description: Listing updated
+          description: Updated
           content:
             application/json:
               schema:
@@ -201,7 +246,6 @@ paths:
     delete:
       operationId: deleteListing
       tags: [listings]
-      summary: Delete a listing
       parameters:
         - name: id
           in: path
@@ -210,7 +254,38 @@ paths:
             type: string
       responses:
         "204":
-          description: Deleted successfully
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /listings/{id}/report:
+    post:
+      operationId: reportListing
+      tags: [listings]
+      summary: Report a listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportListingBody"
+      responses:
+        "200":
+          description: Listing reported
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
         "404":
           description: Not found
           content:
@@ -222,7 +297,6 @@ paths:
     get:
       operationId: getMessages
       tags: [messages]
-      summary: Get messages for a listing
       parameters:
         - name: id
           in: path
@@ -236,7 +310,7 @@ paths:
             type: string
       responses:
         "200":
-          description: Messages for this listing conversation
+          description: Messages
           content:
             application/json:
               schema:
@@ -246,7 +320,6 @@ paths:
     post:
       operationId: sendMessage
       tags: [messages]
-      summary: Send a message about a listing
       parameters:
         - name: id
           in: path
@@ -271,7 +344,6 @@ paths:
     get:
       operationId: getConversations
       tags: [messages]
-      summary: Get all conversations for a user
       parameters:
         - name: userId
           in: query
@@ -280,7 +352,7 @@ paths:
             type: string
       responses:
         "200":
-          description: List of conversations
+          description: Conversations
           content:
             application/json:
               schema:
@@ -292,10 +364,9 @@ paths:
     get:
       operationId: getCategoryStats
       tags: [stats]
-      summary: Get listing counts by category
       responses:
         "200":
-          description: Category statistics
+          description: Category stats
           content:
             application/json:
               schema:
@@ -307,7 +378,6 @@ paths:
     get:
       operationId: getRecentListings
       tags: [stats]
-      summary: Get recently added listings
       parameters:
         - name: limit
           in: query
@@ -323,6 +393,91 @@ paths:
                 items:
                   $ref: "#/components/schemas/Listing"
 
+  /admin/listings:
+    get:
+      operationId: adminGetListings
+      tags: [admin]
+      summary: Get all listings for admin management
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: isReported
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Admin listing list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminListing"
+
+  /admin/listings/{id}/status:
+    patch:
+      operationId: adminUpdateListingStatus
+      tags: [admin]
+      summary: Approve, reject, or delete a listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUpdateStatusBody"
+      responses:
+        "200":
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminListing"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/stats:
+    get:
+      operationId: adminGetStats
+      tags: [admin]
+      summary: Get platform statistics
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: integer
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Platform stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
 components:
   schemas:
     HealthStatus:
@@ -330,16 +485,14 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
     ErrorResponse:
       type: object
       properties:
         error:
           type: string
-      required:
-        - error
+      required: [error]
 
     Profile:
       type: object
@@ -354,9 +507,7 @@ components:
           type: ["string", "null"]
         createdAt:
           type: string
-      required:
-        - id
-        - createdAt
+      required: [id, createdAt]
 
     Listing:
       type: object
@@ -381,18 +532,21 @@ components:
           type: array
           items:
             type: string
+        status:
+          type: string
+        listingType:
+          type: string
+        isReported:
+          type: boolean
+        reportReason:
+          type: ["string", "null"]
+        lat:
+          type: ["number", "null"]
+        lng:
+          type: ["number", "null"]
         createdAt:
           type: string
-      required:
-        - id
-        - sellerId
-        - title
-        - price
-        - isNegotiable
-        - category
-        - location
-        - imageUrls
-        - createdAt
+      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, createdAt]
 
     ListingWithSeller:
       type: object
@@ -417,21 +571,60 @@ components:
           type: array
           items:
             type: string
+        status:
+          type: string
+        listingType:
+          type: string
+        isReported:
+          type: boolean
+        reportReason:
+          type: ["string", "null"]
+        lat:
+          type: ["number", "null"]
+        lng:
+          type: ["number", "null"]
         createdAt:
           type: string
         seller:
           $ref: "#/components/schemas/Profile"
-      required:
-        - id
-        - sellerId
-        - title
-        - price
-        - isNegotiable
-        - category
-        - location
-        - imageUrls
-        - createdAt
-        - seller
+      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, createdAt, seller]
+
+    AdminListing:
+      type: object
+      properties:
+        id:
+          type: string
+        sellerId:
+          type: string
+        sellerName:
+          type: ["string", "null"]
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        price:
+          type: number
+        isNegotiable:
+          type: boolean
+        category:
+          type: string
+        location:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        listingType:
+          type: string
+        isReported:
+          type: boolean
+        reportReason:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, createdAt]
 
     CreateListingBody:
       type: object
@@ -454,12 +647,13 @@ components:
           type: array
           items:
             type: string
-      required:
-        - sellerId
-        - title
-        - price
-        - category
-        - location
+        listingType:
+          type: string
+        lat:
+          type: ["number", "null"]
+        lng:
+          type: ["number", "null"]
+      required: [sellerId, title, price, category, location]
 
     UpdateListingBody:
       type: object
@@ -480,6 +674,26 @@ components:
           type: array
           items:
             type: string
+        lat:
+          type: ["number", "null"]
+        lng:
+          type: ["number", "null"]
+
+    ReportListingBody:
+      type: object
+      properties:
+        reason:
+          type: string
+      required: [reason]
+
+    AdminUpdateStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+        reason:
+          type: ["string", "null"]
+      required: [status]
 
     Message:
       type: object
@@ -498,13 +712,7 @@ components:
           type: string
         senderName:
           type: ["string", "null"]
-      required:
-        - id
-        - listingId
-        - senderId
-        - receiverId
-        - content
-        - createdAt
+      required: [id, listingId, senderId, receiverId, content, createdAt]
 
     SendMessageBody:
       type: object
@@ -515,10 +723,7 @@ components:
           type: string
         content:
           type: string
-      required:
-        - senderId
-        - receiverId
-        - content
+      required: [senderId, receiverId, content]
 
     Conversation:
       type: object
@@ -539,13 +744,7 @@ components:
           type: string
         unreadCount:
           type: integer
-      required:
-        - listingId
-        - listingTitle
-        - otherUserId
-        - lastMessage
-        - lastMessageAt
-        - unreadCount
+      required: [listingId, listingTitle, otherUserId, lastMessage, lastMessageAt, unreadCount]
 
     CategoryStat:
       type: object
@@ -554,6 +753,72 @@ components:
           type: string
         count:
           type: integer
-      required:
-        - category
-        - count
+      required: [category, count]
+
+    RatingItem:
+      type: object
+      properties:
+        id:
+          type: string
+        raterId:
+          type: string
+        ratedId:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: ["string", "null"]
+        raterName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, raterId, ratedId, rating, createdAt]
+
+    ProfileRatings:
+      type: object
+      properties:
+        averageRating:
+          type: ["number", "null"]
+        totalRatings:
+          type: integer
+        ratings:
+          type: array
+          items:
+            $ref: "#/components/schemas/RatingItem"
+      required: [totalRatings, ratings]
+
+    SubmitRatingBody:
+      type: object
+      properties:
+        raterId:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: ["string", "null"]
+      required: [raterId, rating]
+
+    AdminStats:
+      type: object
+      properties:
+        totalListings:
+          type: integer
+        activeListings:
+          type: integer
+        deletedListings:
+          type: integer
+        reportedListings:
+          type: integer
+        pendingListings:
+          type: integer
+        freeListings:
+          type: integer
+        paidListings:
+          type: integer
+        totalProfiles:
+          type: integer
+        newProfilesThisPeriod:
+          type: integer
+        newListingsThisPeriod:
+          type: integer
+      required: [totalListings, activeListings, deletedListings, reportedListings, pendingListings, freeListings, paidListings, totalProfiles, newProfilesThisPeriod, newListingsThisPeriod]

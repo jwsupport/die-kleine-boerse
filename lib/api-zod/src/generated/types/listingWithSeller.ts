@@ -18,6 +18,15 @@ export interface ListingWithSeller {
   category: string;
   location: string;
   imageUrls: string[];
+  status: string;
+  listingType: string;
+  isReported: boolean;
+  /** @nullable */
+  reportReason?: string | null;
+  /** @nullable */
+  lat?: number | null;
+  /** @nullable */
+  lng?: number | null;
   createdAt: string;
   seller: Profile;
 }

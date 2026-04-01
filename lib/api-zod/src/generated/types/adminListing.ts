@@ -6,19 +6,23 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CreateListingBody {
+export interface AdminListing {
+  id: string;
   sellerId: string;
+  /** @nullable */
+  sellerName?: string | null;
   title: string;
   /** @nullable */
   description?: string | null;
   price: number;
-  isNegotiable?: boolean;
+  isNegotiable: boolean;
   category: string;
   location: string;
-  imageUrls?: string[];
-  listingType?: string;
+  imageUrls: string[];
+  status: string;
+  listingType: string;
+  isReported: boolean;
   /** @nullable */
-  lat?: number | null;
-  /** @nullable */
-  lng?: number | null;
+  reportReason?: string | null;
+  createdAt: string;
 }

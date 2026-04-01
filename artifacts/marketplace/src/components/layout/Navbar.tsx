@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { MessageSquare, User, Plus } from "lucide-react";
+import { MessageSquare, User, Plus, Shield } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -10,6 +10,10 @@ export function Navbar() {
         </Link>
         
         <nav className="flex items-center gap-6">
+          <Link href="/admin" className="text-sm font-medium flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors">
+            <Shield className="w-4 h-4" />
+            <span className="hidden md:inline">Admin</span>
+          </Link>
           <Link href="/listings/create" className="text-sm font-medium flex items-center gap-2 hover:text-slate-600 transition-colors">
             <Plus className="w-4 h-4" />
             <span className="hidden md:inline">Sell an Item</span>
