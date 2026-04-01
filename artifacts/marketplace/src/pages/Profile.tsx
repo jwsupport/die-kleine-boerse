@@ -1,19 +1,30 @@
 import { useParams } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   useGetProfile, getGetProfileQueryKey, 
   useGetProfileListings, getGetProfileListingsQueryKey,
   useGetProfileRatings, getGetProfileRatingsQueryKey,
-  useSubmitRating
+  useSubmitRating,
+  useUpdateProfile,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@workspace/replit-auth-web";
 import { Navbar } from "@/components/layout/Navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ListingCard } from "@/components/ListingCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Star } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Star, Pencil } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useT } from "@/lib/i18n";
@@ -24,6 +35,9 @@ export function Profile() {
   const id = params.id as string;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  const isOwner = !!user && user.id === id;
 
   const { data: profile, isLoading: loadingProfile } = useGetProfile(id, {
     query: {
@@ -47,10 +61,55 @@ export function Profile() {
   });
 
   const submitRating = useSubmitRating();
+  const updateProfile = useUpdateProfile();
+
   const [ratingVal, setRatingVal] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
   const [showRatingForm, setShowRatingForm] = useState(false);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editFullName, setEditFullName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
+
+  useEffect(() => {
+    if (profile && editOpen) {
+      setEditFullName(profile.fullName ?? "");
+      setEditUsername(profile.username ?? "");
+    }
+  }, [profile, editOpen]);
+
+  const handleOpenEdit = () => {
+    setEditFullName(profile?.fullName ?? "");
+    setEditUsername(profile?.username ?? "");
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    updateProfile.mutate(
+      {
+        id,
+        data: {
+          fullName: editFullName.trim() || null,
+          username: editUsername.trim() || null,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast({ title: t.profile_editSuccess, description: t.profile_editSuccessDesc });
+          queryClient.invalidateQueries({ queryKey: getGetProfileQueryKey(id) });
+          setEditOpen(false);
+        },
+        onError: (err: any) => {
+          const msg =
+            err?.response?.status === 409
+              ? t.profile_editErrorUsernameTaken
+              : t.profile_editError;
+          toast({ title: msg, variant: "destructive" });
+        },
+      }
+    );
+  };
 
   const handleSubmitRating = () => {
     if (ratingVal === 0) {
@@ -140,7 +199,17 @@ export function Profile() {
 
           {/* Profile Sidebar */}
           <div className="lg:col-span-4 order-1 lg:order-2 space-y-10">
-            <header className="flex flex-col items-center text-center space-y-4 bg-slate-50 p-8 rounded-2xl border border-slate-100">
+            <header className="flex flex-col items-center text-center space-y-4 bg-slate-50 p-8 rounded-2xl border border-slate-100 relative">
+              {isOwner && (
+                <button
+                  onClick={handleOpenEdit}
+                  className="absolute top-4 right-4 p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors"
+                  title={t.profile_editProfile}
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
+
               <Avatar className="w-28 h-28 mb-2 shadow-sm border-2 border-white ring-1 ring-slate-100">
                 <AvatarImage src={profile.avatarUrl || undefined} />
                 <AvatarFallback className="bg-white text-slate-600 text-3xl">
@@ -270,6 +339,53 @@ export function Profile() {
           </div>
         </div>
       </main>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.profile_editProfile}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-5 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-fullname">{t.profile_fullName}</Label>
+              <Input
+                id="edit-fullname"
+                value={editFullName}
+                onChange={e => setEditFullName(e.target.value)}
+                maxLength={100}
+                placeholder="Max Mustermann"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-username">{t.profile_username}</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm select-none">@</span>
+                <Input
+                  id="edit-username"
+                  value={editUsername}
+                  onChange={e => setEditUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))}
+                  maxLength={50}
+                  placeholder="benutzername"
+                  className="pl-7"
+                />
+              </div>
+              <p className="text-xs text-slate-400">{t.profile_usernameHint}</p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={updateProfile.isPending}>
+              {t.profile_cancel}
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={updateProfile.isPending}>
+              {updateProfile.isPending ? "…" : t.profile_saveChanges}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

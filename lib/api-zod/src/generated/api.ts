@@ -102,6 +102,23 @@ export const GetProfileResponse = zod.object({
   createdAt: zod.string(),
 });
 
+export const UpdateProfileParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateProfileBody = zod.object({
+  fullName: zod.string().max(100).nullish(),
+  username: zod.string().max(50).nullish(),
+});
+
+export const UpdateProfileResponse = zod.object({
+  id: zod.string(),
+  username: zod.string().nullish(),
+  fullName: zod.string().nullish(),
+  avatarUrl: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+
 export const GetProfileListingsParams = zod.object({
   id: zod.coerce.string(),
 });

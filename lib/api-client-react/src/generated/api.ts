@@ -49,6 +49,7 @@ import type {
   SendMessageBody,
   SubmitRatingBody,
   UpdateListingBody,
+  UpdateProfileBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -2411,3 +2412,70 @@ export function useAdminGetStats<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+export const getUpdateProfileUrl = (id: string) => `/api/profiles/${id}`;
+
+export const updateProfile = async (
+  id: string,
+  updateProfileBody: BodyType<UpdateProfileBody>,
+  options?: SecondParameter<typeof customFetch>,
+) => {
+  return customFetch<Profile>(getUpdateProfileUrl(id), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    data: updateProfileBody,
+    ...options,
+  });
+};
+
+export const getUpdateProfileMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateProfile>>,
+    TError,
+    { id: string; data: BodyType<UpdateProfileBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateProfile>>,
+  TError,
+  { id: string; data: BodyType<UpdateProfileBody> },
+  TContext
+> => {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateProfile>>,
+    { id: string; data: BodyType<UpdateProfileBody> }
+  > = ({ id, data }) => updateProfile(id, data, requestOptions);
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateProfile>>
+>;
+export type UpdateProfileMutationBody = BodyType<UpdateProfileBody>;
+export type UpdateProfileMutationError = ErrorType<ErrorResponse>;
+
+export const useUpdateProfile = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateProfile>>,
+    TError,
+    { id: string; data: BodyType<UpdateProfileBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateProfile>>,
+  TError,
+  { id: string; data: BodyType<UpdateProfileBody> },
+  TContext
+> => {
+  const mutationOptions = getUpdateProfileMutationOptions(options);
+  return useMutation(mutationOptions);
+};

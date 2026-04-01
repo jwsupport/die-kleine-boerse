@@ -24,6 +24,13 @@ export interface Profile {
   createdAt: string;
 }
 
+export interface UpdateProfileBody {
+  /** @nullable */
+  fullName?: string | null;
+  /** @nullable */
+  username?: string | null;
+}
+
 export interface Listing {
   id: string;
   sellerId: string;
