@@ -237,7 +237,8 @@ router.delete("/listings/:id", async (req, res): Promise<void> => {
   }
 
   const [listing] = await db
-    .delete(listingsTable)
+    .update(listingsTable)
+    .set({ status: "deleted" })
     .where(eq(listingsTable.id, params.data.id))
     .returning();
 
