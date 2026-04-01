@@ -66,6 +66,38 @@ export default function CryptoPayment() {
     },
   });
 
+  if (submitted) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="max-w-md w-full text-center space-y-6">
+            <div className="inline-flex w-16 h-16 rounded-full bg-emerald-50 items-center justify-center">
+              <CheckCircle className="w-8 h-8 text-emerald-500" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-medium text-slate-900">{t.pay_successTitle}</h1>
+              <p className="text-slate-500 text-sm leading-relaxed">{t.pay_successDesc}</p>
+            </div>
+            <Button
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white"
+              onClick={() => setLocation("/my-ads")}
+            >
+              {t.pay_myAds}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setLocation("/")}
+            >
+              {t.pay_goHome}
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-[100dvh] flex flex-col bg-background">
@@ -89,32 +121,6 @@ export default function CryptoPayment() {
   }
 
   const fee = Number(listing.listingFee ?? 0);
-
-  if (submitted) {
-    return (
-      <div className="min-h-[100dvh] flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
-          <div className="max-w-md w-full text-center space-y-6">
-            <div className="inline-flex w-16 h-16 rounded-full bg-emerald-50 items-center justify-center">
-              <CheckCircle className="w-8 h-8 text-emerald-500" />
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-2xl font-medium text-slate-900">{t.pay_successTitle}</h1>
-              <p className="text-slate-500 text-sm leading-relaxed">{t.pay_successDesc}</p>
-            </div>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setLocation(`/listings/${id}`)}
-            >
-              {t.pay_viewListing}
-            </Button>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">

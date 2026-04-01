@@ -205,7 +205,8 @@ export const translations = {
     pay_confirmNote: "Du bestätigst hiermit, dass du die Zahlung abgeschlossen hast.",
     pay_successTitle: "Zahlung bestätigt",
     pay_successDesc: "Deine Zahlung wurde erfasst und deine Anzeige wird innerhalb von 24 Stunden geprüft und aktiviert.",
-    pay_viewListing: "Anzeige ansehen",
+    pay_myAds: "Meine Anzeigen ansehen",
+    pay_goHome: "Zur Hauptseite",
     pay_error: "Fehler beim Bestätigen der Zahlung. Bitte versuche es erneut.",
   },
   en: {
@@ -410,7 +411,8 @@ export const translations = {
     pay_confirmNote: "By clicking you confirm that you have completed the payment.",
     pay_successTitle: "Payment Confirmed",
     pay_successDesc: "Your payment has been recorded and your listing will be reviewed and activated within 24 hours.",
-    pay_viewListing: "View Listing",
+    pay_myAds: "View My Listings",
+    pay_goHome: "Go to Home",
     pay_error: "Error confirming payment. Please try again.",
   },
 } as const;
