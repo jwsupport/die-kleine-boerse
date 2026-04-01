@@ -1,4 +1,23 @@
-# Workspace
+# Workspace — CURATED.
+
+## Project Description
+
+**CURATED.** is a localized marketplace application with a Quiet Luxury aesthetic (slate-900 palette, Inter font, generous whitespace).
+
+### Feature Set
+- Browsable listing feed with category/location/search filtering
+- Listing detail page with real-time chat (send message to seller), star ratings, report system
+- Create listing (requires Replit Auth login)
+- Real-time messaging inbox
+- User profiles with ratings
+- Report system with admin review
+- Admin dashboard with financial stats (paid vs free listings, listing counts by status)
+- **Replit Auth** (browser OIDC login/logout via `/api/login`, `/api/callback`, `/api/logout`)
+- **Listing lifecycle**: free = 10-day expiry set at creation; paid = 30-day expiry after Stripe payment
+- **Stripe checkout** — €1.00 Premium Listing upgrade (€1.00 / 30 days); webhook updates listing to `paid` + resets expiry
+- **Auto-delete cron** — runs hourly in `index.ts`, marks listings `deleted` where `expiryDate < now`
+- **My Ads page** — user dashboard showing own listings with age counter, expiry, and "Boost to Premium" CTA
+- Age counter on listing detail (days since listing created)
 
 ## Overview
 
@@ -90,6 +109,10 @@ Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used b
 ### `lib/api-client-react` (`@workspace/api-client-react`)
 
 Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
+
+### `lib/replit-auth-web` (`@workspace/replit-auth-web`)
+
+Thin React hook library for browser-side Replit Auth. Exports `useAuth()` which calls `GET /api/auth/user` to resolve the authenticated user, and provides `login()` / `logout()` helpers that redirect via `/api/login` and `/api/logout`.
 
 ### `scripts` (`@workspace/scripts`)
 

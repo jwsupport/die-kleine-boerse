@@ -20,6 +20,9 @@ import {
 const router: IRouter = Router();
 
 function mapListing(l: Listing) {
+  const now = Date.now();
+  const createdMs = l.createdAt instanceof Date ? l.createdAt.getTime() : new Date(l.createdAt).getTime();
+  const daysAge = Math.floor((now - createdMs) / (1000 * 60 * 60 * 24));
   return {
     id: l.id,
     sellerId: l.sellerId,
@@ -36,7 +39,10 @@ function mapListing(l: Listing) {
     reportReason: l.reportReason,
     lat: l.lat != null ? Number(l.lat) : null,
     lng: l.lng != null ? Number(l.lng) : null,
-    createdAt: l.createdAt.toISOString(),
+    expiryDate: l.expiryDate ? new Date(l.expiryDate).toISOString() : null,
+    paidAt: l.paidAt ? new Date(l.paidAt).toISOString() : null,
+    daysAge,
+    createdAt: l.createdAt instanceof Date ? l.createdAt.toISOString() : new Date(l.createdAt).toISOString(),
   };
 }
 
@@ -92,6 +98,10 @@ router.post("/listings", async (req, res): Promise<void> => {
     await db.insert(profilesTable).values({ id: sellerId });
   }
 
+  const type = (listingType as string) ?? "free";
+  const freeExpiryMs = 10 * 24 * 60 * 60 * 1000;
+  const expiryDate = new Date(Date.now() + freeExpiryMs);
+
   const [listing] = await db
     .insert(listingsTable)
     .values({
@@ -103,10 +113,11 @@ router.post("/listings", async (req, res): Promise<void> => {
       category,
       location,
       imageUrls: imageUrls ?? [],
-      listingType: listingType ?? "free",
+      listingType: type,
       lat: lat != null ? String(lat) : null,
       lng: lng != null ? String(lng) : null,
-    })
+      expiryDate,
+    } as any)
     .returning();
 
   res.status(201).json(mapListing(listing));

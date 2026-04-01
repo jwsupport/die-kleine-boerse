@@ -19,6 +19,9 @@ export const listingsTable = pgTable("listings", {
   reportReason: text("report_reason"),
   lat: numeric("lat", { precision: 10, scale: 7 }),
   lng: numeric("lng", { precision: 10, scale: 7 }),
+  expiryDate: timestamp("expiry_date", { withTimezone: true }),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  stripeSessionId: text("stripe_session_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

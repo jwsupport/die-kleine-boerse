@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useCreateListing } from "@workspace/api-client-react";
+import { useAuth } from "@workspace/replit-auth-web";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ export function CreateListing() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const createListing = useCreateListing();
+  const { user, isAuthenticated, login } = useAuth();
   
   const [formData, setFormData] = useState({
     title: "",
@@ -29,6 +31,11 @@ export function CreateListing() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isAuthenticated || !user) {
+      login();
+      return;
+    }
     
     if (!formData.title || !formData.price || !formData.category || !formData.location) {
       toast({ title: "Missing fields", description: "Please fill in all required fields.", variant: "destructive" });
@@ -37,7 +44,7 @@ export function CreateListing() {
 
     createListing.mutate({
       data: {
-        sellerId: "user-demo-1",
+        sellerId: user.id,
         title: formData.title,
         price: Number(formData.price),
         isNegotiable: formData.isNegotiable,

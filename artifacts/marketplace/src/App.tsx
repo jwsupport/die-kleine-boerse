@@ -10,6 +10,7 @@ import { CreateListing } from "@/pages/CreateListing";
 import { Messages } from "@/pages/Messages";
 import { Profile } from "@/pages/Profile";
 import { Admin } from "@/pages/Admin";
+import { MyAds } from "@/pages/MyAds";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/admin" component={Admin} />
+      <Route path="/my-ads" component={MyAds} />
       <Route path="/listings/create" component={CreateListing} />
       <Route path="/listings/:id" component={ListingDetail} />
       <Route path="/messages" component={Messages} />

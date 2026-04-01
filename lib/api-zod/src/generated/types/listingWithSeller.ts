@@ -27,6 +27,11 @@ export interface ListingWithSeller {
   lat?: number | null;
   /** @nullable */
   lng?: number | null;
+  /** @nullable */
+  expiryDate?: string | null;
+  /** @nullable */
+  paidAt?: string | null;
+  daysAge: number;
   createdAt: string;
   seller: Profile;
 }

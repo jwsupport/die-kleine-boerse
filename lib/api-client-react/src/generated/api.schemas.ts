@@ -44,6 +44,11 @@ export interface Listing {
   lat?: number | null;
   /** @nullable */
   lng?: number | null;
+  /** @nullable */
+  expiryDate?: string | null;
+  /** @nullable */
+  paidAt?: string | null;
+  daysAge: number;
   createdAt: string;
 }
 
@@ -67,6 +72,11 @@ export interface ListingWithSeller {
   lat?: number | null;
   /** @nullable */
   lng?: number | null;
+  /** @nullable */
+  expiryDate?: string | null;
+  /** @nullable */
+  paidAt?: string | null;
+  daysAge: number;
   createdAt: string;
   seller: Profile;
 }
@@ -89,6 +99,11 @@ export interface AdminListing {
   isReported: boolean;
   /** @nullable */
   reportReason?: string | null;
+  /** @nullable */
+  expiryDate?: string | null;
+  /** @nullable */
+  paidAt?: string | null;
+  daysAge: number;
   createdAt: string;
 }
 
@@ -207,6 +222,58 @@ export interface AdminStats {
   newProfilesThisPeriod: number;
   newListingsThisPeriod: number;
 }
+
+export interface AuthUser {
+  id: string;
+  /** @nullable */
+  email: string | null;
+  /** @nullable */
+  firstName: string | null;
+  /** @nullable */
+  lastName: string | null;
+  /** @nullable */
+  profileImageUrl: string | null;
+}
+
+export interface AuthUserEnvelope {
+  user: AuthUser | null;
+}
+
+export interface MobileTokenExchangeRequest {
+  code: string;
+  code_verifier: string;
+  redirect_uri: string;
+  state: string;
+  nonce?: string;
+}
+
+export interface MobileTokenExchangeSuccess {
+  token: string;
+}
+
+export interface LogoutSuccess {
+  success: boolean;
+}
+
+export interface CreateCheckoutBody {
+  listingId: string;
+}
+
+export interface CreateCheckoutResponse {
+  /** @nullable */
+  url: string | null;
+}
+
+export interface ListingPriceResponse {
+  /** @nullable */
+  priceId?: string | null;
+  amount: number;
+  currency: string;
+}
+
+export type BeginBrowserLoginParams = {
+  returnTo?: string;
+};
 
 export type GetListingsParams = {
   category?: string;

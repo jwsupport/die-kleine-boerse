@@ -14,6 +14,71 @@ export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
 
+/**
+ * @summary Get the currently authenticated user
+ */
+export const GetCurrentAuthUserResponse = zod.object({
+  user: zod.union([
+    zod.object({
+      id: zod.string(),
+      email: zod.string().nullable(),
+      firstName: zod.string().nullable(),
+      lastName: zod.string().nullable(),
+      profileImageUrl: zod.string().nullable(),
+    }),
+    zod.null(),
+  ]),
+});
+
+/**
+ * @summary Start the browser OIDC login flow
+ */
+export const BeginBrowserLoginQueryParams = zod.object({
+  returnTo: zod.coerce.string().optional(),
+});
+
+/**
+ * @summary Exchange a mobile OIDC code for a session token
+ */
+export const ExchangeMobileAuthorizationCodeBody = zod.object({
+  code: zod.string(),
+  code_verifier: zod.string(),
+  redirect_uri: zod.string(),
+  state: zod.string(),
+  nonce: zod.string().optional(),
+});
+
+export const ExchangeMobileAuthorizationCodeResponse = zod.object({
+  token: zod.string(),
+});
+
+/**
+ * @summary Delete a mobile session token
+ */
+export const LogoutMobileSessionResponse = zod.object({
+  success: zod.boolean(),
+});
+
+/**
+ * @summary Create a Stripe checkout session for a premium listing
+ */
+export const CreateStripeCheckoutBody = zod.object({
+  listingId: zod.string(),
+});
+
+export const CreateStripeCheckoutResponse = zod.object({
+  url: zod.string().nullable(),
+});
+
+/**
+ * @summary Get the current premium listing price info
+ */
+export const GetListingPriceResponse = zod.object({
+  priceId: zod.string().nullish(),
+  amount: zod.number(),
+  currency: zod.string(),
+});
+
 export const GetProfileParams = zod.object({
   id: zod.coerce.string(),
 });
@@ -46,6 +111,9 @@ export const GetProfileListingsResponseItem = zod.object({
   reportReason: zod.string().nullish(),
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
+  expiryDate: zod.string().nullish(),
+  paidAt: zod.string().nullish(),
+  daysAge: zod.number(),
   createdAt: zod.string(),
 });
 export const GetProfileListingsResponse = zod.array(
@@ -114,6 +182,9 @@ export const GetListingsResponseItem = zod.object({
   reportReason: zod.string().nullish(),
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
+  expiryDate: zod.string().nullish(),
+  paidAt: zod.string().nullish(),
+  daysAge: zod.number(),
   createdAt: zod.string(),
 });
 export const GetListingsResponse = zod.array(GetListingsResponseItem);
@@ -152,6 +223,9 @@ export const GetListingResponse = zod.object({
   reportReason: zod.string().nullish(),
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
+  expiryDate: zod.string().nullish(),
+  paidAt: zod.string().nullish(),
+  daysAge: zod.number(),
   createdAt: zod.string(),
   seller: zod.object({
     id: zod.string(),
@@ -194,6 +268,9 @@ export const UpdateListingResponse = zod.object({
   reportReason: zod.string().nullish(),
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
+  expiryDate: zod.string().nullish(),
+  paidAt: zod.string().nullish(),
+  daysAge: zod.number(),
   createdAt: zod.string(),
 });
 
@@ -228,6 +305,9 @@ export const ReportListingResponse = zod.object({
   reportReason: zod.string().nullish(),
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
+  expiryDate: zod.string().nullish(),
+  paidAt: zod.string().nullish(),
+  daysAge: zod.number(),
   createdAt: zod.string(),
 });
 
@@ -302,6 +382,9 @@ export const GetRecentListingsResponseItem = zod.object({
   reportReason: zod.string().nullish(),
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
+  expiryDate: zod.string().nullish(),
+  paidAt: zod.string().nullish(),
+  daysAge: zod.number(),
   createdAt: zod.string(),
 });
 export const GetRecentListingsResponse = zod.array(
@@ -333,6 +416,9 @@ export const AdminGetListingsResponseItem = zod.object({
   listingType: zod.string(),
   isReported: zod.boolean(),
   reportReason: zod.string().nullish(),
+  expiryDate: zod.string().nullish(),
+  paidAt: zod.string().nullish(),
+  daysAge: zod.number(),
   createdAt: zod.string(),
 });
 export const AdminGetListingsResponse = zod.array(AdminGetListingsResponseItem);
@@ -364,6 +450,9 @@ export const AdminUpdateListingStatusResponse = zod.object({
   listingType: zod.string(),
   isReported: zod.boolean(),
   reportReason: zod.string().nullish(),
+  expiryDate: zod.string().nullish(),
+  paidAt: zod.string().nullish(),
+  daysAge: zod.number(),
   createdAt: zod.string(),
 });
 

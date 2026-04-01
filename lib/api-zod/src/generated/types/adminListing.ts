@@ -24,5 +24,10 @@ export interface AdminListing {
   isReported: boolean;
   /** @nullable */
   reportReason?: string | null;
+  /** @nullable */
+  expiryDate?: string | null;
+  /** @nullable */
+  paidAt?: string | null;
+  daysAge: number;
   createdAt: string;
 }

@@ -163,15 +163,27 @@ export function ListingDetail() {
                 {listing.isNegotiable && <span className="text-lg text-slate-500 ml-2 font-normal">VB</span>}
               </div>
 
-              <div className="flex items-center gap-4 text-sm text-slate-500 mb-12">
+              <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mb-12">
                 <div className="flex items-center gap-1.5">
                   <MapPin className="w-4 h-4" />
                   {listing.location}
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4" />
-                  {formatDistanceToNow(new Date(listing.createdAt))} ago
+                  {listing.daysAge === 0
+                    ? "Listed today"
+                    : `Listed ${listing.daysAge} day${listing.daysAge !== 1 ? "s" : ""} ago`}
                 </div>
+                {listing.listingType === "paid" && (
+                  <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest font-semibold bg-slate-900 text-white px-2 py-0.5 rounded-sm">
+                    Premium
+                  </span>
+                )}
+                {listing.expiryDate && (
+                  <span className="text-xs text-slate-400">
+                    Expires {formatDistanceToNow(new Date(listing.expiryDate), { addSuffix: true })}
+                  </span>
+                )}
               </div>
 
               <div className="prose prose-slate max-w-none mb-12">

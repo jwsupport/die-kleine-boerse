@@ -9,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Browser and mobile authentication endpoints
   - name: profiles
     description: User profile operations
   - name: listings
@@ -21,6 +23,8 @@ tags:
     description: Profile ratings
   - name: admin
     description: Admin operations
+  - name: stripe
+    description: Payment integration
 paths:
   /healthz:
     get:
@@ -34,6 +38,128 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/user:
+    get:
+      tags: [auth]
+      operationId: getCurrentAuthUser
+      summary: Get the currently authenticated user
+      responses:
+        "200":
+          description: Auth status resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserEnvelope"
+
+  /login:
+    get:
+      tags: [auth]
+      operationId: beginBrowserLogin
+      summary: Start the browser OIDC login flow
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to OIDC authorization endpoint
+
+  /callback:
+    get:
+      tags: [auth]
+      operationId: handleBrowserLoginCallback
+      summary: Complete the browser OIDC login flow
+      responses:
+        "302":
+          description: Redirect after login
+
+  /logout:
+    get:
+      tags: [auth]
+      operationId: logoutBrowserSession
+      summary: Clear session and begin OIDC logout
+      responses:
+        "302":
+          description: Redirect to OIDC logout
+
+  /mobile-auth/token-exchange:
+    post:
+      tags: [auth]
+      operationId: exchangeMobileAuthorizationCode
+      summary: Exchange a mobile OIDC code for a session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MobileTokenExchangeRequest"
+      responses:
+        "200":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MobileTokenExchangeSuccess"
+        "400":
+          description: Invalid params
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /mobile-auth/logout:
+    post:
+      tags: [auth]
+      operationId: logoutMobileSession
+      summary: Delete a mobile session token
+      responses:
+        "200":
+          description: Logout processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutSuccess"
+
+  /stripe/checkout:
+    post:
+      tags: [stripe]
+      operationId: createStripeCheckout
+      summary: Create a Stripe checkout session for a premium listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCheckoutBody"
+      responses:
+        "200":
+          description: Checkout session URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateCheckoutResponse"
+        "404":
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stripe/listing-price:
+    get:
+      tags: [stripe]
+      operationId: getListingPrice
+      summary: Get the current premium listing price info
+      responses:
+        "200":
+          description: Price info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingPriceResponse"
 
   /profiles/{id}:
     get:
@@ -544,9 +670,15 @@ components:
           type: ["number", "null"]
         lng:
           type: ["number", "null"]
+        expiryDate:
+          type: ["string", "null"]
+        paidAt:
+          type: ["string", "null"]
+        daysAge:
+          type: integer
         createdAt:
           type: string
-      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, createdAt]
+      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, daysAge, createdAt]
 
     ListingWithSeller:
       type: object
@@ -583,11 +715,17 @@ components:
           type: ["number", "null"]
         lng:
           type: ["number", "null"]
+        expiryDate:
+          type: ["string", "null"]
+        paidAt:
+          type: ["string", "null"]
+        daysAge:
+          type: integer
         createdAt:
           type: string
         seller:
           $ref: "#/components/schemas/Profile"
-      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, createdAt, seller]
+      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, daysAge, createdAt, seller]
 
     AdminListing:
       type: object
@@ -622,9 +760,15 @@ components:
           type: boolean
         reportReason:
           type: ["string", "null"]
+        expiryDate:
+          type: ["string", "null"]
+        paidAt:
+          type: ["string", "null"]
+        daysAge:
+          type: integer
         createdAt:
           type: string
-      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, createdAt]
+      required: [id, sellerId, title, price, isNegotiable, category, location, imageUrls, status, listingType, isReported, daysAge, createdAt]
 
     CreateListingBody:
       type: object
@@ -822,3 +966,81 @@ components:
         newListingsThisPeriod:
           type: integer
       required: [totalListings, activeListings, deletedListings, reportedListings, pendingListings, freeListings, paidListings, totalProfiles, newProfilesThisPeriod, newListingsThisPeriod]
+
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id:
+          type: string
+        email:
+          type: ["string", "null"]
+        firstName:
+          type: ["string", "null"]
+        lastName:
+          type: ["string", "null"]
+        profileImageUrl:
+          type: ["string", "null"]
+
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/AuthUser"
+            - type: "null"
+
+    MobileTokenExchangeRequest:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code:
+          type: string
+        code_verifier:
+          type: string
+        redirect_uri:
+          type: string
+        state:
+          type: string
+        nonce:
+          type: string
+
+    MobileTokenExchangeSuccess:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    LogoutSuccess:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+
+    CreateCheckoutBody:
+      type: object
+      required: [listingId]
+      properties:
+        listingId:
+          type: string
+
+    CreateCheckoutResponse:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: ["string", "null"]
+
+    ListingPriceResponse:
+      type: object
+      required: [amount, currency]
+      properties:
+        priceId:
+          type: ["string", "null"]
+        amount:
+          type: integer
+        currency:
+          type: string
