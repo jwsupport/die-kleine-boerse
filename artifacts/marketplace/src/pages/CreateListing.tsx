@@ -3,22 +3,27 @@ import { useLocation } from "wouter";
 import { useCreateListing } from "@workspace/api-client-react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { Navbar } from "@/components/layout/Navbar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { SEO } from "@/components/seo/SEO";
 
-const CATEGORIES = ["Furniture", "Clothing", "Electronics", "Art", "Books", "Other"];
+const CATEGORIES: { value: string; label: string }[] = [
+  { value: "Möbel", label: "Möbel" },
+  { value: "Elektronik", label: "Elektronik" },
+  { value: "Kleidung", label: "Kleidung" },
+  { value: "Kunst", label: "Kunst" },
+  { value: "Bücher", label: "Bücher" },
+  { value: "Haushalt", label: "Haushalt" },
+  { value: "Sport", label: "Sport" },
+  { value: "Sonstiges", label: "Sonstiges" },
+];
 
 export function CreateListing() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const createListing = useCreateListing();
   const { user, isAuthenticated, login } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     title: "",
     price: "",
@@ -26,7 +31,13 @@ export function CreateListing() {
     category: "",
     location: "",
     description: "",
-    imageUrls: ""
+    imageUrls: "",
+  });
+
+  const field = <K extends keyof typeof formData>(key: K) => ({
+    value: formData[key] as string,
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setFormData((p) => ({ ...p, [key]: e.target.value })),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,137 +47,178 @@ export function CreateListing() {
       login();
       return;
     }
-    
+
     if (!formData.title || !formData.price || !formData.category || !formData.location) {
-      toast({ title: "Missing fields", description: "Please fill in all required fields.", variant: "destructive" });
+      toast({
+        title: "Pflichtfelder fehlen",
+        description: "Bitte fülle alle Pflichtfelder aus.",
+        variant: "destructive",
+      });
       return;
     }
 
-    createListing.mutate({
-      data: {
-        sellerId: user.id,
-        title: formData.title,
-        price: Number(formData.price),
-        isNegotiable: formData.isNegotiable,
-        category: formData.category,
-        location: formData.location,
-        description: formData.description || null,
-        imageUrls: formData.imageUrls ? formData.imageUrls.split(',').map(s => s.trim()).filter(Boolean) : []
+    createListing.mutate(
+      {
+        data: {
+          sellerId: user.id,
+          title: formData.title,
+          price: Number(formData.price),
+          isNegotiable: formData.isNegotiable,
+          category: formData.category,
+          location: formData.location,
+          description: formData.description || null,
+          imageUrls: formData.imageUrls
+            ? formData.imageUrls.split(",").map((s) => s.trim()).filter(Boolean)
+            : [],
+        },
+      },
+      {
+        onSuccess: (newListing) => {
+          toast({ title: "Anzeige veröffentlicht!", description: "Deine Anzeige ist jetzt live." });
+          setLocation(`/listings/${newListing.id}`);
+        },
+        onError: () => {
+          toast({
+            title: "Fehler",
+            description: "Anzeige konnte nicht erstellt werden.",
+            variant: "destructive",
+          });
+        },
       }
-    }, {
-      onSuccess: (newListing) => {
-        toast({ title: "Success", description: "Listing created successfully." });
-        setLocation(`/listings/${newListing.id}`);
-      }
-    });
+    );
   };
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
+      <SEO title="Anzeige aufgeben" description="Verkaufe dein Objekt auf Die kleine Börse — einfach, sicher und kostenlos." />
       <Navbar />
-      
+
       <main className="flex-1 container mx-auto px-4 py-12 max-w-2xl">
         <div className="mb-10">
-          <h1 className="text-3xl font-medium text-slate-900 mb-2">Sell an item</h1>
-          <p className="text-slate-500">List your item for sale in the local marketplace.</p>
+          <h1 className="text-3xl font-light text-slate-900 mb-2">Anzeige aufgeben</h1>
+          <p className="text-slate-500 text-sm">
+            Kostenlos inserieren — 10 Tage aktiv. Upgrade auf Premium für 30 Tage.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="space-y-6 bg-white p-6 md:p-8 rounded-sm border border-slate-100 shadow-sm">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input 
-                id="title" 
-                placeholder="E.g., Mid-century modern armchair" 
-                value={formData.title}
-                onChange={e => setFormData(p => ({ ...p, title: e.target.value }))}
-                className="focus-visible:ring-slate-300"
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-sm p-8 md:p-10">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
+                Titel der Anzeige *
+              </label>
+              <input
+                type="text"
+                required
+                className="w-full p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                placeholder="z.B. Design Klassiker Sessel"
+                {...field("title")}
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="price">Price ($) *</Label>
-                <Input 
-                  id="price" 
-                  type="number" 
-                  min="0" 
-                  step="0.01" 
-                  placeholder="0.00" 
-                  value={formData.price}
-                  onChange={e => setFormData(p => ({ ...p, price: e.target.value }))}
-                  className="focus-visible:ring-slate-300"
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
+                  Preis (€) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="0.01"
+                  className="w-full p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none text-slate-900 placeholder:text-slate-400"
+                  placeholder="0.00"
+                  {...field("price")}
                 />
               </div>
-              
-              <div className="flex items-center space-x-2 pt-8">
-                <Switch 
-                  id="negotiable" 
+              <div>
+                <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
+                  Kategorie *
+                </label>
+                <select
+                  required
+                  className="w-full p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none text-slate-900"
+                  value={formData.category}
+                  onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))}
+                >
+                  <option value="" disabled>Auswählen…</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
+                  Ort *
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="w-full p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none text-slate-900 placeholder:text-slate-400"
+                  placeholder="z.B. Berlin Mitte"
+                  {...field("location")}
+                />
+              </div>
+              <div className="flex items-center gap-3 pt-8">
+                <Switch
+                  id="negotiable"
                   checked={formData.isNegotiable}
-                  onCheckedChange={checked => setFormData(p => ({ ...p, isNegotiable: checked }))}
+                  onCheckedChange={(checked) => setFormData((p) => ({ ...p, isNegotiable: checked }))}
                 />
-                <Label htmlFor="negotiable" className="font-normal cursor-pointer">Price is negotiable (VB)</Label>
+                <label htmlFor="negotiable" className="text-sm text-slate-600 cursor-pointer select-none">
+                  Preis verhandelbar (VB)
+                </label>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
-                <Select value={formData.category} onValueChange={v => setFormData(p => ({ ...p, category: v }))}>
-                  <SelectTrigger id="category" className="focus-visible:ring-slate-300">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map(c => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="location">Location *</Label>
-                <Input 
-                  id="location" 
-                  placeholder="E.g., Downtown, SF" 
-                  value={formData.location}
-                  onChange={e => setFormData(p => ({ ...p, location: e.target.value }))}
-                  className="focus-visible:ring-slate-300"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea 
-                id="description" 
-                placeholder="Describe the condition, dimensions, and history of the item." 
-                className="min-h-[120px] focus-visible:ring-slate-300"
-                value={formData.description}
-                onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
+                Beschreibung
+              </label>
+              <textarea
+                rows={5}
+                className="w-full p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none resize-none text-slate-900 placeholder:text-slate-400"
+                placeholder="Erzähle die Geschichte dieses Objekts — Zustand, Maße, Besonderheiten…"
+                {...field("description")}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="images">Images</Label>
-              <Input 
-                id="images" 
-                placeholder="Comma-separated image URLs" 
-                value={formData.imageUrls}
-                onChange={e => setFormData(p => ({ ...p, imageUrls: e.target.value }))}
-                className="focus-visible:ring-slate-300"
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
+                Bilder
+              </label>
+              <input
+                type="text"
+                className="w-full p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none text-slate-900 placeholder:text-slate-400"
+                placeholder="Bild-URLs kommagetrennt eingeben"
+                {...field("imageUrls")}
               />
-              <p className="text-xs text-slate-500">Provide direct links to images, separated by commas.</p>
+              <p className="text-xs text-slate-400 mt-1.5">
+                Direkte Bild-Links, durch Komma getrennt.
+              </p>
             </div>
-          </div>
 
-          <div className="flex justify-end gap-4">
-            <Button variant="outline" type="button" onClick={() => setLocation('/')} className="rounded-sm">Cancel</Button>
-            <Button type="submit" className="rounded-sm px-8" disabled={createListing.isPending}>
-              {createListing.isPending ? 'Publishing...' : 'Publish Listing'}
-            </Button>
-          </div>
-        </form>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setLocation("/")}
+                className="flex-1 py-4 rounded-2xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-all text-sm"
+              >
+                Abbrechen
+              </button>
+              <button
+                type="submit"
+                disabled={createListing.isPending}
+                className="flex-1 py-4 rounded-2xl bg-slate-900 text-white font-medium hover:bg-slate-800 transition-all disabled:bg-slate-300 text-sm"
+              >
+                {createListing.isPending ? "Wird veröffentlicht…" : "Anzeige jetzt schalten"}
+              </button>
+            </div>
+          </form>
+        </div>
       </main>
     </div>
   );
