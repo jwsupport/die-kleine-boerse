@@ -64,8 +64,8 @@ export function Home() {
       <Navbar />
 
       <main className="flex-1 container mx-auto px-4 md:px-8 py-8 md:py-12 max-w-7xl">
-        <header className="mb-12 space-y-8">
-          <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-slate-900">
+        <header className="mb-8 md:mb-12 space-y-5 md:space-y-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight text-slate-900">
             {t.home_headline}
           </h1>
           
@@ -138,20 +138,20 @@ export function Home() {
 
         <section aria-label="Listings">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 gap-y-12">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5 md:gap-6 gap-y-6 sm:gap-y-8 md:gap-y-10">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="space-y-4">
-                  <Skeleton className="aspect-[4/5] w-full rounded-sm" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-3 w-1/3" />
-                    <Skeleton className="h-5 w-3/4" />
-                    <Skeleton className="h-5 w-1/4" />
+                <div key={i} className="space-y-2.5">
+                  <Skeleton className="aspect-[3/4] w-full rounded-sm" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-2.5 w-1/3" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/4" />
                   </div>
                 </div>
               ))}
             </div>
           ) : listings && listings.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 gap-y-12">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5 md:gap-6 gap-y-6 sm:gap-y-8 md:gap-y-10">
               {listings.map((listing, index) => (
                 <ListingCard key={listing.id} listing={listing} index={index} />
               ))}
@@ -180,7 +180,7 @@ export function Home() {
               </p>
             </header>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 gap-y-12">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5 md:gap-6 gap-y-6 sm:gap-y-8 md:gap-y-10">
               {trendingListings.map((listing, index) => (
                 <ListingCard key={listing.id} listing={listing} index={index} />
               ))}

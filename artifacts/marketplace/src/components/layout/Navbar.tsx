@@ -1,95 +1,184 @@
+import { useState } from "react";
 import { Link } from "wouter";
-import { MessageSquare, User, Plus, Shield, LogIn, LogOut, LayoutList, Star } from "lucide-react";
+import {
+  MessageSquare, User, Plus, Shield, LogIn, LogOut,
+  LayoutList, Star, Menu, X, Briefcase,
+} from "lucide-react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { Button } from "@/components/ui/button";
 import { isAdminEmail } from "@/lib/admin";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n";
+
 export function Navbar() {
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
   const t = useT();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/90 backdrop-blur-md">
-      <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-        <Link href="/">
-          <span className="text-slate-900 font-medium tracking-tight text-[15px] select-none">
-            die kleine börse
-          </span>
-        </Link>
-
-        <nav className="flex items-center gap-5">
-          <LanguageSwitcher />
-
-          {isAuthenticated && isAdminEmail(user?.email) && (
-            <Link href="/admin" className="text-sm font-medium flex items-center gap-1.5 text-slate-400 hover:text-slate-900 transition-colors">
-              <Shield className="w-4 h-4" />
-              <span className="hidden md:inline">{t.nav_admin}</span>
-            </Link>
-          )}
-
-          {isAuthenticated && (
-            <Link href="/my-ads" className="text-sm font-medium flex items-center gap-1.5 text-slate-500 hover:text-slate-900 transition-colors">
-              <LayoutList className="w-4 h-4" />
-              <span className="hidden md:inline">{t.nav_myAds}</span>
-            </Link>
-          )}
-
-          <Link href="/listings/create" className="text-sm font-medium flex items-center gap-1.5 hover:text-slate-600 transition-colors">
-            <Plus className="w-4 h-4" />
-            <span className="hidden md:inline">{t.nav_sell}</span>
+    <>
+      <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/90 backdrop-blur-md">
+        <div className="container mx-auto px-4 md:px-8 h-14 md:h-16 flex items-center justify-between gap-4">
+          {/* Logo */}
+          <Link href="/" onClick={closeMenu}>
+            <span className="text-slate-900 font-medium tracking-tight text-[14px] md:text-[15px] select-none">
+              die kleine börse
+            </span>
           </Link>
 
-          {isAuthenticated && (
-            <Link href="/favourites" className="text-slate-500 hover:text-slate-900 transition-colors" title={t.nav_favourites}>
-              <Star className="w-5 h-5 stroke-[1.5]" />
-            </Link>
-          )}
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-5">
+            <LanguageSwitcher />
 
-          {isAuthenticated && (
-            <Link href="/messages" className="text-slate-500 hover:text-slate-900 transition-colors">
-              <MessageSquare className="w-5 h-5 stroke-[1.5]" />
-            </Link>
-          )}
-
-          {!isLoading && isAuthenticated && user ? (
-            <div className="flex items-center gap-3">
-              <Link
-                href={`/profile/${user.id}`}
-                className="text-slate-500 hover:text-slate-900 transition-colors"
-                title={user.firstName ?? user.email ?? "Profile"}
-              >
-                {user.profileImageUrl ? (
-                  <img
-                    src={user.profileImageUrl}
-                    alt="avatar"
-                    className="w-7 h-7 rounded-full object-cover ring-1 ring-slate-200"
-                  />
-                ) : (
-                  <User className="w-5 h-5 stroke-[1.5]" />
-                )}
+            {isAuthenticated && isAdminEmail(user?.email) && (
+              <Link href="/admin" className="text-sm font-medium flex items-center gap-1.5 text-slate-400 hover:text-slate-900 transition-colors">
+                <Shield className="w-4 h-4" />
+                <span>{t.nav_admin}</span>
               </Link>
-              <button
-                onClick={logout}
-                className="text-slate-400 hover:text-slate-900 transition-colors"
-                title={t.nav_signOut}
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : !isLoading ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={login}
-              className="gap-1.5 text-slate-700 border-slate-200 hover:bg-slate-50"
+            )}
+
+            {isAuthenticated && (
+              <Link href="/my-ads" className="text-sm font-medium flex items-center gap-1.5 text-slate-500 hover:text-slate-900 transition-colors">
+                <LayoutList className="w-4 h-4" />
+                <span>{t.nav_myAds}</span>
+              </Link>
+            )}
+
+            <Link href="/listings/create" className="text-sm font-medium flex items-center gap-1.5 hover:text-slate-600 transition-colors">
+              <Plus className="w-4 h-4" />
+              <span>{t.nav_sell}</span>
+            </Link>
+
+            {isAuthenticated && (
+              <Link href="/favourites" className="text-slate-500 hover:text-slate-900 transition-colors" title={t.nav_favourites}>
+                <Star className="w-5 h-5 stroke-[1.5]" />
+              </Link>
+            )}
+
+            {isAuthenticated && (
+              <Link href="/messages" className="text-slate-500 hover:text-slate-900 transition-colors">
+                <MessageSquare className="w-5 h-5 stroke-[1.5]" />
+              </Link>
+            )}
+
+            {!isLoading && isAuthenticated && user ? (
+              <div className="flex items-center gap-3">
+                <Link href={`/profile/${user.id}`} className="text-slate-500 hover:text-slate-900 transition-colors" title={user.firstName ?? user.email ?? "Profile"}>
+                  {user.profileImageUrl ? (
+                    <img src={user.profileImageUrl} alt="avatar" className="w-7 h-7 rounded-full object-cover ring-1 ring-slate-200" />
+                  ) : (
+                    <User className="w-5 h-5 stroke-[1.5]" />
+                  )}
+                </Link>
+                <button onClick={logout} className="text-slate-400 hover:text-slate-900 transition-colors" title={t.nav_signOut}>
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : !isLoading ? (
+              <Button variant="outline" size="sm" onClick={login} className="gap-1.5 text-slate-700 border-slate-200 hover:bg-slate-50">
+                <LogIn className="w-4 h-4" />
+                <span>{t.nav_signIn}</span>
+              </Button>
+            ) : null}
+          </nav>
+
+          {/* Mobile right side */}
+          <div className="flex md:hidden items-center gap-3">
+            <Link href="/listings/create" onClick={closeMenu} className="flex items-center gap-1 text-sm font-medium text-slate-900">
+              <Plus className="w-4 h-4" />
+              <span className="text-xs font-bold uppercase tracking-wider">{t.nav_sell}</span>
+            </Link>
+            <button
+              onClick={() => setMenuOpen(v => !v)}
+              className="text-slate-700 p-1.5 rounded-md hover:bg-slate-100 transition-colors"
+              aria-label="Menü öffnen"
             >
-              <LogIn className="w-4 h-4" />
-              <span>{t.nav_signIn}</span>
-            </Button>
-          ) : null}
-        </nav>
-      </div>
-    </header>
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile slide-down menu */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden" onClick={closeMenu}>
+          <div
+            className="absolute top-14 left-0 right-0 bg-white border-b border-slate-200 shadow-xl animate-in slide-in-from-top-2 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="container mx-auto px-4 py-5 space-y-1">
+              {/* User info */}
+              {!isLoading && isAuthenticated && user && (
+                <div className="flex items-center gap-3 pb-4 mb-2 border-b border-slate-100">
+                  {user.profileImageUrl ? (
+                    <img src={user.profileImageUrl} alt="avatar" className="w-9 h-9 rounded-full object-cover ring-1 ring-slate-200" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
+                      <User className="w-4 h-4 text-slate-500" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">{user.firstName ?? user.email}</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">Eingeloggt</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Nav links */}
+              <MobileNavLink href="/" icon={<Star className="w-4 h-4" />} label="Startseite" onClick={closeMenu} />
+
+              {isAuthenticated && (
+                <MobileNavLink href="/my-ads" icon={<LayoutList className="w-4 h-4" />} label={t.nav_myAds} onClick={closeMenu} />
+              )}
+              {isAuthenticated && (
+                <MobileNavLink href="/favourites" icon={<Star className="w-4 h-4" />} label={t.nav_favourites} onClick={closeMenu} />
+              )}
+              {isAuthenticated && (
+                <MobileNavLink href="/messages" icon={<MessageSquare className="w-4 h-4" />} label={t.messages_conversations} onClick={closeMenu} />
+              )}
+              {isAuthenticated && user && (
+                <MobileNavLink href={`/profile/${user.id}`} icon={<User className="w-4 h-4" />} label="Mein Profil" onClick={closeMenu} />
+              )}
+              {isAuthenticated && isAdminEmail(user?.email) && (
+                <MobileNavLink href="/admin" icon={<Shield className="w-4 h-4" />} label={t.nav_admin} onClick={closeMenu} />
+              )}
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <LanguageSwitcher />
+                {!isLoading && isAuthenticated ? (
+                  <button
+                    onClick={() => { logout(); closeMenu(); }}
+                    className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors py-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    {t.nav_signOut}
+                  </button>
+                ) : !isLoading ? (
+                  <Button size="sm" onClick={() => { login(); closeMenu(); }} className="gap-1.5">
+                    <LogIn className="w-4 h-4" />
+                    {t.nav_signIn}
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function MobileNavLink({ href, icon, label, onClick }: { href: string; icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-3 py-3 px-2 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
+    >
+      <span className="text-slate-400">{icon}</span>
+      {label}
+    </Link>
   );
 }

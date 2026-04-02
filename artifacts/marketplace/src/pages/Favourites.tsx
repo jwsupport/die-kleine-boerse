@@ -23,9 +23,9 @@ export function Favourites() {
       <div className="min-h-[100dvh] flex flex-col bg-background">
         <Navbar />
         <main className="flex-1 container mx-auto px-4 md:px-8 py-12 max-w-7xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 animate-pulse">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 animate-pulse">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="aspect-[4/5] bg-slate-100 rounded-sm" />
+              <div key={i} className="aspect-[3/4] bg-slate-100 rounded-sm" />
             ))}
           </div>
         </main>
@@ -65,9 +65,9 @@ export function Favourites() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 animate-pulse">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 animate-pulse">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="aspect-[4/5] bg-slate-100 rounded-sm" />
+              <div key={i} className="aspect-[3/4] bg-slate-100 rounded-sm" />
             ))}
           </div>
         ) : !listings || listings.length === 0 ? (
@@ -80,7 +80,7 @@ export function Favourites() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5 md:gap-6 gap-y-6 sm:gap-y-8">
             {listings.map((listing, index) => (
               <ListingCard key={listing.id} listing={listing} index={index} />
             ))}
