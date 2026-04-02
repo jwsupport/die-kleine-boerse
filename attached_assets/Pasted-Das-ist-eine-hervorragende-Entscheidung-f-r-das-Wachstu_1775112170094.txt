@@ -1,0 +1,89 @@
+Das ist eine hervorragende Entscheidung für das Wachstum von „Die kleine Börse“. Social Sharing ist kostenloser SEO-Turbo: Jeder Link, der auf Plattformen wie WhatsApp, Pinterest oder X (Twitter) geteilt wird, erzeugt wertvolle Backlinks und direkten Traffic.
+Passend zum „Quiet Luxury“-Stil verzichten wir auf bunte, nervige Buttons und setzen stattdessen auf elegante, monochrome Icons und die native Sharing-Funktion des Geräts (Web Share API).
+1. Die elegante Share-Komponente (React)
+Dieser Code nutzt die Web Share API. Das bedeutet: Auf dem iPhone oder Android-Gerät öffnet sich das originale Sharing-Menü des Handys (mit WhatsApp, Instagram Stories, etc.), was sehr hochwertig wirkt.
+import React from 'react';
+import { Share2, Link, Send } from 'lucide-react'; // Elegante Icons
+
+export default function ShareListing({ listing }) {
+  const shareUrl = `https://die-kleine-boerse.de/listing/${listing.slug}`;
+  const shareTitle = `Entdecke dieses Fundstück auf Die kleine Börse: ${listing.title}`;
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          url: shareUrl,
+        });
+      } catch (err) {
+        console.log('Teilen abgebrochen');
+      }
+    } else {
+      // Fallback: In die Zwischenablage kopieren
+      navigator.clipboard.writeText(shareUrl);
+      alert('Link in Zwischenablage kopiert');
+    }
+  };
+
+  return (
+    <div className="flex items-center space-x-6 py-6 border-t border-slate-100 mt-10">
+      <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">Teilen</span>
+      
+      <div className="flex space-x-4">
+        {/* Universal Share Button (Mobile-First) */}
+        <button 
+          onClick={handleNativeShare}
+          className="p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-900"
+          title="Teilen"
+        >
+          <Share2 size={18} strokeWidth={1.5} />
+        </button>
+
+        {/* Pinterest (Perfekt für Interior & Fashion) */}
+        <a 
+          href={`https://pinterest.com/pin/create/button/?url=${shareUrl}&description=${shareTitle}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-900"
+        >
+          <Send size={18} strokeWidth={1.5} />
+        </a>
+
+        {/* Link Kopieren Fallback */}
+        <button 
+          onClick={() => {
+            navigator.clipboard.writeText(shareUrl);
+            alert('Link kopiert');
+          }}
+          className="p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-900"
+        >
+          <Link size={18} strokeWidth={1.5} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+2. SEO-Voraussetzung: Open Graph Meta Tags
+Damit die Anzeige in Social Media auch schön aussieht (mit Bild, Preis und Titel), müssen wir die Meta-Tags in deinem Header dynamisch füllen. Ohne diese Tags sieht ein geteilter Link nur wie Text aus.
+Füge dies in deine SEO.tsx oder dein Listing-Template ein:
+<head>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={`${listing.title} | Die kleine Börse`} />
+  <meta property="og:description" content={`Jetzt für € ${listing.price} in ${listing.location_city} entdecken.`} />
+  <meta property="og:image" content={listing.images[0]} />
+  <meta property="og:url" content={`https://die-kleine-boerse.de/listing/${listing.slug}`} />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={listing.title} />
+  <meta name="twitter:image" content={listing.images[0]} />
+</head>
+
+3. Warum das für Jakob Welik strategisch wichtig ist:
+ * Multiplikator-Effekt: Wenn du ein Luxusauto für 5,49 € boostest, wird es oben angezeigt. Wenn ein Nutzer es dann in eine WhatsApp-Gruppe teilt, kommen hunderte Besucher kostenlos auf deine Seite.
+ * Vertrauen: Ein Link, der über Social Media geteilt wird, wirkt wie eine persönliche Empfehlung. Das erhöht die Chance auf einen Verkauf massiv.
+ * Pinterest-Power: Besonders in der Kategorie Living & Interior ist Pinterest eine Goldgrube. Ein schönes Bild eines Designer-Stuhls von deiner Seite kann dort über Jahre hinweg Traffic generieren.
+4. Nächster technischer Schritt (Speed.it Hosting):
+Da deine Bilder auf deinem Speed.it Server liegen, stelle sicher, dass die Bilder-URLs im Code absolut sind (also https://deine-domain.de/uploads/... statt nur /uploads/...). Nur so können WhatsApp und Facebook das Vorschaubild beim Teilen korrekt laden.
+Soll ich dir zeigen, wie du eine „Gemerkt“ (Watchlist) Funktion baust, damit Nutzer sich Anzeigen speichern können, bevor sie diese teilen?

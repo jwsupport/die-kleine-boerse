@@ -63,6 +63,23 @@ export function Admin() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [verifyPending, setVerifyPending] = useState<string | null>(null);
 
+  type IntelligenceRow = {
+    keyword: string; searchCount: number; listingCount: number; lastSearchedAt: string;
+  };
+  const [intelligence, setIntelligence] = useState<IntelligenceRow[]>([]);
+  const [intelligenceLoading, setIntelligenceLoading] = useState(false);
+
+  const loadIntelligence = async () => {
+    setIntelligenceLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/market-intelligence`, { credentials: "include" });
+      if (res.ok) setIntelligence(await res.json());
+    } finally {
+      setIntelligenceLoading(false);
+    }
+  };
+
   const loadUsers = async () => {
     setUsersLoading(true);
     try {
@@ -293,6 +310,13 @@ export function Admin() {
               onClick={() => { if (users.length === 0) loadUsers(); }}
             >
               Nutzer
+            </TabsTrigger>
+            <TabsTrigger
+              value="intelligence"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900"
+              onClick={() => { if (intelligence.length === 0) loadIntelligence(); }}
+            >
+              Intelligence
             </TabsTrigger>
           </TabsList>
 
@@ -747,6 +771,66 @@ export function Admin() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="intelligence" className="space-y-6">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-blue-600 font-bold mb-1">Market Intelligence</p>
+                <h2 className="text-2xl font-light text-slate-900">Was deine Nutzer wirklich suchen</h2>
+              </div>
+              <Button variant="outline" size="sm" onClick={loadIntelligence} disabled={intelligenceLoading}>
+                {intelligenceLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aktualisieren"}
+              </Button>
+            </div>
+
+            {intelligenceLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              </div>
+            ) : intelligence.length === 0 ? (
+              <div className="py-20 text-center border border-dashed border-slate-200 rounded-2xl">
+                <p className="text-slate-400 text-sm mb-1">Noch keine Suchdaten vorhanden</p>
+                <p className="text-slate-300 text-xs">Suchbegriffe werden automatisch erfasst, sobald Nutzer suchen</p>
+              </div>
+            ) : (
+              <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm space-y-7">
+                {(() => {
+                  const maxCount = Math.max(...intelligence.map(r => r.searchCount), 1);
+                  return intelligence.map((row) => (
+                    <div key={row.keyword}>
+                      <div className="flex justify-between items-end mb-2">
+                        <span className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                          {row.keyword}
+                        </span>
+                        <span className="text-[10px] text-slate-400 tabular-nums">
+                          {row.searchCount} {row.searchCount === 1 ? "Suche" : "Suchen"} · {row.listingCount} {row.listingCount === 1 ? "Anzeige" : "Anzeigen"}
+                        </span>
+                      </div>
+                      <div className="relative w-full h-2 bg-slate-50 rounded-full overflow-hidden">
+                        <div
+                          className="absolute left-0 top-0 h-full rounded-full transition-all duration-1000"
+                          style={{
+                            width: `${Math.min((row.searchCount / maxCount) * 100, 100)}%`,
+                            background: row.listingCount === 0 ? "#ef4444" : "#0f172a",
+                          }}
+                        />
+                      </div>
+                      {row.listingCount === 0 && (
+                        <p className="text-[10px] text-red-500 mt-1.5 font-bold uppercase tracking-tight">
+                          ⚠ Marktlücke — Keine Anzeigen für diesen Begriff
+                        </p>
+                      )}
+                      {row.listingCount > 0 && row.searchCount >= 5 && (
+                        <p className="text-[10px] text-blue-500 mt-1.5 font-medium">
+                          🔥 Hohe Nachfrage — Boost-Empfehlung für passende Anzeigen
+                        </p>
+                      )}
+                    </div>
+                  ));
+                })()}
               </div>
             )}
           </TabsContent>

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, ilike, and, gte, lte, sql, count } from "drizzle-orm";
-import { db, listingsTable, profilesTable } from "@workspace/db";
+import { db, listingsTable, profilesTable, searchStatsTable } from "@workspace/db";
 import type { Listing } from "@workspace/db";
 import {
   GetListingsQueryParams,
@@ -82,6 +82,31 @@ router.get("/listings", async (req, res): Promise<void> => {
     .orderBy(sql`${listingsTable.createdAt} desc`)
     .limit(limit ?? 50)
     .offset(offset ?? 0);
+
+  if (search && search.trim().length >= 2) {
+    const kw = search.trim().toLowerCase();
+    const matchCount = await db
+      .select({ c: count() })
+      .from(listingsTable)
+      .where(
+        and(
+          eq(listingsTable.status, "active"),
+          sql`${listingsTable.title} ilike ${"%" + kw + "%"}`,
+        ),
+      );
+    const lcount = Number(matchCount[0]?.c ?? 0);
+    db.insert(searchStatsTable)
+      .values({ keyword: kw, searchCount: 1, listingCount: lcount, lastSearchedAt: new Date() })
+      .onConflictDoUpdate({
+        target: searchStatsTable.keyword,
+        set: {
+          searchCount: sql`${searchStatsTable.searchCount} + 1`,
+          listingCount: lcount,
+          lastSearchedAt: new Date(),
+        },
+      })
+      .catch(() => {});
+  }
 
   res.json(GetListingsResponse.parse(rows.map(mapListing)));
 });

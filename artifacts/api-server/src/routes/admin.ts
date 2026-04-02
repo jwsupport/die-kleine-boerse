@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, gte, lt, sql, desc } from "drizzle-orm";
-import { db, listingsTable, profilesTable } from "@workspace/db";
+import { db, listingsTable, profilesTable, searchStatsTable } from "@workspace/db";
 import {
   AdminGetListingsQueryParams,
   AdminGetListingsResponse,
@@ -298,6 +298,30 @@ router.get("/admin/payments", async (req, res): Promise<void> => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.setHeader("Pragma", "no-cache");
   res.json(AdminGetPaymentsResponse.parse(data));
+});
+
+router.get("/admin/market-intelligence", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+
+  const rows = await db
+    .select()
+    .from(searchStatsTable)
+    .where(gte(searchStatsTable.lastSearchedAt, since))
+    .orderBy(desc(searchStatsTable.searchCount))
+    .limit(15);
+
+  res.json(rows.map((r) => ({
+    keyword: r.keyword,
+    searchCount: r.searchCount,
+    listingCount: r.listingCount,
+    lastSearchedAt: r.lastSearchedAt.toISOString(),
+  })));
 });
 
 export default router;
