@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { sql } from "drizzle-orm";
-import { db, listingsTable } from "@workspace/db";
+import { db, listingsTable, searchStatsTable } from "@workspace/db";
 import {
   GetCategoryStatsResponse,
   GetRecentListingsQueryParams,
@@ -62,6 +62,23 @@ router.get("/stats/recent", async (req, res): Promise<void> => {
       })),
     ),
   );
+});
+
+router.get("/stats/search-trends", async (_req, res): Promise<void> => {
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+
+  const rows = await db
+    .select({
+      keyword: searchStatsTable.keyword,
+      searchCount: searchStatsTable.searchCount,
+    })
+    .from(searchStatsTable)
+    .where(sql`${searchStatsTable.lastSearchedAt} > ${since}`)
+    .orderBy(sql`${searchStatsTable.searchCount} desc`)
+    .limit(8);
+
+  res.json(rows.map((r) => r.keyword));
 });
 
 export default router;

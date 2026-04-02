@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGetListings, useGetCategoryStats, getGetListingsQueryKey, getGetCategoryStatsQueryKey } from "@workspace/api-client-react";
 import { ListingCard } from "@/components/ListingCard";
 import { Navbar } from "@/components/layout/Navbar";
@@ -17,6 +17,15 @@ export function Home() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>();
   const [location, setLocation] = useState("");
+  const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
+
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+    fetch(`${base}/api/stats/search-trends`)
+      .then((r) => r.ok ? r.json() : [])
+      .then(setTrendingKeywords)
+      .catch(() => {});
+  }, []);
 
   const { data: stats } = useGetCategoryStats({
     query: {
@@ -75,6 +84,27 @@ export function Home() {
               />
             </div>
           </div>
+
+          {trendingKeywords.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold shrink-0">
+                Häufig gesucht:
+              </span>
+              {trendingKeywords.map((kw) => (
+                <button
+                  key={kw}
+                  onClick={() => setSearch(kw)}
+                  className={`px-3.5 py-1 rounded-full text-[11px] border transition-colors ${
+                    search === kw
+                      ? "bg-slate-900 text-white border-slate-900"
+                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-900 hover:text-slate-900"
+                  }`}
+                >
+                  {kw}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
             <button
