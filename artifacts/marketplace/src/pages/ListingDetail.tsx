@@ -256,6 +256,30 @@ export function ListingDetail() {
               />
 
               <div className="border-t border-slate-200 pt-8 mt-auto">
+                {/* Business badge */}
+                {(listing.seller as any).isBusiness && (
+                  <div className="mb-4 pb-4 border-b border-slate-100">
+                    <div className="flex items-center gap-2 text-slate-900">
+                      <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-700">
+                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-slate-900">
+                          Gewerblicher Anbieter
+                        </span>
+                        {(listing.seller as any).companyName && (
+                          <span className="block text-xs text-slate-500 leading-none mt-0.5">
+                            {(listing.seller as any).companyName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <Link href={`/profile/${listing.sellerId}`} className="block group mb-8">
                   <div className="flex items-center gap-4">
                     <Avatar className="w-12 h-12 ring-2 ring-transparent group-hover:ring-slate-100 transition-all">
@@ -265,7 +289,14 @@ export function ListingDetail() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <div className="font-medium text-slate-900 group-hover:underline decoration-slate-300 underline-offset-4">{listing.seller.fullName || 'Anonymous'}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-slate-900 group-hover:underline decoration-slate-300 underline-offset-4">
+                          {listing.seller.fullName || 'Anonymous'}
+                        </span>
+                        {(listing.seller as any).isBusiness && (
+                          <span className="text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 bg-slate-900 text-white rounded-full">PRO</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-sm text-slate-500">{t.profile_memberSince} {new Date(listing.seller.createdAt).getFullYear()}</span>
                         {sellerRatings && sellerRatings.totalRatings > 0 && (

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, ilike, and, gte, lte, sql, count } from "drizzle-orm";
-import { db, listingsTable, profilesTable, searchStatsTable } from "@workspace/db";
+import { db, listingsTable, profilesTable, searchStatsTable, businessBookingsTable } from "@workspace/db";
 import type { Listing } from "@workspace/db";
 import {
   GetListingsQueryParams,
@@ -191,6 +191,24 @@ router.post("/listings", async (req, res): Promise<void> => {
     } as any)
     .returning();
 
+  // Auto-create a business_booking record if seller is a business and paid
+  if (fee > 0) {
+    const [profile] = await db
+      .select({ isBusiness: (profilesTable as any).isBusiness })
+      .from(profilesTable)
+      .where(eq(profilesTable.id, sellerId));
+    if ((profile as any)?.isBusiness) {
+      db.insert(businessBookingsTable as any)
+        .values({
+          profileId: sellerId,
+          listingId: listing.id,
+          amount: String(fee),
+          paymentStatus: "pending",
+        })
+        .catch(() => {});
+    }
+  }
+
   res.status(201).json(mapListing(listing));
 });
 
@@ -245,18 +263,19 @@ router.get("/listings/:id", async (req, res): Promise<void> => {
 
   const { listing, seller } = row;
 
-  res.json(
-    GetListingResponse.parse({
-      ...mapListing(listing),
-      seller: {
-        id: seller?.id ?? listing.sellerId,
-        username: seller?.username ?? null,
-        fullName: seller?.fullName ?? null,
-        avatarUrl: seller?.avatarUrl ?? null,
-        createdAt: seller?.createdAt?.toISOString() ?? new Date().toISOString(),
-      },
-    }),
-  );
+  res.json({
+    ...mapListing(listing),
+    seller: {
+      id: seller?.id ?? listing.sellerId,
+      username: seller?.username ?? null,
+      fullName: seller?.fullName ?? null,
+      avatarUrl: seller?.avatarUrl ?? null,
+      createdAt: seller?.createdAt?.toISOString() ?? new Date().toISOString(),
+      isBusiness: (seller as any)?.isBusiness ?? false,
+      companyName: (seller as any)?.companyName ?? null,
+      vatId: (seller as any)?.vatId ?? null,
+    },
+  });
 });
 
 router.patch("/listings/:id", async (req, res): Promise<void> => {

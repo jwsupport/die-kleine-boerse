@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Star, Pencil, BadgeCheck } from "lucide-react";
+import { Star, Pencil, BadgeCheck, Briefcase } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -71,17 +71,26 @@ export function Profile() {
   const [editOpen, setEditOpen] = useState(false);
   const [editFullName, setEditFullName] = useState("");
   const [editUsername, setEditUsername] = useState("");
+  const [editIsBusiness, setEditIsBusiness] = useState(false);
+  const [editCompanyName, setEditCompanyName] = useState("");
+  const [editVatId, setEditVatId] = useState("");
 
   useEffect(() => {
     if (profile && editOpen) {
       setEditFullName(profile.fullName ?? "");
       setEditUsername(profile.username ?? "");
+      setEditIsBusiness((profile as any).isBusiness ?? false);
+      setEditCompanyName((profile as any).companyName ?? "");
+      setEditVatId((profile as any).vatId ?? "");
     }
   }, [profile, editOpen]);
 
   const handleOpenEdit = () => {
     setEditFullName(profile?.fullName ?? "");
     setEditUsername(profile?.username ?? "");
+    setEditIsBusiness((profile as any)?.isBusiness ?? false);
+    setEditCompanyName((profile as any)?.companyName ?? "");
+    setEditVatId((profile as any)?.vatId ?? "");
     setEditOpen(true);
   };
 
@@ -92,7 +101,10 @@ export function Profile() {
         data: {
           fullName: editFullName.trim() || null,
           username: editUsername.trim() || null,
-        },
+          isBusiness: editIsBusiness,
+          companyName: editIsBusiness ? editCompanyName.trim() || null : null,
+          vatId: editIsBusiness ? editVatId.trim() || null : null,
+        } as any,
       },
       {
         onSuccess: () => {
@@ -225,8 +237,16 @@ export function Profile() {
                       <BadgeCheck className="w-3 h-3" /> Verifiziert
                     </span>
                   )}
+                  {(profile as any).isBusiness && (
+                    <span className="inline-flex items-center gap-1 bg-slate-900 text-white px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold">
+                      <Briefcase className="w-3 h-3" /> PRO
+                    </span>
+                  )}
                 </div>
                 {profile.username && <p className="text-slate-500 mt-1">@{profile.username}</p>}
+                {(profile as any).isBusiness && (profile as any).companyName && (
+                  <p className="text-xs text-slate-500 mt-0.5">{(profile as any).companyName}</p>
+                )}
               </div>
 
               <div className="w-full">
@@ -394,6 +414,52 @@ export function Profile() {
                 />
               </div>
               <p className="text-xs text-slate-400">{t.profile_usernameHint}</p>
+            </div>
+
+            {/* Business / B2B Settings */}
+            <div className="border-t border-slate-100 pt-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-slate-900 font-medium flex items-center gap-1.5">
+                    <Briefcase className="w-4 h-4 text-slate-600" /> Gewerblicher Anbieter
+                  </Label>
+                  <p className="text-xs text-slate-400">Aktiviere dies für B2B / Unternehmensverkäufe</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={editIsBusiness}
+                  onClick={() => setEditIsBusiness(v => !v)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 ${editIsBusiness ? "bg-slate-900" : "bg-slate-200"}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editIsBusiness ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </div>
+
+              {editIsBusiness && (
+                <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-company">Firmenname</Label>
+                    <Input
+                      id="edit-company"
+                      value={editCompanyName}
+                      onChange={e => setEditCompanyName(e.target.value)}
+                      maxLength={120}
+                      placeholder="Musterfirma GmbH"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-vatid">USt-IdNr. (optional)</Label>
+                    <Input
+                      id="edit-vatid"
+                      value={editVatId}
+                      onChange={e => setEditVatId(e.target.value)}
+                      maxLength={30}
+                      placeholder="DE123456789"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

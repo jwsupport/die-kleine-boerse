@@ -78,6 +78,43 @@ export function Admin() {
   const [pendingVideosLoading, setPendingVideosLoading] = useState(false);
   const [videoActionPending, setVideoActionPending] = useState<string | null>(null);
 
+  type BusinessBooking = {
+    id: string; profileId: string; companyName: string; vatId: string | null;
+    listingTitle: string; amount: number | null; paymentStatus: string;
+    invoiceNumber: string | null; createdAt: string;
+  };
+  const [businessBookings, setBusinessBookings] = useState<BusinessBooking[]>([]);
+  const [businessBookingsLoading, setBusinessBookingsLoading] = useState(false);
+  const [markPaidPending, setMarkPaidPending] = useState<string | null>(null);
+
+  const loadBusinessBookings = async () => {
+    setBusinessBookingsLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/business-bookings`, { credentials: "include" });
+      if (res.ok) setBusinessBookings(await res.json());
+    } finally {
+      setBusinessBookingsLoading(false);
+    }
+  };
+
+  const handleMarkPaid = async (id: string) => {
+    setMarkPaidPending(id);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/business-bookings/${id}/mark-paid`, {
+        method: "PATCH", credentials: "include",
+      });
+      if (res.ok) {
+        const { invoiceNumber } = await res.json();
+        setBusinessBookings(prev => prev.map(b => b.id === id ? { ...b, paymentStatus: "paid", invoiceNumber } : b));
+        toast({ title: "Bezahlt markiert", description: `Rechnung: ${invoiceNumber}` });
+      }
+    } finally {
+      setMarkPaidPending(null);
+    }
+  };
+
   const loadPendingVideos = async () => {
     setPendingVideosLoading(true);
     try {
@@ -382,6 +419,13 @@ export function Admin() {
                   {pendingVideos.length}
                 </span>
               )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="b2b"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900"
+              onClick={() => { if (businessBookings.length === 0) loadBusinessBookings(); }}
+            >
+              B2B
             </TabsTrigger>
           </TabsList>
 
@@ -990,6 +1034,80 @@ export function Admin() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="b2b" className="space-y-6">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-1">Business Module</p>
+                <h2 className="text-2xl font-light text-slate-900">B2B-Buchungen</h2>
+              </div>
+              <Button variant="outline" size="sm" onClick={loadBusinessBookings} disabled={businessBookingsLoading}>
+                {businessBookingsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aktualisieren"}
+              </Button>
+            </div>
+
+            {businessBookingsLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              </div>
+            ) : businessBookings.length === 0 ? (
+              <div className="py-20 text-center border border-dashed border-slate-200 rounded-2xl">
+                <p className="text-slate-400 text-sm mb-1">Keine B2B-Buchungen vorhanden</p>
+                <p className="text-slate-300 text-xs">Buchungen erscheinen automatisch sobald gewerbliche Anbieter bezahlte Anzeigen schalten</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Unternehmen</TableHead>
+                      <TableHead>USt-IdNr.</TableHead>
+                      <TableHead>Anzeigentitel</TableHead>
+                      <TableHead>Betrag</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Rechnungsnr.</TableHead>
+                      <TableHead>Datum</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {businessBookings.map((booking) => (
+                      <TableRow key={booking.id}>
+                        <TableCell className="font-medium text-slate-900">{booking.companyName}</TableCell>
+                        <TableCell className="text-slate-500 text-xs font-mono">{booking.vatId ?? "—"}</TableCell>
+                        <TableCell className="text-slate-700 max-w-[180px] truncate">{booking.listingTitle}</TableCell>
+                        <TableCell className="font-medium">
+                          {booking.amount != null ? `€${Number(booking.amount).toFixed(2)}` : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold ${booking.paymentStatus === "paid" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
+                            {booking.paymentStatus === "paid" ? "Bezahlt" : "Offen"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-xs font-mono text-slate-500">{booking.invoiceNumber ?? "—"}</TableCell>
+                        <TableCell className="text-xs text-slate-400">
+                          {new Date(booking.createdAt).toLocaleDateString("de-DE")}
+                        </TableCell>
+                        <TableCell>
+                          {booking.paymentStatus !== "paid" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleMarkPaid(booking.id)}
+                              disabled={markPaidPending === booking.id}
+                              className="text-xs"
+                            >
+                              {markPaidPending === booking.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Als bezahlt markieren"}
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </TabsContent>

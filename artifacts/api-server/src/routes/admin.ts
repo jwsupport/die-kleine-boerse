@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, gte, lt, sql, desc } from "drizzle-orm";
-import { db, listingsTable, profilesTable, searchStatsTable } from "@workspace/db";
+import { db, listingsTable, profilesTable, searchStatsTable, businessBookingsTable } from "@workspace/db";
 import {
   AdminGetListingsQueryParams,
   AdminGetListingsResponse,
@@ -374,6 +374,61 @@ router.post("/admin/pending-videos/:id/reject", async (req, res): Promise<void> 
     return;
   }
   res.json({ ok: true });
+});
+
+router.get("/admin/business-bookings", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const rows = await db
+    .select({
+      booking: businessBookingsTable,
+      profile: profilesTable,
+      listing: listingsTable,
+    })
+    .from(businessBookingsTable)
+    .leftJoin(profilesTable, eq(businessBookingsTable.profileId, profilesTable.id))
+    .leftJoin(listingsTable, eq(businessBookingsTable.listingId, listingsTable.id))
+    .orderBy(desc(businessBookingsTable.createdAt))
+    .limit(200);
+
+  res.json(rows.map(({ booking, profile, listing }) => ({
+    id: booking.id,
+    profileId: booking.profileId,
+    companyName: (profile as any)?.companyName ?? profile?.fullName ?? "—",
+    vatId: (profile as any)?.vatId ?? null,
+    listingTitle: listing?.title ?? "—",
+    amount: booking.amount != null ? Number(booking.amount) : null,
+    paymentStatus: booking.paymentStatus,
+    invoiceNumber: booking.invoiceNumber,
+    createdAt: booking.createdAt.toISOString(),
+  })));
+});
+
+router.patch("/admin/business-bookings/:id/mark-paid", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const { id } = req.params;
+  const now = new Date();
+  const invoiceNumber = `DKB-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${id.slice(0, 6).toUpperCase()}`;
+
+  const [updated] = await db
+    .update(businessBookingsTable)
+    .set({ paymentStatus: "paid", invoiceNumber })
+    .where(eq(businessBookingsTable.id, id))
+    .returning();
+
+  if (!updated) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  res.json({ ok: true, invoiceNumber });
 });
 
 router.get("/admin/market-intelligence", async (req, res): Promise<void> => {

@@ -10,6 +10,9 @@ export const profilesTable = pgTable("profiles", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   isVerified: boolean("is_verified").notNull().default(false),
   verificationDate: timestamp("verification_date", { withTimezone: true }),
+  isBusiness: boolean("is_business").notNull().default(false),
+  companyName: text("company_name"),
+  vatId: text("vat_id"),
 });
 
 export const insertProfileSchema = createInsertSchema(profilesTable).omit({ createdAt: true });

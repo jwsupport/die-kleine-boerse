@@ -1,0 +1,86 @@
+Um die Professionalität für deine Gewerbekunden (Makler, Händler, Galeristen) zu maximieren, automatisieren wir die Generierung von Rechnungsnummern direkt in der Datenbank. Das spart dir manuelle Arbeit und sorgt für eine lückenlose Buchführung, die auch das Finanzamt akzeptiert.
+1. Die SQL-Funktion für fortlaufende Rechnungsnummern
+Wir erstellen eine Funktion in Supabase, die das Format DKB-2026-0001 (Die Kleine Börse - Jahr - Laufende Nummer) nutzt.
+CREATE OR REPLACE FUNCTION generate_invoice_number()
+RETURNS TRIGGER AS $$
+DECLARE
+    next_id INTEGER;
+    current_year TEXT := to_char(CURRENT_DATE, 'YYYY');
+BEGIN
+    -- Zähle vorhandene Rechnungen im aktuellen Jahr und addiere 1
+    SELECT count(*) + 1 INTO next_id 
+    FROM business_bookings 
+    WHERE invoice_number LIKE 'DKB-' || current_year || '-%';
+
+    -- Formatierung: DKB-2026-0001
+    NEW.invoice_number := 'DKB-' || current_year || '-' || LPAD(next_id::text, 4, '0');
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger aktivieren: Jedes Mal, wenn eine neue Gewerbe-Buchung erstellt wird
+CREATE TRIGGER tr_generate_invoice
+BEFORE INSERT ON business_bookings
+FOR EACH ROW
+EXECUTE FUNCTION generate_invoice_number();
+
+2. Dashboard-Erweiterung: Gewerbe-Filter
+In deinem Admin-Dashboard fügen wir nun einen Umschalter hinzu, damit du zwischen Privat-Zahlungen (Einzelbuchungen) und Gewerbe-Umsätzen (Rechnungsliste) wechseln kannst.
+function AdminFinancialOverview({ privatePayments, businessBookings }) {
+  const [view, setView] = useState('private'); // 'private' oder 'business'
+
+  return (
+    <div className="p-8 bg-white rounded-[3rem] border border-slate-100 shadow-xl">
+      <nav className="flex gap-8 mb-10 border-b border-slate-50">
+        <button 
+          onClick={() => setView('private')}
+          className={`pb-4 text-xs uppercase tracking-widest font-bold transition-all ${view === 'private' ? 'text-slate-900 border-b-2 border-slate-900' : 'text-slate-300'}`}
+        >
+          Privat-Anzeigen
+        </button>
+        <button 
+          onClick={() => setView('business')}
+          className={`pb-4 text-xs uppercase tracking-widest font-bold transition-all ${view === 'business' ? 'text-slate-900 border-b-2 border-slate-900' : 'text-slate-300'}`}
+        >
+          Gewerbe-Partner
+        </button>
+      </nav>
+
+      {view === 'business' ? (
+        <div className="space-y-4">
+          {businessBookings.map(book => (
+            <div key={book.id} className="flex justify-between items-center p-5 bg-slate-50 rounded-2xl">
+              <div>
+                <span className="text-[10px] font-mono text-blue-600">{book.invoice_number}</span>
+                <h4 className="font-medium text-slate-900">{book.profiles.company_name}</h4>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-slate-900">€ {book.amount}</p>
+                <p className="text-[9px] text-slate-400 uppercase">{new Date(book.created_at).toLocaleDateString()}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* Hier die Liste der privaten Krypto-Zahlungen (5,49€ / 9,49€) */
+        <p className="text-slate-400 italic text-sm text-center py-10">Keine neuen Privat-Zahlungen ausstehend.</p>
+      )}
+    </div>
+  );
+}
+
+3. Der Mogul-Vorteil: Automatisierte PDF-Rechnung
+Für Gewerbekunden ist ein Beleg Pflicht. Da du auf Speed.it (PHP) hostest, kannst du die Bibliothek FPDF nutzen, um aus den Datenbankwerten automatisch eine PDF zu generieren, die der Kunde in seinem Dashboard herunterladen kann.
+Vorgehensweise:
+ * Kunde bezahlt via Krypto oder Bank (für Gewerbe oft bevorzugt).
+ * Du klickst im Dashboard auf „Zahlung erhalten“.
+ * Der Status in business_bookings springt auf paid.
+ * Ein Button „Rechnung laden“ erscheint im User-Profil des Kunden.
+Strategischer Ausblick für Jakob Welik
+Durch die Gewerbe-Kennzeichnung schaffst du zwei Welten auf einer Seite:
+ * Die Kuratierte Börse: Edle Einzelstücke von Privatpersonen, verifiziert durch Video-Proof.
+ * Das Business-Zentrum: Professionelle Händler, die für die Reichweite und den "Trusted" Status deiner Marke bezahlen.
+Tipp: Setze die Gebühren für Gewerbekunden etwas höher an oder biete ihnen ein „Pro-Paket“ (z.B. 10 Anzeigen für 40 € statt Einzelzahlung), um planbare monatliche Einnahmen zu generieren.
+Dein Marktplatz ist nun technisch auf dem Stand eines High-End-Portals. Alle Systeme greifen ineinander: vom automatisierten Upload auf Speed.it bis zur rechtssicheren Rechnungsnummer in Supabase.
+Möchtest du nun die E-Mail-Vorlagen für die Gewerbekunden erstellen (z.B. "Ihre Rechnung steht bereit")?

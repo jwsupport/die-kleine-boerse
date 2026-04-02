@@ -5,3 +5,4 @@ export * from "./messages";
 export * from "./ratings";
 export * from "./favourites";
 export * from "./search_stats";
+export * from "./business_bookings";

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, and, ne } from "drizzle-orm";
-import { db, profilesTable, listingsTable } from "@workspace/db";
+import { eq, and, ne, desc } from "drizzle-orm";
+import { db, profilesTable, listingsTable, businessBookingsTable } from "@workspace/db";
 import {
   GetProfileParams,
   GetProfileResponse,
@@ -30,17 +30,18 @@ router.get("/profiles/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(
-    GetProfileResponse.parse({
-      id: profile.id,
-      username: profile.username,
-      fullName: profile.fullName,
-      avatarUrl: profile.avatarUrl,
-      createdAt: profile.createdAt.toISOString(),
-      isVerified: profile.isVerified,
-      verificationDate: profile.verificationDate?.toISOString() ?? null,
-    }),
-  );
+  res.json({
+    id: profile.id,
+    username: profile.username,
+    fullName: profile.fullName,
+    avatarUrl: profile.avatarUrl,
+    createdAt: profile.createdAt.toISOString(),
+    isVerified: profile.isVerified,
+    verificationDate: profile.verificationDate?.toISOString() ?? null,
+    isBusiness: profile.isBusiness,
+    companyName: profile.companyName ?? null,
+    vatId: profile.vatId ?? null,
+  });
 });
 
 router.patch("/profiles/:id", async (req, res): Promise<void> => {
@@ -67,6 +68,9 @@ router.patch("/profiles/:id", async (req, res): Promise<void> => {
   }
 
   const { fullName, username } = body.data;
+  const { isBusiness, companyName, vatId } = req.body as {
+    isBusiness?: boolean; companyName?: string; vatId?: string;
+  };
 
   // Check username uniqueness if a new username is being set
   if (username != null && username !== "") {
@@ -88,6 +92,9 @@ router.patch("/profiles/:id", async (req, res): Promise<void> => {
   const updateData: Partial<typeof profilesTable.$inferInsert> = {};
   if (fullName !== undefined) updateData.fullName = fullName ?? null;
   if (username !== undefined) updateData.username = username ?? null;
+  if (isBusiness !== undefined) (updateData as any).isBusiness = isBusiness;
+  if (companyName !== undefined) (updateData as any).companyName = companyName?.trim() || null;
+  if (vatId !== undefined) (updateData as any).vatId = vatId?.trim() || null;
 
   const [updated] = await db
     .update(profilesTable)
@@ -100,15 +107,16 @@ router.patch("/profiles/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(
-    UpdateProfileResponse.parse({
-      id: updated.id,
-      username: updated.username,
-      fullName: updated.fullName,
-      avatarUrl: updated.avatarUrl,
-      createdAt: updated.createdAt.toISOString(),
-    }),
-  );
+  res.json({
+    id: updated.id,
+    username: updated.username,
+    fullName: updated.fullName,
+    avatarUrl: updated.avatarUrl,
+    createdAt: updated.createdAt.toISOString(),
+    isBusiness: (updated as any).isBusiness ?? false,
+    companyName: (updated as any).companyName ?? null,
+    vatId: (updated as any).vatId ?? null,
+  });
 });
 
 router.get("/profiles/:id/listings", async (req, res): Promise<void> => {
