@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { MapPin, Clock, ArrowRight, Star, Flag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ListingCard } from "@/components/ListingCard";
+import { ShareListing } from "@/components/ShareListing";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/seo/SEO";
 import { useT, getCatLabel } from "@/lib/i18n";
@@ -245,6 +246,14 @@ export function ListingDetail() {
                   {listing.description || "No description provided."}
                 </p>
               </div>
+
+              <ShareListing
+                title={listing.title}
+                listingId={listing.id}
+                imageUrl={listing.imageUrls?.[0]}
+                price={listing.price}
+                location={listing.location}
+              />
 
               <div className="border-t border-slate-200 pt-8 mt-auto">
                 <Link href={`/profile/${listing.sellerId}`} className="block group mb-8">
