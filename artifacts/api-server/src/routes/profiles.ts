@@ -37,6 +37,8 @@ router.get("/profiles/:id", async (req, res): Promise<void> => {
       fullName: profile.fullName,
       avatarUrl: profile.avatarUrl,
       createdAt: profile.createdAt.toISOString(),
+      isVerified: profile.isVerified,
+      verificationDate: profile.verificationDate?.toISOString() ?? null,
     }),
   );
 });
@@ -146,6 +148,47 @@ router.get("/profiles/:id/listings", async (req, res): Promise<void> => {
         createdAt: l.createdAt.toISOString(),
       })),
     ),
+  );
+});
+
+router.patch("/profiles/:id/verify", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const { id } = req.params;
+  const { verify } = req.body as { verify: boolean };
+
+  await db
+    .update(profilesTable)
+    .set({
+      isVerified: verify,
+      verificationDate: verify ? new Date() : null,
+    })
+    .where(eq(profilesTable.id, id));
+
+  res.json({ ok: true });
+});
+
+router.get("/profiles", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const profiles = await db.select().from(profilesTable).orderBy(profilesTable.createdAt);
+
+  res.json(
+    profiles.map((p) => ({
+      id: p.id,
+      username: p.username,
+      fullName: p.fullName,
+      avatarUrl: p.avatarUrl,
+      createdAt: p.createdAt.toISOString(),
+      isVerified: p.isVerified,
+      verificationDate: p.verificationDate?.toISOString() ?? null,
+    })),
   );
 });
 

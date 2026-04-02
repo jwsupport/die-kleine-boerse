@@ -27,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Loader2, Pencil, TrendingUp } from "lucide-react";
+import { Loader2, Pencil, TrendingUp, BadgeCheck } from "lucide-react";
 import { CATEGORIES } from "@/lib/categories";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -52,6 +52,49 @@ export function Admin() {
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
 
   const [activeTab, setActiveTab] = useState("listings");
+
+  // Users tab
+  type AdminProfile = {
+    id: string; username: string | null; fullName: string | null;
+    avatarUrl: string | null; createdAt: string;
+    isVerified: boolean; verificationDate: string | null;
+  };
+  const [users, setUsers] = useState<AdminProfile[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [verifyPending, setVerifyPending] = useState<string | null>(null);
+
+  const loadUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/profiles`, { credentials: "include" });
+      if (res.ok) setUsers(await res.json());
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const toggleVerify = async (profileId: string, currentState: boolean) => {
+    setVerifyPending(profileId);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      await fetch(`${base}/api/profiles/${profileId}/verify`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ verify: !currentState }),
+      });
+      setUsers(prev => prev.map(u => u.id === profileId
+        ? { ...u, isVerified: !currentState, verificationDate: !currentState ? new Date().toISOString() : null }
+        : u
+      ));
+      toast({ title: !currentState ? "Nutzer verifiziert" : "Verifizierung entfernt" });
+    } catch {
+      toast({ title: "Fehler", variant: "destructive" });
+    } finally {
+      setVerifyPending(null);
+    }
+  };
 
   // Listings Filters
   const [statusFilter, setStatusFilter] = useState("All");
@@ -243,6 +286,13 @@ export function Admin() {
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900"
             >
               Zahlungen
+            </TabsTrigger>
+            <TabsTrigger
+              value="users"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900"
+              onClick={() => { if (users.length === 0) loadUsers(); }}
+            >
+              Nutzer
             </TabsTrigger>
           </TabsList>
 
@@ -633,6 +683,70 @@ export function Admin() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-6">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-medium text-slate-900">Nutzer</h2>
+              <Button variant="outline" size="sm" onClick={loadUsers} disabled={usersLoading}>
+                {usersLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aktualisieren"}
+              </Button>
+            </div>
+
+            {usersLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              </div>
+            ) : users.length === 0 ? (
+              <div className="py-16 text-center text-slate-400 border border-dashed border-slate-200 rounded-lg">
+                Keine Nutzer gefunden
+              </div>
+            ) : (
+              <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Benutzername</TableHead>
+                      <TableHead>Mitglied seit</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead className="text-center">Verifiziert</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((u) => (
+                      <TableRow key={u.id}>
+                        <TableCell className="font-medium text-slate-900">
+                          {u.fullName || <span className="text-slate-400 italic">–</span>}
+                        </TableCell>
+                        <TableCell className="text-slate-500">
+                          {u.username ? `@${u.username}` : <span className="text-slate-300 italic">–</span>}
+                        </TableCell>
+                        <TableCell className="text-slate-500 text-sm">
+                          {format(new Date(u.createdAt), "dd.MM.yyyy")}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {u.isVerified ? (
+                            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold border border-blue-100">
+                              <BadgeCheck className="w-3 h-3" /> Verifiziert
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-400">–</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Switch
+                            checked={u.isVerified}
+                            disabled={verifyPending === u.id}
+                            onCheckedChange={() => toggleVerify(u.id, u.isVerified)}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </TabsContent>

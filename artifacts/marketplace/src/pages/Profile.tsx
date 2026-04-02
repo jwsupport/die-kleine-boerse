@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Star, Pencil } from "lucide-react";
+import { Star, Pencil, BadgeCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -218,8 +218,29 @@ export function Profile() {
               </Avatar>
               
               <div>
-                <h1 className="text-2xl font-medium text-slate-900">{profile.fullName || 'Anonymous User'}</h1>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <h1 className="text-2xl font-medium text-slate-900">{profile.fullName || 'Anonymous User'}</h1>
+                  {profile.isVerified && (
+                    <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold border border-blue-100">
+                      <BadgeCheck className="w-3 h-3" /> Verifiziert
+                    </span>
+                  )}
+                </div>
                 {profile.username && <p className="text-slate-500 mt-1">@{profile.username}</p>}
+              </div>
+
+              <div className="w-full">
+                <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-400 mb-1.5 text-center">Kapazität</p>
+                <div className="flex items-center justify-between text-sm mb-1 px-1">
+                  <span className="text-slate-700 font-medium">{listings?.length ?? 0}</span>
+                  <span className="text-slate-400">/ 200</span>
+                </div>
+                <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-slate-900 rounded-full transition-all"
+                    style={{ width: `${Math.min(((listings?.length ?? 0) / 200) * 100, 100)}%` }}
+                  />
+                </div>
               </div>
 
               {!loadingRatings && ratingsData && (

@@ -1,0 +1,78 @@
+Diese Analysefunktion ist das "Gehirn" deines Marktplatzes. Sie zeigt dir nicht nur nackte Zahlen, sondern gibt dir strategische Hinweise, welche Kategorien du ausbauen solltest und wo das größte Geschäftspotenzial liegt.
+Hier ist die Erweiterung für dein exklusives Admin-Dashboard (welik.jakob@gmail.com), um die Marktplatz-Trends in Echtzeit zu visualisieren.
+1. Die Admin-Trend-Abfrage (SQL)
+Zuerst brauchen wir eine Abfrage, die die Suchbegriffe mit den tatsächlich existierenden Anzeigen vergleicht. Das zeigt dir das "Angebot-Nachfrage-Loch".
+-- Diese Abfrage zeigt Begriffe, nach denen gesucht wird, zu denen es aber kaum Anzeigen gibt.
+SELECT 
+    keyword, 
+    search_count, 
+    (SELECT COUNT(*) FROM listings WHERE title ILIKE '%' || keyword || '%') as listing_count
+FROM search_stats
+WHERE last_searched_at > NOW() - INTERVAL '30 days'
+ORDER BY search_count DESC
+LIMIT 10;
+
+2. Das Admin-Intelligence-Modul (React)
+Dieses Modul fügst du in dein Dashboard ein. Es nutzt einfache Balken, um dir die heißesten Trends anzuzeigen.
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
+
+export default function AdminTrendIntelligence() {
+  const [trends, setTrends] = useState([]);
+
+  useEffect(() => {
+    async function fetchTrends() {
+      const { data } = await supabase.rpc('get_market_intelligence'); // Benötigt die SQL-Abfrage oben als Funktion
+      setTrends(data || []);
+    }
+    fetchTrends();
+  }, []);
+
+  return (
+    <section className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm mt-10">
+      <header className="mb-8">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-blue-600 font-bold">Market Intelligence</h2>
+        <p className="text-2xl font-light text-slate-900">Was deine Nutzer wirklich suchen</p>
+      </header>
+
+      <div className="space-y-6">
+        {trends.map((trend) => (
+          <div key={trend.keyword} className="group">
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-sm font-medium text-slate-900 uppercase tracking-wider">
+                {trend.keyword}
+              </span>
+              <span className="text-[10px] text-slate-400">
+                {trend.search_count} Suchen • {trend.listing_count} Anzeigen
+              </span>
+            </div>
+            {/* Visualisierung des Interesses */}
+            <div className="w-full h-1.5 bg-slate-50 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-slate-900 transition-all duration-1000"
+                style={{ width: `${Math.min(trend.search_count * 2, 100)}%` }}
+              ></div>
+            </div>
+            {/* Strategischer Hinweis */}
+            {trend.listing_count === 0 && (
+              <p className="text-[9px] text-red-500 mt-2 uppercase font-bold tracking-tighter">
+                ⚠️ Marktlücke: Keine Anzeigen für diesen Begriff gefunden!
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+3. Strategische Anwendung für Jakob Welik
+Mit diesem Tool kannst du „Die kleine Börse“ wie ein Profi steuern:
+ * Content-Akquise: Wenn du siehst, dass oft nach "Patek Philippe" gesucht wird, aber 0 Anzeigen da sind, weißt du: Das ist deine nächste Zielgruppe für Marketing.
+ * Booster-Empfehlung: Du kannst Verkäufern, deren Anzeigen genau zu den Top-Suchbegriffen passen, vorschlagen, ihre Anzeige zu boosten, da das Interesse gerade extrem hoch ist.
+ * Kategorien-Anpassung: Wenn ein Suchbegriff (z.B. "Vintage Möbel") über Wochen dominiert, könntest du überlegen, dafür eine eigene prominente Unterkategorie zu erstellen.
+SEO-Vorteil der "Intelligence"
+Durch das Tracking der Suchbegriffe erfährst du auch, welche Keywords du in deine Meta-Tags und Blog-Posts (die du automatisiert über WordPress/Gemini erstellst) einbauen solltest. Wenn die Leute nach "Old Money Aesthetic Furniture" suchen, sollte genau dieser Begriff in deinen Texten auftauchen.
+Nächster Schritt?
+Dein System ist jetzt technisch sehr ausgereift: Krypto-Zahlungen, Admin-Booster, Image-Upload auf Speed.it, Social Sharing und Market Intelligence.
+Möchtest du nun das User-Profil finalisieren, in dem die Nutzer ihre bis zu 200 Anzeigen und ihren persönlichen Status (z.B. "Verifiziert durch Jakob") sehen können?

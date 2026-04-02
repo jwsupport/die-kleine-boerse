@@ -100,6 +100,8 @@ export const GetProfileResponse = zod.object({
   fullName: zod.string().nullish(),
   avatarUrl: zod.string().nullish(),
   createdAt: zod.string(),
+  isVerified: zod.boolean().optional(),
+  verificationDate: zod.string().nullish(),
 });
 
 export const UpdateProfileParams = zod.object({
