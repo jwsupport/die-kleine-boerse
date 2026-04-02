@@ -13,6 +13,25 @@ interface ListingCardProps {
 export function ListingCard({ listing, index = 0, size = "md" }: ListingCardProps) {
   const t = useT();
   const isSmall = size === "sm";
+  const ext = listing as any;
+
+  const renderBadge = () => {
+    if (ext.sellerIsVerified) {
+      return (
+        <span className="absolute top-2 left-2 z-10 bg-white/85 backdrop-blur-sm text-blue-600 px-2 py-0.5 rounded-full text-[7px] uppercase tracking-widest font-bold border border-blue-100 shadow-sm">
+          Verifiziert
+        </span>
+      );
+    }
+    if (ext.sellerIsBusiness) {
+      return (
+        <span className="absolute top-2 left-2 z-10 bg-slate-900 text-white px-2 py-0.5 rounded-full text-[7px] uppercase tracking-widest font-bold shadow-sm">
+          PRO
+        </span>
+      );
+    }
+    return null;
+  };
 
   return (
     <motion.article
@@ -25,14 +44,15 @@ export function ListingCard({ listing, index = 0, size = "md" }: ListingCardProp
     >
       <Link href={`/listings/${listing.id}`} className="block h-full flex flex-col space-y-2.5">
         {/* Image */}
-        <div className="relative aspect-[3/4] overflow-hidden rounded-sm bg-slate-100">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-slate-100 border border-slate-100/80">
+          {renderBadge()}
           {listing.imageUrls && listing.imageUrls.length > 0 ? (
             <img
               src={listing.imageUrls[0]}
               alt={`${listing.title} — ${listing.location}`}
               loading="lazy"
               decoding="async"
-              className="object-cover w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
+              className="object-cover w-full h-full transition-transform duration-1000 ease-out group-hover:scale-105"
               itemProp="image"
             />
           ) : (
@@ -45,7 +65,7 @@ export function ListingCard({ listing, index = 0, size = "md" }: ListingCardProp
           </div>
           {listing.listingType === "paid" && (
             <div className="absolute bottom-1.5 left-1.5">
-              <span className="text-[8px] uppercase tracking-widest font-bold bg-slate-900/90 text-white px-1.5 py-0.5 rounded-sm">
+              <span className="text-[7px] uppercase tracking-widest font-bold bg-slate-900/90 text-white px-1.5 py-0.5 rounded-full">
                 Premium
               </span>
             </div>
@@ -53,7 +73,7 @@ export function ListingCard({ listing, index = 0, size = "md" }: ListingCardProp
         </div>
 
         {/* Info */}
-        <div className="space-y-1 flex flex-col flex-1">
+        <div className="space-y-0.5 flex flex-col flex-1 px-0.5">
           <div className="flex items-center justify-between gap-1">
             <span
               className="text-[9px] uppercase tracking-widest font-medium text-slate-400 truncate"
@@ -65,21 +85,21 @@ export function ListingCard({ listing, index = 0, size = "md" }: ListingCardProp
           </div>
 
           <h3
-            className={`font-medium text-slate-900 leading-snug line-clamp-2 ${isSmall ? "text-xs" : "text-sm md:text-base"}`}
+            className={`font-medium text-slate-900 leading-snug line-clamp-2 group-hover:text-slate-600 transition-colors ${isSmall ? "text-xs" : "text-sm"}`}
             itemProp="name"
           >
             {listing.title}
           </h3>
 
           <div
-            className={`font-semibold text-slate-900 mt-auto ${isSmall ? "text-xs" : "text-sm md:text-base"}`}
+            className={`font-semibold text-slate-950 mt-auto pt-1 ${isSmall ? "text-xs" : "text-sm"}`}
             itemProp="offers"
             itemScope
             itemType="https://schema.org/Offer"
           >
             <meta itemProp="priceCurrency" content="EUR" />
             <span itemProp="price" content={String(listing.price)}>
-              €{listing.price.toLocaleString()}
+              €{listing.price.toLocaleString("de-DE")}
             </span>
             {listing.isNegotiable && (
               <span className="text-xs font-normal text-slate-400 ml-1">VB</span>

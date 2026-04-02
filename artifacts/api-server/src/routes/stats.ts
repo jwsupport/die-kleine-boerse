@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { sql, eq, and } from "drizzle-orm";
-import { db, listingsTable, searchStatsTable } from "@workspace/db";
+import { db, listingsTable, searchStatsTable, profilesTable } from "@workspace/db";
 import {
   GetCategoryStatsResponse,
   GetRecentListingsQueryParams,
@@ -85,8 +85,9 @@ router.get("/stats/trending-listings", async (_req, res): Promise<void> => {
   );
 
   const rows = await db
-    .select()
+    .select({ listing: listingsTable, seller: profilesTable })
     .from(listingsTable)
+    .leftJoin(profilesTable, eq(listingsTable.sellerId, profilesTable.id))
     .where(
       and(
         eq(listingsTable.status, "active"),
@@ -97,7 +98,7 @@ router.get("/stats/trending-listings", async (_req, res): Promise<void> => {
     .limit(8);
 
   const now = Date.now();
-  res.json(rows.map((l) => ({
+  res.json(rows.map(({ listing: l, seller }) => ({
     id: l.id,
     sellerId: l.sellerId,
     title: l.title,
@@ -119,6 +120,9 @@ router.get("/stats/trending-listings", async (_req, res): Promise<void> => {
     listingFee: Number(l.listingFee),
     daysAge: Math.floor((now - l.createdAt.getTime()) / (1000 * 60 * 60 * 24)),
     createdAt: l.createdAt.toISOString(),
+    sellerIsVerified: seller?.isVerified ?? false,
+    sellerIsBusiness: seller?.isBusiness ?? false,
+    sellerUsername: seller?.username ?? null,
   })));
 });
 

@@ -77,8 +77,9 @@ router.get("/listings", async (req, res): Promise<void> => {
   if (maxPrice != null) conditions.push(lte(listingsTable.price, String(maxPrice)));
 
   const rows = await db
-    .select()
+    .select({ listing: listingsTable, seller: profilesTable })
     .from(listingsTable)
+    .leftJoin(profilesTable, eq(listingsTable.sellerId, profilesTable.id))
     .where(and(...conditions))
     .orderBy(sql`${listingsTable.createdAt} desc`)
     .limit(limit ?? 50)
@@ -109,7 +110,12 @@ router.get("/listings", async (req, res): Promise<void> => {
       .catch(() => {});
   }
 
-  res.json(GetListingsResponse.parse(rows.map(mapListing)));
+  res.json(rows.map(({ listing, seller }) => ({
+    ...mapListing(listing),
+    sellerIsVerified: seller?.isVerified ?? false,
+    sellerIsBusiness: seller?.isBusiness ?? false,
+    sellerUsername: seller?.username ?? null,
+  })));
 });
 
 router.post("/listings", async (req, res): Promise<void> => {
