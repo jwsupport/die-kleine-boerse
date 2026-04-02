@@ -32,6 +32,38 @@
 - **Silent Listing** — `is_silent boolean default false` column on listings; toggle in CreateListing; public feed filters out silent listings; only accessible via direct link.
 - **Admin Video Review** — "Video-Prüfung" tab in admin dashboard shows pending_video listings with embedded video player, approve (activates listing) and reject (deletes listing) buttons. Badge counter on tab. Endpoints: `GET/POST /api/admin/pending-videos/:id/approve`, `GET/POST /api/admin/pending-videos/:id/reject`.
 
+## Business/B2B Module
+- `is_business`, `company_name`, `vat_id` columns on `profiles` table
+- `business_bookings` table (profileId, listingId, amount, paymentStatus, invoiceNumber)
+- BusinessBadge component (`artifacts/marketplace/src/components/BusinessBadge.tsx`)
+- Profile edit dialog: business toggle + Firmenname + USt-IdNr. fields (only visible to owner)
+- ListingDetail: "Gewerblicher Anbieter" block + PRO pill on seller card when `seller.isBusiness`
+- Admin "B2B" tab: table of all business_bookings with "Als bezahlt markieren" button
+- Auto-creates a `business_booking` record when a business user creates a paid listing
+
+## Pending Features (implement later)
+
+### 1. Transaktionale E-Mails
+- **Service**: Resend (resend.com) — needs API key stored as `RESEND_API_KEY` secret
+- **3 Templates**:
+  - Willkommens-Mail wenn Gewerbe-Profil aktiviert → an Nutzer
+  - Rechnungs-Benachrichtigung wenn Admin "Als bezahlt markieren" klickt → an Gewerbekunden
+  - Video-Proof Status (Freischaltung / Ablehnung) → an Verkäufer
+- **Trigger-Punkte**: `PATCH /api/profiles/:id` (isBusiness→true), `PATCH /admin/business-bookings/:id/mark-paid`, `POST /admin/pending-videos/:id/approve|reject`
+
+### 2. Registrierungsfluss Privat/Gewerbe
+- Toggle UI bei Registrierung (Privat / Gewerbe) mit animierten Zusatzfeldern
+- Status `pending_business` für neue Gewerbekunden → manuelle Freischaltung im Admin
+- DB-Felder bereits vorhanden (is_business, company_name, vat_id)
+
+### 3. Automatische Rechnungsnummern via DB-Trigger
+- SQL-Funktion `generate_invoice_number()` → Format `DKB-2026-0001` (fortlaufend pro Jahr)
+- Trigger `tr_generate_invoice` auf `business_bookings` BEFORE INSERT
+
+### 4. PDF-Rechnung für Gewerbekunden
+- PDF-Generierung nach Zahlung, abrufbar im Nutzerprofil
+- Button "Rechnung herunterladen" erscheint wenn paymentStatus = 'paid'
+
 ## Overview
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
