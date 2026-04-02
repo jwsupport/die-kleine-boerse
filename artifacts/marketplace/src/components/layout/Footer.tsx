@@ -67,6 +67,9 @@ export function Footer() {
           <h3 className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-300 mb-2">
             {isDE ? "Rechtliches" : "Legal"}
           </h3>
+          <Link href="/archive" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors font-medium">
+            {isDE ? "Archiv" : "Archive"}
+          </Link>
           <Link href="/impressum" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
             Impressum
           </Link>

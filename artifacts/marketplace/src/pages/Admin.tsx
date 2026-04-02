@@ -69,6 +69,59 @@ export function Admin() {
   const [intelligence, setIntelligence] = useState<IntelligenceRow[]>([]);
   const [intelligenceLoading, setIntelligenceLoading] = useState(false);
 
+  type PendingVideo = {
+    id: string; title: string; price: number; category: string; location: string;
+    videoUrl: string | null; imageUrls: string[]; createdAt: string;
+    sellerName: string | null; sellerId: string;
+  };
+  const [pendingVideos, setPendingVideos] = useState<PendingVideo[]>([]);
+  const [pendingVideosLoading, setPendingVideosLoading] = useState(false);
+  const [videoActionPending, setVideoActionPending] = useState<string | null>(null);
+
+  const loadPendingVideos = async () => {
+    setPendingVideosLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/pending-videos`, { credentials: "include" });
+      if (res.ok) setPendingVideos(await res.json());
+    } finally {
+      setPendingVideosLoading(false);
+    }
+  };
+
+  const handleVideoApprove = async (id: string) => {
+    setVideoActionPending(id);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/pending-videos/${id}/approve`, { method: "POST", credentials: "include" });
+      if (res.ok) {
+        setPendingVideos(prev => prev.filter(v => v.id !== id));
+        toast({ title: "Anzeige freigeschaltet", description: "Video-Proof genehmigt." });
+      }
+    } finally {
+      setVideoActionPending(null);
+    }
+  };
+
+  const handleVideoReject = async (id: string) => {
+    setVideoActionPending(id);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/pending-videos/${id}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ reason: "Video-Proof abgelehnt durch Admin" }),
+      });
+      if (res.ok) {
+        setPendingVideos(prev => prev.filter(v => v.id !== id));
+        toast({ title: "Anzeige abgelehnt", description: "Listing wurde gelöscht.", variant: "destructive" });
+      }
+    } finally {
+      setVideoActionPending(null);
+    }
+  };
+
   const loadIntelligence = async () => {
     setIntelligenceLoading(true);
     try {
@@ -317,6 +370,18 @@ export function Admin() {
               onClick={() => { if (intelligence.length === 0) loadIntelligence(); }}
             >
               Intelligence
+            </TabsTrigger>
+            <TabsTrigger
+              value="video-review"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900 relative"
+              onClick={() => { if (pendingVideos.length === 0) loadPendingVideos(); }}
+            >
+              Video-Prüfung
+              {pendingVideos.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {pendingVideos.length}
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -831,6 +896,100 @@ export function Admin() {
                     </div>
                   ));
                 })()}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="video-review" className="space-y-6">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-red-500 font-bold mb-1">Anti-Scam System</p>
+                <h2 className="text-2xl font-light text-slate-900">Video-Proof Prüfung</h2>
+              </div>
+              <Button variant="outline" size="sm" onClick={loadPendingVideos} disabled={pendingVideosLoading}>
+                {pendingVideosLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aktualisieren"}
+              </Button>
+            </div>
+
+            {pendingVideosLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              </div>
+            ) : pendingVideos.length === 0 ? (
+              <div className="py-20 text-center border border-dashed border-slate-200 rounded-2xl">
+                <p className="text-slate-400 text-sm mb-1">Keine Videos zur Prüfung</p>
+                <p className="text-slate-300 text-xs">Neue Anzeigen über 500 € erscheinen hier automatisch</p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {pendingVideos.map((pv) => (
+                  <div key={pv.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-6">
+                    {pv.videoUrl ? (
+                      <div className="flex-shrink-0">
+                        <video
+                          width={220}
+                          className="rounded-xl bg-black object-cover"
+                          controls
+                          style={{ maxHeight: 160 }}
+                        >
+                          <source src={pv.videoUrl} />
+                          Dein Browser unterstützt kein Video.
+                        </video>
+                      </div>
+                    ) : (
+                      <div className="w-[220px] h-[140px] bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <p className="text-xs text-slate-400">Kein Video</p>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">{pv.category}</p>
+                      <h3 className="text-xl font-medium text-slate-900 mb-1 line-clamp-1">{pv.title}</h3>
+                      <p className="text-slate-500 text-sm mb-4">
+                        €{pv.price.toLocaleString("de-DE")} · {pv.location}
+                        {pv.sellerName && <> · <span className="font-medium">{pv.sellerName}</span></>}
+                        <span className="ml-2 text-slate-400 text-xs">
+                          {new Date(pv.createdAt).toLocaleDateString("de-DE")}
+                        </span>
+                      </p>
+                      {pv.imageUrls.length > 0 && (
+                        <div className="flex gap-2 mb-4">
+                          {pv.imageUrls.slice(0, 3).map((url, i) => (
+                            <img key={i} src={url} alt="" className="w-12 h-12 rounded-lg object-cover border border-slate-100" />
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-3">
+                        <Button
+                          onClick={() => handleVideoApprove(pv.id)}
+                          disabled={videoActionPending === pv.id}
+                          className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl px-6"
+                        >
+                          {videoActionPending === pv.id
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : "Video korrekt — Freischalten"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleVideoReject(pv.id)}
+                          disabled={videoActionPending === pv.id}
+                          className="text-red-500 border-red-200 hover:bg-red-50 rounded-xl"
+                        >
+                          Ablehnen
+                        </Button>
+                        {pv.videoUrl && (
+                          <a
+                            href={pv.videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-500 underline flex items-center self-center ml-1"
+                          >
+                            Video extern öffnen
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </TabsContent>

@@ -16,6 +16,7 @@ import { MyAds } from "@/pages/MyAds";
 import { Favourites } from "@/pages/Favourites";
 import { CategoryPage } from "@/pages/CategoryPage";
 import CryptoPayment from "@/pages/CryptoPayment";
+import { Archive } from "@/pages/Archive";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/messages" component={Messages} />
       <Route path="/profile/:id" component={Profile} />
       <Route path="/category/:id" component={CategoryPage} />
+      <Route path="/archive" component={Archive} />
       <Route component={NotFound} />
     </Switch>
   );

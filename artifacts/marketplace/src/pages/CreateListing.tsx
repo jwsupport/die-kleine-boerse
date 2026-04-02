@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/seo/SEO";
 import { CATEGORIES, categoryByLabel } from "@/lib/categories";
-import { ShieldCheck, Zap, Check } from "lucide-react";
+import { ShieldCheck, Zap, Check, Sparkles, Loader2, Video, EyeOff } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import { useT, getCatLabel } from "@/lib/i18n";
 
@@ -27,9 +27,12 @@ export function CreateListing() {
     location: "",
     description: "",
     imageUrls: [] as string[],
+    videoUrl: "",
+    isSilent: false,
   });
 
   const [selectedTier, setSelectedTier] = useState<"free" | "boost">("free");
+  const [isImprovingDescription, setIsImprovingDescription] = useState(false);
 
   const selectedCategory = categoryByLabel[formData.category];
   const categoryFee = selectedCategory?.fee ?? 0;
@@ -37,12 +40,43 @@ export function CreateListing() {
   const fee = isBoost ? 1.00 : categoryFee;
   const requiresPayment = fee > 0;
   const showTierPicker = formData.category !== "" && categoryFee === 0;
+  const priceNum = Number(formData.price);
+  const needsVideoProof = priceNum >= 500;
 
   const field = <K extends keyof typeof formData>(key: K) => ({
     value: formData[key] as string,
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setFormData((p) => ({ ...p, [key]: e.target.value })),
   });
+
+  const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+
+  const handleImproveDescription = async () => {
+    if (!formData.description.trim()) {
+      toast({ title: "Beschreibung fehlt", description: "Bitte zuerst eine Beschreibung eingeben.", variant: "destructive" });
+      return;
+    }
+    setIsImprovingDescription(true);
+    try {
+      const res = await fetch(`${base}/api/ai/improve-description`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ text: formData.description }),
+      });
+      const json = await res.json();
+      if (json.improved) {
+        setFormData((p) => ({ ...p, description: json.improved }));
+        toast({ title: "KI-Exposé aktiviert", description: "Beschreibung wurde im Quiet Luxury Stil veredelt." });
+      } else {
+        toast({ title: "Fehler", description: json.error ?? "Veredelung fehlgeschlagen.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Fehler", description: "KI-Veredelung fehlgeschlagen.", variant: "destructive" });
+    } finally {
+      setIsImprovingDescription(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,23 +95,40 @@ export function CreateListing() {
       return;
     }
 
+    if (needsVideoProof && !formData.videoUrl.trim()) {
+      toast({
+        title: "Video-Proof erforderlich",
+        description: "Für Objekte über 500 € ist ein Video-Proof-Link notwendig.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     createListing.mutate(
       {
         data: {
           sellerId: user.id,
           title: formData.title,
-          price: Number(formData.price),
+          price: priceNum,
           isNegotiable: formData.isNegotiable,
           category: formData.category,
           location: formData.location,
           description: formData.description || null,
           imageUrls: formData.imageUrls,
           boostTier: isBoost ? "boost" : undefined,
-        },
+          videoUrl: formData.videoUrl.trim() || undefined,
+          isSilent: formData.isSilent,
+        } as any,
       },
       {
         onSuccess: (newListing) => {
-          if (newListing.paymentStatus === "pending") {
+          if ((newListing as any).status === "pending_video") {
+            toast({
+              title: "Video-Proof eingereicht",
+              description: "Deine Anzeige wird nach Prüfung des Videos freigeschaltet.",
+            });
+            setLocation("/my-ads");
+          } else if (newListing.paymentStatus === "pending") {
             setLocation(`/pay/${newListing.id}`);
           } else {
             toast({ title: t.create_success, description: t.create_successDesc });
@@ -179,10 +230,24 @@ export function CreateListing() {
               </div>
             </div>
 
+            {/* Description with KI-Exposé button */}
             <div>
-              <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">
-                {t.create_descriptionLabel}
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs uppercase tracking-widest text-slate-400 font-semibold">
+                  {t.create_descriptionLabel}
+                </label>
+                <button
+                  type="button"
+                  onClick={handleImproveDescription}
+                  disabled={isImprovingDescription}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200 text-violet-700 rounded-full font-medium hover:from-violet-100 hover:to-indigo-100 transition-all disabled:opacity-60"
+                >
+                  {isImprovingDescription
+                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                    : <Sparkles className="w-3 h-3" />}
+                  KI-Exposé
+                </button>
+              </div>
               <textarea
                 rows={5}
                 className="w-full p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none resize-none text-slate-900 placeholder:text-slate-400"
@@ -196,6 +261,55 @@ export function CreateListing() {
               onChange={(urls) => setFormData((p) => ({ ...p, imageUrls: urls }))}
             />
 
+            {/* Video-Proof — shown when price ≥ €500 */}
+            {needsVideoProof && (
+              <div className="p-6 bg-blue-50 rounded-3xl border border-blue-100 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <Video className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-blue-600 mb-1">Sicherheits-Check Aktiv</p>
+                    <p className="text-sm text-slate-700 leading-relaxed">
+                      Objekte über 500 € erfordern einen <strong>Video-Proof</strong>. Nimm ein kurzes Video (max. 10 s) auf,
+                      in dem das Objekt und ein Zettel mit der Aufschrift <strong>"Die kleine Börse"</strong> zu sehen sind.
+                      Lade es auf Speed.it hoch und füge den Link hier ein. Die Anzeige wird nach manueller Prüfung freigeschaltet.
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs uppercase tracking-widest text-blue-500 mb-2 font-semibold">
+                    Video-Link (Speed.it o.ä.) *
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://speed.it/dein-video"
+                    value={formData.videoUrl}
+                    onChange={(e) => setFormData((p) => ({ ...p, videoUrl: e.target.value }))}
+                    className="w-full p-4 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-200 outline-none text-slate-900 placeholder:text-slate-400 text-sm"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Silent Listing toggle */}
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                  <EyeOff className="w-4 h-4 text-slate-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Diskreter Modus</p>
+                  <p className="text-xs text-slate-500">Nur für Nutzer mit direktem Link sichtbar — nicht in der öffentlichen Suche</p>
+                </div>
+              </div>
+              <Switch
+                id="silent"
+                checked={formData.isSilent}
+                onCheckedChange={(checked) => setFormData((p) => ({ ...p, isSilent: checked }))}
+              />
+            </div>
+
             {/* Tier picker — free categories get the two-option selector */}
             {formData.category && (
               showTierPicker ? (
@@ -204,7 +318,6 @@ export function CreateListing() {
                     {t.create_tierHeading}
                   </p>
                   <div className="grid grid-cols-2 gap-3">
-                    {/* Free tier */}
                     <button
                       type="button"
                       onClick={() => setSelectedTier("free")}
@@ -227,7 +340,6 @@ export function CreateListing() {
                       <p className="text-xl font-light text-slate-900 mt-2">Gratis</p>
                     </button>
 
-                    {/* Boost tier */}
                     <button
                       type="button"
                       onClick={() => setSelectedTier("boost")}
@@ -255,7 +367,6 @@ export function CreateListing() {
                   </div>
                 </div>
               ) : (
-                /* Category already has a fee — show the fixed fee summary */
                 <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
                   <div className="flex justify-between items-center">
                     <div className="flex items-start gap-3">
@@ -290,9 +401,13 @@ export function CreateListing() {
                 disabled={isSubmitting}
                 className="flex-1 py-4 rounded-2xl bg-slate-900 text-white font-medium hover:bg-slate-800 transition-all disabled:bg-slate-300 text-sm"
               >
-                {requiresPayment
-                  ? `${t.create_submit} — €${fee.toFixed(2)}`
-                  : t.create_submit}
+                {isSubmitting
+                  ? <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                  : requiresPayment
+                    ? `${t.create_submit} — €${fee.toFixed(2)}`
+                    : needsVideoProof
+                      ? "Anzeige + Video einreichen"
+                      : t.create_submit}
               </button>
             </div>
           </form>

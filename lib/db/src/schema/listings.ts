@@ -25,6 +25,8 @@ export const listingsTable = pgTable("listings", {
   stripeSessionId: text("stripe_session_id"),
   paymentStatus: text("payment_status").notNull().default("not_required"),
   listingFee: numeric("listing_fee", { precision: 10, scale: 2 }).notNull().default("0.00"),
+  videoUrl: text("video_url"),
+  isSilent: boolean("is_silent").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   check("check_max_images", sql`cardinality(${table.imageUrls}) <= 4`),

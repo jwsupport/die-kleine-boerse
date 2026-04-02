@@ -63,8 +63,9 @@ router.get("/listings", async (req, res): Promise<void> => {
   const { category, location, search, minPrice, maxPrice, limit, offset } = query.data;
 
   const conditions = [];
-  // Only show active listings on the public feed
+  // Only show active listings on the public feed; never show silent ones
   conditions.push(eq(listingsTable.status, "active"));
+  conditions.push(eq(listingsTable.isSilent, false));
   if (category) conditions.push(eq(listingsTable.category, category));
   if (location) conditions.push(ilike(listingsTable.location, `%${location}%`));
   if (search) {
@@ -118,8 +119,8 @@ router.post("/listings", async (req, res): Promise<void> => {
     return;
   }
 
-  const { sellerId, title, description, price, isNegotiable, category, location, imageUrls, listingType, lat, lng, boostTier } =
-    parsed.data;
+  const { sellerId, title, description, price, isNegotiable, category, location, imageUrls, listingType, lat, lng, boostTier, videoUrl, isSilent } =
+    parsed.data as any;
 
   const [existingProfile] = await db
     .select()
@@ -155,6 +156,18 @@ router.post("/listings", async (req, res): Promise<void> => {
   const durationMs = (isBoost || requiresPayment) ? 30 * 24 * 60 * 60 * 1000 : 10 * 24 * 60 * 60 * 1000;
   const expiryDate = new Date(Date.now() + durationMs);
 
+  // Video-Proof: listings ≥ €500 with a video URL go into pending_video until admin approves
+  const priceNum = Number(price);
+  const needsVideoProof = priceNum >= 500 && !!videoUrl;
+  let status: string;
+  if (needsVideoProof) {
+    status = "pending_video";
+  } else if (requiresPayment) {
+    status = "pending";
+  } else {
+    status = "active";
+  }
+
   const [listing] = await db
     .insert(listingsTable)
     .values({
@@ -170,13 +183,43 @@ router.post("/listings", async (req, res): Promise<void> => {
       lat: lat != null ? String(lat) : null,
       lng: lng != null ? String(lng) : null,
       expiryDate,
-      status: requiresPayment ? "pending" : "active",
+      status,
       paymentStatus: requiresPayment ? "pending" : "not_required",
       listingFee: String(fee),
+      videoUrl: videoUrl ?? null,
+      isSilent: isSilent ?? false,
     } as any)
     .returning();
 
   res.status(201).json(mapListing(listing));
+});
+
+router.get("/listings/archive", async (req, res): Promise<void> => {
+  const limit = Math.min(Number(req.query.limit) || 24, 100);
+  const offset = Number(req.query.offset) || 0;
+
+  const rows = await db
+    .select({
+      listing: listingsTable,
+      seller: profilesTable,
+    })
+    .from(listingsTable)
+    .leftJoin(profilesTable, eq(listingsTable.sellerId, profilesTable.id))
+    .where(eq(listingsTable.status, "sold"))
+    .orderBy(sql`${listingsTable.createdAt} desc`)
+    .limit(limit)
+    .offset(offset);
+
+  res.json(rows.map(({ listing, seller }) => ({
+    id: listing.id,
+    title: listing.title,
+    price: Number(listing.price),
+    category: listing.category,
+    location: listing.location,
+    imageUrls: listing.imageUrls,
+    createdAt: listing.createdAt.toISOString(),
+    sellerName: seller?.fullName ?? seller?.username ?? null,
+  })));
 });
 
 router.get("/listings/:id", async (req, res): Promise<void> => {

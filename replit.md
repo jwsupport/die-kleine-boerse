@@ -26,6 +26,11 @@
 - Age counter on listing detail (days since listing created)
 - **SEO layer** — `react-helmet-async` with `<SEO>` component (meta, og, twitter), Schema.org JSON-LD (`MarketplaceSchema`, `ListingSchema`, `BreadcrumbSchema`) on Home + ListingDetail; `<article>` semantic HTML with inline microdata on listing cards; footer with site attribution; `€` currency throughout
 - **Dynamic pricing** — `Vehicles & Mobility` (€5.49) and `Real Estate` (€9.49) require a one-time Stripe listing fee; other categories free. Paid listings created as `status='pending'` until Stripe confirms; `paymentStatus` + `listingFee` columns on DB; `/stripe/checkout-category` creates ad-hoc Stripe session with `price_data`; `/stripe/session-status/:listingId` verifies payment on return and activates listing; live fee summary card in the create form updates as category changes
+- **Video-Proof System** — listings ≥ €500 must provide a video URL (Speed.it link); backend sets `status='pending_video'`; admin must approve via "Video-Prüfung" tab before listing goes live. Schema: `videoUrl text` column on listings table.
+- **Archive** — sold listings visible at `/archive` (SEO-gold); "Verkauft" badge overlay + grayscale tint; archive link in footer. `GET /api/listings/archive` endpoint.
+- **KI-Exposé** — Gemini AI (gemini-2.5-flash via Replit AI Integrations) rewrites listing descriptions in Quiet Luxury Sotheby's style. Backend: `POST /api/ai/improve-description`. Frontend button next to description label in CreateListing.
+- **Silent Listing** — `is_silent boolean default false` column on listings; toggle in CreateListing; public feed filters out silent listings; only accessible via direct link.
+- **Admin Video Review** — "Video-Prüfung" tab in admin dashboard shows pending_video listings with embedded video player, approve (activates listing) and reject (deletes listing) buttons. Badge counter on tab. Endpoints: `GET/POST /api/admin/pending-videos/:id/approve`, `GET/POST /api/admin/pending-videos/:id/reject`.
 
 ## Overview
 

@@ -300,6 +300,82 @@ router.get("/admin/payments", async (req, res): Promise<void> => {
   res.json(AdminGetPaymentsResponse.parse(data));
 });
 
+router.get("/admin/pending-videos", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const rows = await db
+    .select({
+      listing: listingsTable,
+      seller: profilesTable,
+    })
+    .from(listingsTable)
+    .leftJoin(profilesTable, eq(listingsTable.sellerId, profilesTable.id))
+    .where(eq(listingsTable.status, "pending_video"))
+    .orderBy(desc(listingsTable.createdAt));
+
+  res.json(rows.map(({ listing, seller }) => ({
+    id: listing.id,
+    title: listing.title,
+    price: Number(listing.price),
+    category: listing.category,
+    location: listing.location,
+    videoUrl: (listing as any).videoUrl ?? null,
+    imageUrls: listing.imageUrls,
+    createdAt: listing.createdAt.toISOString(),
+    sellerId: listing.sellerId,
+    sellerName: seller?.fullName ?? seller?.username ?? null,
+    sellerEmail: (seller as any)?.email ?? null,
+  })));
+});
+
+router.post("/admin/pending-videos/:id/approve", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const { id } = req.params;
+  const expiryDate = new Date();
+  expiryDate.setDate(expiryDate.getDate() + 30);
+
+  const [listing] = await db
+    .update(listingsTable)
+    .set({ status: "active", expiryDate })
+    .where(eq(listingsTable.id, id))
+    .returning();
+
+  if (!listing) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.json({ ok: true });
+});
+
+router.post("/admin/pending-videos/:id/reject", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const { id } = req.params;
+  const { reason } = req.body as { reason?: string };
+
+  const [listing] = await db
+    .update(listingsTable)
+    .set({ status: "deleted", reportReason: reason ?? "Video-Proof abgelehnt" })
+    .where(eq(listingsTable.id, id))
+    .returning();
+
+  if (!listing) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.json({ ok: true });
+});
+
 router.get("/admin/market-intelligence", async (req, res): Promise<void> => {
   if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
     res.status(403).json({ error: "Forbidden" });

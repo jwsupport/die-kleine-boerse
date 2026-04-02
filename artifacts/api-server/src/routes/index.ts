@@ -10,6 +10,7 @@ import adminRouter from "./admin";
 import stripeRouter from "./stripe";
 import notifyRouter from "./notify";
 import favouritesRouter from "./favourites";
+import aiRouter from "./ai";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(adminRouter);
 router.use(stripeRouter);
 router.use(notifyRouter);
 router.use(favouritesRouter);
+router.use(aiRouter);
 
 export default router;
