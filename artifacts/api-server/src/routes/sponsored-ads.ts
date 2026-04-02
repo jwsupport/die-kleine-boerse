@@ -1,11 +1,26 @@
 import { Router, type IRouter } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { db, sponsoredAdsTable, profilesTable } from "@workspace/db";
 import { getUncachableStripeClient } from "../stripeClient";
 
 const router: IRouter = Router();
 
-const AD_PRICE_CENTS = 4900; // €49.00
+const AD_PRICE_CENTS = 4900;       // €49.00 regular
+const PREMIUM_PRICE_CENTS = 7900;  // €79.00 premium (6th slot, always top)
+
+function getWeekMonday(d: Date): string {
+  const day = d.getUTCDay(); // 0=Sun
+  const diff = day === 0 ? -6 : 1 - day;
+  const monday = new Date(d);
+  monday.setUTCDate(d.getUTCDate() + diff);
+  return monday.toISOString().split("T")[0]!;
+}
+
+function addWeeks(monday: string, weeks: number): string {
+  const d = new Date(monday);
+  d.setUTCDate(d.getUTCDate() + weeks * 7);
+  return d.toISOString().split("T")[0]!;
+}
 
 router.post("/sponsored-ads", async (req, res): Promise<void> => {
   if (!req.isAuthenticated()) {
@@ -14,7 +29,7 @@ router.post("/sponsored-ads", async (req, res): Promise<void> => {
   }
 
   const userId = (req.user as any).id as string;
-  const { title, description, imageUrl, targetUrl } = req.body;
+  const { title, description, imageUrl, targetUrl, isPremium } = req.body;
 
   if (!title?.trim() || !targetUrl?.trim()) {
     res.status(400).json({ error: "Titel und Ziel-URL sind erforderlich" });
@@ -31,6 +46,9 @@ router.post("/sponsored-ads", async (req, res): Promise<void> => {
     return;
   }
 
+  const premium = !!isPremium;
+  const priceCents = premium ? PREMIUM_PRICE_CENTS : AD_PRICE_CENTS;
+
   const [ad] = await db
     .insert(sponsoredAdsTable)
     .values({
@@ -41,6 +59,7 @@ router.post("/sponsored-ads", async (req, res): Promise<void> => {
       targetUrl: targetUrl.trim(),
       status: "pending",
       paymentStatus: "pending",
+      isPremium: premium,
     })
     .returning();
 
@@ -54,10 +73,14 @@ router.post("/sponsored-ads", async (req, res): Promise<void> => {
       {
         price_data: {
           currency: "eur",
-          unit_amount: AD_PRICE_CENTS,
+          unit_amount: priceCents,
           product_data: {
-            name: "Werbeplatz — Die kleine Börse",
-            description: `Ihre Werbeanzeige wird nach Admin-Prüfung auf der Startseite angezeigt.`,
+            name: premium
+              ? "Werbeplatz PREMIUM — Die kleine Börse"
+              : "Werbeplatz — Die kleine Börse",
+            description: premium
+              ? "Ihr Banner erscheint diese Woche ganz oben (Slot #1, Premium)."
+              : "Ihr Banner erscheint in der nächsten verfügbaren Woche (Slot 1–5).",
           },
         },
         quantity: 1,
@@ -100,28 +123,54 @@ router.get("/sponsored-ads/my", async (req, res): Promise<void> => {
     status: ad.status,
     paymentStatus: ad.paymentStatus,
     adminNote: ad.adminNote,
+    isPremium: ad.isPremium,
+    weekStart: ad.weekStart ?? null,
+    slotPosition: ad.slotPosition ?? null,
     createdAt: ad.createdAt.toISOString(),
   })));
 });
 
 router.get("/sponsored-ads/active", async (_req, res): Promise<void> => {
-  const rows = await db
-    .select({
-      ad: sponsoredAdsTable,
-      profile: profilesTable,
-    })
+  const currentMonday = getWeekMonday(new Date());
+
+  const premiumRows = await db
+    .select({ ad: sponsoredAdsTable, profile: profilesTable })
     .from(sponsoredAdsTable)
     .leftJoin(profilesTable, eq(sponsoredAdsTable.profileId, profilesTable.id))
-    .where(eq(sponsoredAdsTable.status, "approved"))
+    .where(
+      and(
+        eq(sponsoredAdsTable.status, "approved"),
+        eq(sponsoredAdsTable.isPremium, true),
+        eq(sponsoredAdsTable.weekStart, currentMonday),
+      ),
+    )
     .orderBy(desc(sponsoredAdsTable.createdAt))
-    .limit(6);
+    .limit(1);
 
-  res.json(rows.map(({ ad, profile }) => ({
+  const regularRows = await db
+    .select({ ad: sponsoredAdsTable, profile: profilesTable })
+    .from(sponsoredAdsTable)
+    .leftJoin(profilesTable, eq(sponsoredAdsTable.profileId, profilesTable.id))
+    .where(
+      and(
+        eq(sponsoredAdsTable.status, "approved"),
+        eq(sponsoredAdsTable.isPremium, false),
+        eq(sponsoredAdsTable.weekStart, currentMonday),
+      ),
+    )
+    .orderBy(sponsoredAdsTable.slotPosition)
+    .limit(5);
+
+  const all = [...premiumRows, ...regularRows];
+
+  res.json(all.map(({ ad, profile }) => ({
     id: ad.id,
     title: ad.title,
     description: ad.description,
     imageUrl: ad.imageUrl,
     targetUrl: ad.targetUrl,
+    isPremium: ad.isPremium,
+    slotPosition: ad.slotPosition,
     companyName: (profile as any)?.companyName ?? profile?.fullName ?? null,
   })));
 });

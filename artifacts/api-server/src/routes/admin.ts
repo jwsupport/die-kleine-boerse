@@ -452,9 +452,26 @@ router.get("/admin/sponsored-ads", async (req, res): Promise<void> => {
     status: ad.status,
     paymentStatus: ad.paymentStatus,
     adminNote: ad.adminNote,
+    isPremium: ad.isPremium,
+    weekStart: ad.weekStart ?? null,
+    slotPosition: ad.slotPosition ?? null,
     createdAt: ad.createdAt.toISOString(),
   })));
 });
+
+function getWeekMonday(d: Date): string {
+  const day = d.getUTCDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const monday = new Date(d);
+  monday.setUTCDate(d.getUTCDate() + diff);
+  return monday.toISOString().split("T")[0]!;
+}
+
+function addWeeks(monday: string, weeks: number): string {
+  const d = new Date(monday);
+  d.setUTCDate(d.getUTCDate() + weeks * 7);
+  return d.toISOString().split("T")[0]!;
+}
 
 router.patch("/admin/sponsored-ads/:id", async (req, res): Promise<void> => {
   if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
@@ -466,12 +483,57 @@ router.patch("/admin/sponsored-ads/:id", async (req, res): Promise<void> => {
   const { status, adminNote, title, description, imageUrl, targetUrl } = req.body;
 
   const updates: Record<string, any> = { updatedAt: new Date() };
-  if (status) updates.status = status;
   if (adminNote !== undefined) updates.adminNote = adminNote;
   if (title) updates.title = title;
   if (description !== undefined) updates.description = description;
   if (imageUrl !== undefined) updates.imageUrl = imageUrl;
   if (targetUrl) updates.targetUrl = targetUrl;
+
+  if (status === "approved") {
+    // Load ad to check isPremium
+    const [existing] = await db
+      .select()
+      .from(sponsoredAdsTable)
+      .where(eq(sponsoredAdsTable.id, id));
+
+    if (!existing) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    const currentMonday = getWeekMonday(new Date());
+
+    if (existing.isPremium) {
+      updates.weekStart = currentMonday;
+      updates.slotPosition = 0;
+    } else {
+      let targetMonday = currentMonday;
+      let assigned = false;
+      for (let attempt = 0; attempt < 52; attempt++) {
+        const { rows } = await db.execute(
+          sql`SELECT COUNT(*) as cnt FROM sponsored_ads
+              WHERE week_start = ${targetMonday}
+              AND is_premium = false
+              AND status = 'approved'`,
+        );
+        const cnt = Number((rows[0] as any)?.cnt ?? 0);
+        if (cnt < 5) {
+          updates.weekStart = targetMonday;
+          updates.slotPosition = cnt + 1;
+          assigned = true;
+          break;
+        }
+        targetMonday = addWeeks(targetMonday, 1);
+      }
+      if (!assigned) {
+        res.status(409).json({ error: "Alle Slots ausgebucht (52 Wochen im Voraus)." });
+        return;
+      }
+    }
+    updates.status = "approved";
+  } else if (status) {
+    updates.status = status;
+  }
 
   const [updated] = await db
     .update(sponsoredAdsTable)
@@ -484,7 +546,7 @@ router.patch("/admin/sponsored-ads/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json({ ok: true, ad: updated });
+  res.json({ ok: true, ad: updated, weekStart: updated.weekStart, slotPosition: updated.slotPosition });
 });
 
 router.get("/admin/market-intelligence", async (req, res): Promise<void> => {

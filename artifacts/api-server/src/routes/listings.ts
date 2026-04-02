@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, ilike, and, gte, lte, sql, count } from "drizzle-orm";
+import { notifyNewListing } from "../lib/adminEmail";
 import { db, listingsTable, profilesTable, searchStatsTable, businessBookingsTable } from "@workspace/db";
 import type { Listing } from "@workspace/db";
 import {
@@ -137,9 +138,10 @@ router.post("/listings", async (req, res): Promise<void> => {
     await db.insert(profilesTable).values({ id: sellerId });
   }
 
-  // Enforce image limit
-  if (imageUrls && imageUrls.length > 4) {
-    res.status(400).json({ error: "Maximum of 4 images per listing." });
+  // Enforce image limit — business sellers get 8, everyone else 4
+  const maxImages = existingProfile?.isBusiness ? 8 : 4;
+  if (imageUrls && imageUrls.length > maxImages) {
+    res.status(400).json({ error: `Maximum von ${maxImages} Bildern pro Inserat.` });
     return;
   }
 
@@ -196,6 +198,16 @@ router.post("/listings", async (req, res): Promise<void> => {
       isSilent: isSilent ?? false,
     } as any)
     .returning();
+
+  // Notify admin of new listing (fire-and-forget)
+  notifyNewListing({
+    id: listing.id,
+    title: listing.title,
+    price: Number(listing.price),
+    category: listing.category,
+    location: listing.location ?? null,
+    sellerId: listing.sellerId,
+  }).catch(() => {});
 
   // Auto-create a business_booking record if seller is a business and paid
   if (fee > 0) {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useCreateListing, useCreateCategoryCheckout } from "@workspace/api-client-react";
 import { useAuth } from "@workspace/replit-auth-web";
@@ -33,6 +33,15 @@ export function CreateListing() {
 
   const [selectedTier, setSelectedTier] = useState<"free" | "boost">("free");
   const [isImprovingDescription, setIsImprovingDescription] = useState(false);
+  const [isBusiness, setIsBusiness] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetch(`${import.meta.env.BASE_URL.replace(/\/+$/, "")}/api/profiles/${user.id}`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(p => { if (p?.isBusiness) setIsBusiness(true); })
+      .catch(() => {});
+  }, [user?.id]);
 
   const selectedCategory = categoryByLabel[formData.category];
   const categoryFee = selectedCategory?.fee ?? 0;
@@ -259,6 +268,7 @@ export function CreateListing() {
             <ImageUploader
               value={formData.imageUrls}
               onChange={(urls) => setFormData((p) => ({ ...p, imageUrls: urls }))}
+              maxImages={isBusiness ? 8 : 4}
             />
 
             {/* Video-Proof — shown when price ≥ €500 */}

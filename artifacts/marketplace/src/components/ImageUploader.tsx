@@ -5,11 +5,10 @@ import { useT } from "@/lib/i18n";
 interface ImageUploaderProps {
   value: string[];
   onChange: (urls: string[]) => void;
+  maxImages?: number;
 }
 
-const MAX_IMAGES = 4;
-
-export function ImageUploader({ value, onChange }: ImageUploaderProps) {
+export function ImageUploader({ value, onChange, maxImages = 4 }: ImageUploaderProps) {
   const t = useT();
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -18,7 +17,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
   const addUrl = () => {
     const trimmed = inputValue.trim();
     if (!trimmed) return;
-    if (value.length >= MAX_IMAGES) return;
+    if (value.length >= maxImages) return;
     onChange([...value, trimmed]);
     setInputValue("");
     setInputVisible(false);
@@ -44,13 +43,15 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
+  const cols = maxImages > 4 ? "grid-cols-4" : "grid-cols-4";
+
   return (
     <div>
       <label className="block text-xs uppercase tracking-widest text-slate-400 mb-3 font-semibold">
-        {t.uploader_gallery} ({value.length} / {MAX_IMAGES})
+        {t.uploader_gallery} ({value.length} / {maxImages})
       </label>
 
-      <div className="grid grid-cols-4 gap-3">
+      <div className={`grid ${cols} gap-3`}>
         {value.map((url, idx) => (
           <div
             key={idx}
@@ -76,7 +77,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
           </div>
         ))}
 
-        {value.length < MAX_IMAGES && !inputVisible && (
+        {value.length < maxImages && !inputVisible && (
           <button
             type="button"
             onClick={openInput}

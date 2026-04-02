@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, date, boolean, integer } from "drizzle-orm/pg-core";
 import { profilesTable } from "./profiles";
 
 export const sponsoredAdsTable = pgTable("sponsored_ads", {
@@ -12,6 +12,9 @@ export const sponsoredAdsTable = pgTable("sponsored_ads", {
   paymentStatus: text("payment_status").notNull().default("pending"),
   stripeSessionId: text("stripe_session_id"),
   adminNote: text("admin_note"),
+  isPremium: boolean("is_premium").notNull().default(false),
+  weekStart: date("week_start"),
+  slotPosition: integer("slot_position"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -7,6 +7,7 @@ import {
   LogoutMobileSessionResponse,
 } from "@workspace/api-zod";
 import { db, usersTable } from "@workspace/db";
+import { notifyNewUser } from "../lib/adminEmail";
 import {
   clearSession,
   getOidcConfig,
@@ -167,6 +168,16 @@ router.get("/callback", async (req: Request, res: Response) => {
   const dbUser = await upsertUser(
     claims as unknown as Record<string, unknown>,
   );
+
+  // Notify admin only on fresh registration (createdAt ≈ now)
+  const ageMs = Date.now() - new Date(dbUser.createdAt).getTime();
+  if (ageMs < 15_000) {
+    notifyNewUser({
+      id: dbUser.id,
+      email: dbUser.email ?? undefined,
+      username: [dbUser.firstName, dbUser.lastName].filter(Boolean).join(" ") || undefined,
+    }).catch(() => {});
+  }
 
   const now = Math.floor(Date.now() / 1000);
   const sessionData: SessionData = {
