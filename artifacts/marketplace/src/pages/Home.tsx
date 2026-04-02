@@ -18,12 +18,17 @@ export function Home() {
   const [category, setCategory] = useState<string>();
   const [location, setLocation] = useState("");
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
+  const [trendingListings, setTrendingListings] = useState<any[]>([]);
 
   useEffect(() => {
     const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
     fetch(`${base}/api/stats/search-trends`)
       .then((r) => r.ok ? r.json() : [])
       .then(setTrendingKeywords)
+      .catch(() => {});
+    fetch(`${base}/api/stats/trending-listings`)
+      .then((r) => r.ok ? r.json() : [])
+      .then(setTrendingListings)
       .catch(() => {});
   }, []);
 
@@ -159,6 +164,30 @@ export function Home() {
           )}
         </section>
       </main>
+
+      {trendingListings.length > 0 && (
+        <section className="py-20 bg-slate-50/60 border-t border-slate-100">
+          <div className="container mx-auto px-4 md:px-8 max-w-7xl">
+            <header className="flex flex-col md:flex-row md:justify-between md:items-end mb-12 gap-2">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-blue-600 font-bold mb-2">
+                  Market Intelligence
+                </p>
+                <h2 className="text-3xl font-light text-slate-900">Current Desires</h2>
+              </div>
+              <p className="text-slate-400 text-sm italic">
+                Basierend auf den meistgesuchten Begriffen dieser Woche.
+              </p>
+            </header>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 gap-y-12">
+              {trendingListings.map((listing, index) => (
+                <ListingCard key={listing.id} listing={listing} index={index} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <div className="container mx-auto px-4 md:px-8 max-w-7xl">
         <CategoryGrid />

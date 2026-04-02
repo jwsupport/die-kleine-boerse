@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { sql } from "drizzle-orm";
+import { sql, eq, and } from "drizzle-orm";
 import { db, listingsTable, searchStatsTable } from "@workspace/db";
 import {
   GetCategoryStatsResponse,
@@ -62,6 +62,64 @@ router.get("/stats/recent", async (req, res): Promise<void> => {
       })),
     ),
   );
+});
+
+router.get("/stats/trending-listings", async (_req, res): Promise<void> => {
+  const since7d = new Date();
+  since7d.setDate(since7d.getDate() - 7);
+
+  const topKeywords = await db
+    .select({ keyword: searchStatsTable.keyword })
+    .from(searchStatsTable)
+    .where(sql`${searchStatsTable.lastSearchedAt} > ${since7d}`)
+    .orderBy(sql`${searchStatsTable.searchCount} desc`)
+    .limit(3);
+
+  if (topKeywords.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  const kwConditions = topKeywords.map(
+    (r) => sql`(${listingsTable.title} ilike ${"%" + r.keyword + "%"} or ${listingsTable.description} ilike ${"%" + r.keyword + "%"})`
+  );
+
+  const rows = await db
+    .select()
+    .from(listingsTable)
+    .where(
+      and(
+        eq(listingsTable.status, "active"),
+        sql`(${sql.join(kwConditions, sql` OR `)})`
+      )
+    )
+    .orderBy(sql`${listingsTable.createdAt} desc`)
+    .limit(8);
+
+  const now = Date.now();
+  res.json(rows.map((l) => ({
+    id: l.id,
+    sellerId: l.sellerId,
+    title: l.title,
+    description: l.description,
+    price: Number(l.price),
+    isNegotiable: l.isNegotiable,
+    category: l.category,
+    location: l.location,
+    imageUrls: l.imageUrls,
+    status: l.status,
+    listingType: l.listingType,
+    isReported: l.isReported,
+    reportReason: l.reportReason,
+    lat: l.lat != null ? Number(l.lat) : null,
+    lng: l.lng != null ? Number(l.lng) : null,
+    expiryDate: l.expiryDate ? new Date(l.expiryDate).toISOString() : null,
+    paidAt: l.paidAt ? new Date(l.paidAt).toISOString() : null,
+    paymentStatus: l.paymentStatus,
+    listingFee: Number(l.listingFee),
+    daysAge: Math.floor((now - l.createdAt.getTime()) / (1000 * 60 * 60 * 24)),
+    createdAt: l.createdAt.toISOString(),
+  })));
 });
 
 router.get("/stats/search-trends", async (_req, res): Promise<void> => {
