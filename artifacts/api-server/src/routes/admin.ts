@@ -414,12 +414,10 @@ router.patch("/admin/business-bookings/:id/mark-paid", async (req, res): Promise
   }
 
   const { id } = req.params;
-  const now = new Date();
-  const invoiceNumber = `DKB-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${id.slice(0, 6).toUpperCase()}`;
 
   const [updated] = await db
     .update(businessBookingsTable)
-    .set({ paymentStatus: "paid", invoiceNumber })
+    .set({ paymentStatus: "paid" })
     .where(eq(businessBookingsTable.id, id))
     .returning();
 
@@ -428,7 +426,7 @@ router.patch("/admin/business-bookings/:id/mark-paid", async (req, res): Promise
     return;
   }
 
-  res.json({ ok: true, invoiceNumber });
+  res.json({ ok: true, invoiceNumber: updated.invoiceNumber });
 });
 
 router.get("/admin/market-intelligence", async (req, res): Promise<void> => {

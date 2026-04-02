@@ -1,9 +1,13 @@
+import React from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/lib/i18n";
+import { useAuth } from "@workspace/replit-auth-web";
+import { useGetProfile } from "@workspace/api-client-react";
+import { OnboardingModal } from "@/components/OnboardingModal";
 import NotFound from "@/pages/not-found";
 
 import { Home } from "@/pages/Home";
@@ -39,6 +43,27 @@ function Router() {
   );
 }
 
+function OnboardingGate({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const { data: profile } = useGetProfile(user?.id ?? "", {
+    query: { enabled: !!user?.id }
+  });
+
+  const showOnboarding = !!user && !!profile && !(profile as any).setupComplete;
+
+  return (
+    <>
+      {children}
+      {showOnboarding && (
+        <OnboardingModal
+          userId={user.id}
+          onComplete={() => {}}
+        />
+      )}
+    </>
+  );
+}
+
 function App() {
   return (
     <HelmetProvider>
@@ -46,7 +71,9 @@ function App() {
         <TooltipProvider>
           <LanguageProvider>
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-              <Router />
+              <OnboardingGate>
+                <Router />
+              </OnboardingGate>
             </WouterRouter>
             <Toaster />
           </LanguageProvider>

@@ -11,6 +11,7 @@ import stripeRouter from "./stripe";
 import notifyRouter from "./notify";
 import favouritesRouter from "./favourites";
 import aiRouter from "./ai";
+import invoicesRouter from "./invoices";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(stripeRouter);
 router.use(notifyRouter);
 router.use(favouritesRouter);
 router.use(aiRouter);
+router.use(invoicesRouter);
 
 export default router;

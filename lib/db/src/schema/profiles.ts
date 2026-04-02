@@ -13,6 +13,7 @@ export const profilesTable = pgTable("profiles", {
   isBusiness: boolean("is_business").notNull().default(false),
   companyName: text("company_name"),
   vatId: text("vat_id"),
+  setupComplete: boolean("setup_complete").notNull().default(false),
 });
 
 export const insertProfileSchema = createInsertSchema(profilesTable).omit({ createdAt: true });

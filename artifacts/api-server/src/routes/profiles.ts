@@ -41,6 +41,7 @@ router.get("/profiles/:id", async (req, res): Promise<void> => {
     isBusiness: profile.isBusiness,
     companyName: profile.companyName ?? null,
     vatId: profile.vatId ?? null,
+    setupComplete: (profile as any).setupComplete ?? false,
   });
 });
 
@@ -68,8 +69,8 @@ router.patch("/profiles/:id", async (req, res): Promise<void> => {
   }
 
   const { fullName, username } = body.data;
-  const { isBusiness, companyName, vatId } = req.body as {
-    isBusiness?: boolean; companyName?: string; vatId?: string;
+  const { isBusiness, companyName, vatId, setupComplete } = req.body as {
+    isBusiness?: boolean; companyName?: string; vatId?: string; setupComplete?: boolean;
   };
 
   // Check username uniqueness if a new username is being set
@@ -95,6 +96,7 @@ router.patch("/profiles/:id", async (req, res): Promise<void> => {
   if (isBusiness !== undefined) (updateData as any).isBusiness = isBusiness;
   if (companyName !== undefined) (updateData as any).companyName = companyName?.trim() || null;
   if (vatId !== undefined) (updateData as any).vatId = vatId?.trim() || null;
+  if (setupComplete !== undefined) (updateData as any).setupComplete = setupComplete;
 
   const [updated] = await db
     .update(profilesTable)
@@ -116,6 +118,7 @@ router.patch("/profiles/:id", async (req, res): Promise<void> => {
     isBusiness: (updated as any).isBusiness ?? false,
     companyName: (updated as any).companyName ?? null,
     vatId: (updated as any).vatId ?? null,
+    setupComplete: (updated as any).setupComplete ?? false,
   });
 });
 

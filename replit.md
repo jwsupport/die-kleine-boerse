@@ -51,18 +51,21 @@
   - Video-Proof Status (Freischaltung / Ablehnung) → an Verkäufer
 - **Trigger-Punkte**: `PATCH /api/profiles/:id` (isBusiness→true), `PATCH /admin/business-bookings/:id/mark-paid`, `POST /admin/pending-videos/:id/approve|reject`
 
-### 2. Registrierungsfluss Privat/Gewerbe
-- Toggle UI bei Registrierung (Privat / Gewerbe) mit animierten Zusatzfeldern
-- Status `pending_business` für neue Gewerbekunden → manuelle Freischaltung im Admin
-- DB-Felder bereits vorhanden (is_business, company_name, vat_id)
+### 2. Registrierungsfluss Privat/Gewerbe — IMPLEMENTIERT
+- Onboarding-Modal nach erstem Login: Privat/Gewerbe-Toggle mit animierten Zusatzfeldern
+- `setup_complete boolean` Spalte auf profiles (default false), Modal erscheint bis gespeichert
+- OnboardingModal component: `artifacts/marketplace/src/components/OnboardingModal.tsx`
+- OnboardingGate in App.tsx umhüllt die gesamte App
 
-### 3. Automatische Rechnungsnummern via DB-Trigger
+### 3. Automatische Rechnungsnummern via DB-Trigger — IMPLEMENTIERT
 - SQL-Funktion `generate_invoice_number()` → Format `DKB-2026-0001` (fortlaufend pro Jahr)
-- Trigger `tr_generate_invoice` auf `business_bookings` BEFORE INSERT
+- Trigger `tr_generate_invoice` auf `business_bookings` BEFORE INSERT — live in der DB
 
-### 4. PDF-Rechnung für Gewerbekunden
-- PDF-Generierung nach Zahlung, abrufbar im Nutzerprofil
-- Button "Rechnung herunterladen" erscheint wenn paymentStatus = 'paid'
+### 4. PDF-Rechnung für Gewerbekunden — IMPLEMENTIERT
+- pdfkit installiert in api-server (externalized in build.mjs)
+- `GET /api/my/business-bookings` — gibt eigene Buchungen zurück
+- `GET /api/business-bookings/:id/invoice.pdf` — streamt PDF (nur eigene + paid)
+- Profil-Seite: "Meine Rechnungen" Sektion für Business-Owner mit Rechnungsnummer, Status + PDF-Download-Button
 
 ## Overview
 

@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Star, Pencil, BadgeCheck, Briefcase } from "lucide-react";
+import { Star, Pencil, BadgeCheck, Briefcase, FileDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -74,6 +74,21 @@ export function Profile() {
   const [editIsBusiness, setEditIsBusiness] = useState(false);
   const [editCompanyName, setEditCompanyName] = useState("");
   const [editVatId, setEditVatId] = useState("");
+
+  type MyBooking = {
+    id: string; listingTitle: string; amount: number | null;
+    paymentStatus: string; invoiceNumber: string | null; createdAt: string;
+  };
+  const [myBookings, setMyBookings] = useState<MyBooking[]>([]);
+
+  useEffect(() => {
+    if (!isOwner || !(profile as any)?.isBusiness) return;
+    const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+    fetch(`${base}/api/my/business-bookings`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : [])
+      .then(setMyBookings)
+      .catch(() => {});
+  }, [isOwner, (profile as any)?.isBusiness]);
 
   useEffect(() => {
     if (profile && editOpen) {
@@ -280,6 +295,55 @@ export function Profile() {
                 {t.profile_memberSince} {format(new Date(profile.createdAt), "MMMM yyyy")}
               </p>
             </header>
+
+            {/* Business Invoices — only for owner who is a business */}
+            {isOwner && (profile as any).isBusiness && (
+              <div>
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-4 mb-5">
+                  <Briefcase className="w-4 h-4 text-slate-500" />
+                  <h2 className="text-base font-medium text-slate-900">Meine Rechnungen</h2>
+                </div>
+                {myBookings.length === 0 ? (
+                  <p className="text-sm text-slate-400 italic text-center py-6 border border-dashed border-slate-200 rounded-xl">
+                    Noch keine Buchungen vorhanden
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {myBookings.map(booking => (
+                      <div key={booking.id} className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          {booking.invoiceNumber && (
+                            <p className="text-[10px] font-mono text-blue-600 font-bold mb-0.5">
+                              {booking.invoiceNumber}
+                            </p>
+                          )}
+                          <p className="text-sm text-slate-700 font-medium truncate">{booking.listingTitle}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {booking.amount != null && (
+                              <span className="text-xs text-slate-500">€{booking.amount.toFixed(2)}</span>
+                            )}
+                            <span className={`text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded-full ${booking.paymentStatus === "paid" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                              {booking.paymentStatus === "paid" ? "Bezahlt" : "Offen"}
+                            </span>
+                          </div>
+                        </div>
+                        {booking.paymentStatus === "paid" && (
+                          <a
+                            href={`${import.meta.env.BASE_URL.replace(/\/+$/, "")}/api/business-bookings/${booking.id}/invoice.pdf`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-shrink-0 flex items-center gap-1.5 text-xs font-medium text-slate-900 hover:text-blue-600 border border-slate-200 hover:border-blue-300 rounded-xl px-3 py-2 bg-white transition-colors"
+                          >
+                            <FileDown className="w-3.5 h-3.5" />
+                            PDF
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Ratings Section */}
             <div>
