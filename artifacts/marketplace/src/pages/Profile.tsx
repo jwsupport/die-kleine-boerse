@@ -74,6 +74,12 @@ export function Profile() {
   const [editIsBusiness, setEditIsBusiness] = useState(false);
   const [editCompanyName, setEditCompanyName] = useState("");
   const [editVatId, setEditVatId] = useState("");
+  const [editStreet, setEditStreet] = useState("");
+  const [editPostalCode, setEditPostalCode] = useState("");
+  const [editCity, setEditCity] = useState("");
+  const [editCountry, setEditCountry] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editWebsite, setEditWebsite] = useState("");
 
   type MyBooking = {
     id: string; listingTitle: string; amount: number | null;
@@ -97,6 +103,12 @@ export function Profile() {
       setEditIsBusiness((profile as any).isBusiness ?? false);
       setEditCompanyName((profile as any).companyName ?? "");
       setEditVatId((profile as any).vatId ?? "");
+      setEditStreet((profile as any).street ?? "");
+      setEditPostalCode((profile as any).postalCode ?? "");
+      setEditCity((profile as any).city ?? "");
+      setEditCountry((profile as any).country ?? "");
+      setEditPhone((profile as any).phone ?? "");
+      setEditWebsite((profile as any).website ?? "");
     }
   }, [profile, editOpen]);
 
@@ -106,6 +118,12 @@ export function Profile() {
     setEditIsBusiness((profile as any)?.isBusiness ?? false);
     setEditCompanyName((profile as any)?.companyName ?? "");
     setEditVatId((profile as any)?.vatId ?? "");
+    setEditStreet((profile as any)?.street ?? "");
+    setEditPostalCode((profile as any)?.postalCode ?? "");
+    setEditCity((profile as any)?.city ?? "");
+    setEditCountry((profile as any)?.country ?? "");
+    setEditPhone((profile as any)?.phone ?? "");
+    setEditWebsite((profile as any)?.website ?? "");
     setEditOpen(true);
   };
 
@@ -119,6 +137,12 @@ export function Profile() {
           isBusiness: editIsBusiness,
           companyName: editIsBusiness ? editCompanyName.trim() || null : null,
           vatId: editIsBusiness ? editVatId.trim() || null : null,
+          street: editIsBusiness ? editStreet.trim() || null : null,
+          postalCode: editIsBusiness ? editPostalCode.trim() || null : null,
+          city: editIsBusiness ? editCity.trim() || null : null,
+          country: editIsBusiness ? editCountry.trim() || null : null,
+          phone: editIsBusiness ? editPhone.trim() || null : null,
+          website: editIsBusiness ? editWebsite.trim() || null : null,
         } as any,
       },
       {
@@ -521,6 +545,74 @@ export function Profile() {
                       maxLength={30}
                       placeholder="DE123456789"
                     />
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-3 space-y-3">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">
+                      Geschäftsadresse
+                    </p>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit-street">Straße & Hausnummer</Label>
+                      <Input
+                        id="edit-street"
+                        value={editStreet}
+                        onChange={e => setEditStreet(e.target.value)}
+                        maxLength={120}
+                        placeholder="Musterstraße 1"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="edit-postal">PLZ</Label>
+                        <Input
+                          id="edit-postal"
+                          value={editPostalCode}
+                          onChange={e => setEditPostalCode(e.target.value)}
+                          maxLength={10}
+                          placeholder="12345"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="edit-city">Stadt</Label>
+                        <Input
+                          id="edit-city"
+                          value={editCity}
+                          onChange={e => setEditCity(e.target.value)}
+                          maxLength={80}
+                          placeholder="Wien"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit-country">Land (optional)</Label>
+                      <Input
+                        id="edit-country"
+                        value={editCountry}
+                        onChange={e => setEditCountry(e.target.value)}
+                        maxLength={60}
+                        placeholder="Österreich"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit-phone">Telefon (optional)</Label>
+                      <Input
+                        id="edit-phone"
+                        value={editPhone}
+                        onChange={e => setEditPhone(e.target.value)}
+                        maxLength={40}
+                        placeholder="+43 1 234 5678"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit-website">Website (optional)</Label>
+                      <Input
+                        id="edit-website"
+                        value={editWebsite}
+                        onChange={e => setEditWebsite(e.target.value)}
+                        maxLength={120}
+                        placeholder="www.meinefirma.at"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

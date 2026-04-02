@@ -41,6 +41,12 @@ router.get("/profiles/:id", async (req, res): Promise<void> => {
     isBusiness: profile.isBusiness,
     companyName: profile.companyName ?? null,
     vatId: profile.vatId ?? null,
+    street: profile.street ?? null,
+    postalCode: profile.postalCode ?? null,
+    city: profile.city ?? null,
+    country: profile.country ?? null,
+    phone: profile.phone ?? null,
+    website: profile.website ?? null,
     setupComplete: (profile as any).setupComplete ?? false,
   });
 });
@@ -69,8 +75,10 @@ router.patch("/profiles/:id", async (req, res): Promise<void> => {
   }
 
   const { fullName, username } = body.data;
-  const { isBusiness, companyName, vatId, setupComplete } = req.body as {
+  const { isBusiness, companyName, vatId, setupComplete, street, postalCode, city, country, phone, website } = req.body as {
     isBusiness?: boolean; companyName?: string; vatId?: string; setupComplete?: boolean;
+    street?: string; postalCode?: string; city?: string; country?: string;
+    phone?: string; website?: string;
   };
 
   // Check username uniqueness if a new username is being set
@@ -96,6 +104,12 @@ router.patch("/profiles/:id", async (req, res): Promise<void> => {
   if (isBusiness !== undefined) (updateData as any).isBusiness = isBusiness;
   if (companyName !== undefined) (updateData as any).companyName = companyName?.trim() || null;
   if (vatId !== undefined) (updateData as any).vatId = vatId?.trim() || null;
+  if (street !== undefined) (updateData as any).street = street?.trim() || null;
+  if (postalCode !== undefined) (updateData as any).postalCode = postalCode?.trim() || null;
+  if (city !== undefined) (updateData as any).city = city?.trim() || null;
+  if (country !== undefined) (updateData as any).country = country?.trim() || null;
+  if (phone !== undefined) (updateData as any).phone = phone?.trim() || null;
+  if (website !== undefined) (updateData as any).website = website?.trim() || null;
   if (setupComplete !== undefined) (updateData as any).setupComplete = setupComplete;
 
   const [updated] = await db

@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { MapPin, Clock, ArrowRight, Star, Flag } from "lucide-react";
+import { MapPin, Clock, ArrowRight, Star, Flag, Building2, Phone, Globe, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ListingCard } from "@/components/ListingCard";
 import { ShareListing } from "@/components/ShareListing";
@@ -256,29 +256,83 @@ export function ListingDetail() {
               />
 
               <div className="border-t border-slate-200 pt-8 mt-auto">
-                {/* Business badge */}
-                {(listing.seller as any).isBusiness && (
-                  <div className="mb-4 pb-4 border-b border-slate-100">
-                    <div className="flex items-center gap-2 text-slate-900">
-                      <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-700">
-                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                        </svg>
-                      </div>
-                      <div>
-                        <span className="text-[10px] uppercase tracking-widest font-bold text-slate-900">
-                          Gewerblicher Anbieter
-                        </span>
-                        {(listing.seller as any).companyName && (
-                          <span className="block text-xs text-slate-500 leading-none mt-0.5">
-                            {(listing.seller as any).companyName}
+                {/* Business info card — shown when seller is a business with full address */}
+                {(() => {
+                  const s = listing.seller as any;
+                  const hasAddress = s.isBusiness && s.street && s.postalCode && s.city;
+                  return s.isBusiness ? (
+                    <div className="mb-6">
+                      {/* Header badge */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center flex-shrink-0">
+                          <Building2 className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase tracking-widest font-bold text-slate-900">
+                            Gewerblicher Anbieter
                           </span>
-                        )}
+                          {s.companyName && (
+                            <span className="block text-xs text-slate-500 leading-none mt-0.5">
+                              {s.companyName}
+                            </span>
+                          )}
+                        </div>
                       </div>
+
+                      {/* Full address card — only when address is complete */}
+                      {hasAddress && (
+                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3">
+                          <div className="flex items-start gap-3">
+                            <MapPin className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                            <div className="text-sm text-slate-700 leading-snug">
+                              {s.companyName && (
+                                <p className="font-medium text-slate-900">{s.companyName}</p>
+                              )}
+                              <p>{s.street}</p>
+                              <p>{s.postalCode} {s.city}</p>
+                              {s.country && s.country !== "Deutschland" && s.country !== "Austria" && s.country !== "Switzerland" && (
+                                <p className="text-slate-500">{s.country}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {s.phone && (
+                            <div className="flex items-center gap-3 pt-1 border-t border-slate-200/60">
+                              <Phone className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                              <a
+                                href={`tel:${s.phone}`}
+                                className="text-sm text-slate-700 hover:text-slate-900 transition-colors"
+                              >
+                                {s.phone}
+                              </a>
+                            </div>
+                          )}
+
+                          {s.website && (
+                            <div className="flex items-center gap-3 border-t border-slate-200/60 pt-1">
+                              <Globe className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                              <a
+                                href={s.website.startsWith("http") ? s.website : `https://${s.website}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors truncate"
+                              >
+                                {s.website.replace(/^https?:\/\//, "")}
+                                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                              </a>
+                            </div>
+                          )}
+
+                          {s.vatId && (
+                            <p className="text-[10px] text-slate-400 pt-1 border-t border-slate-200/60">
+                              USt-IdNr.: {s.vatId}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  ) : null;
+                })()}
 
                 <Link href={`/profile/${listing.sellerId}`} className="block group mb-8">
                   <div className="flex items-center gap-4">

@@ -13,6 +13,12 @@ export const profilesTable = pgTable("profiles", {
   isBusiness: boolean("is_business").notNull().default(false),
   companyName: text("company_name"),
   vatId: text("vat_id"),
+  street: text("street"),
+  postalCode: text("postal_code"),
+  city: text("city"),
+  country: text("country"),
+  phone: text("phone"),
+  website: text("website"),
   setupComplete: boolean("setup_complete").notNull().default(false),
 });
 
