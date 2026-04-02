@@ -11,6 +11,7 @@ import { SEO } from "@/components/seo/SEO";
 import { MarketplaceSchema } from "@/components/seo/schemas";
 import { categoryByLabel } from "@/lib/categories";
 import { CategoryGrid } from "@/components/CategoryGrid";
+import { SocialPromiseBanner } from "@/components/SocialPromiseBanner";
 import { useT, getCatLabel } from "@/lib/i18n";
 
 export function Home() {
@@ -196,6 +197,8 @@ export function Home() {
           </div>
         </section>
       )}
+
+      <SocialPromiseBanner />
 
       <div className="container mx-auto px-4 md:px-8 max-w-7xl">
         <CategoryGrid />
