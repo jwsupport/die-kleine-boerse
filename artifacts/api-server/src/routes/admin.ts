@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, gte, lt, sql, desc } from "drizzle-orm";
-import { db, listingsTable, profilesTable, searchStatsTable, businessBookingsTable } from "@workspace/db";
+import { db, listingsTable, profilesTable, searchStatsTable, businessBookingsTable, sponsoredAdsTable } from "@workspace/db";
 import {
   AdminGetListingsQueryParams,
   AdminGetListingsResponse,
@@ -427,6 +427,64 @@ router.patch("/admin/business-bookings/:id/mark-paid", async (req, res): Promise
   }
 
   res.json({ ok: true, invoiceNumber: updated.invoiceNumber });
+});
+
+router.get("/admin/sponsored-ads", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const rows = await db
+    .select({ ad: sponsoredAdsTable, profile: profilesTable })
+    .from(sponsoredAdsTable)
+    .leftJoin(profilesTable, eq(sponsoredAdsTable.profileId, profilesTable.id))
+    .orderBy(desc(sponsoredAdsTable.createdAt));
+
+  res.json(rows.map(({ ad, profile }) => ({
+    id: ad.id,
+    profileId: ad.profileId,
+    companyName: (profile as any)?.companyName ?? profile?.fullName ?? "—",
+    title: ad.title,
+    description: ad.description,
+    imageUrl: ad.imageUrl,
+    targetUrl: ad.targetUrl,
+    status: ad.status,
+    paymentStatus: ad.paymentStatus,
+    adminNote: ad.adminNote,
+    createdAt: ad.createdAt.toISOString(),
+  })));
+});
+
+router.patch("/admin/sponsored-ads/:id", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const { id } = req.params;
+  const { status, adminNote, title, description, imageUrl, targetUrl } = req.body;
+
+  const updates: Record<string, any> = { updatedAt: new Date() };
+  if (status) updates.status = status;
+  if (adminNote !== undefined) updates.adminNote = adminNote;
+  if (title) updates.title = title;
+  if (description !== undefined) updates.description = description;
+  if (imageUrl !== undefined) updates.imageUrl = imageUrl;
+  if (targetUrl) updates.targetUrl = targetUrl;
+
+  const [updated] = await db
+    .update(sponsoredAdsTable)
+    .set(updates)
+    .where(eq(sponsoredAdsTable.id, id))
+    .returning();
+
+  if (!updated) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  res.json({ ok: true, ad: updated });
 });
 
 router.get("/admin/market-intelligence", async (req, res): Promise<void> => {

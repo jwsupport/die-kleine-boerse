@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useGetListings, useGetCategoryStats, getGetListingsQueryKey, getGetCategoryStatsQueryKey } from "@workspace/api-client-react";
 import { ListingCard } from "@/components/ListingCard";
+import { SponsoredAdSidebar } from "@/components/SponsoredAdSidebar";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Input } from "@/components/ui/input";
@@ -136,7 +137,8 @@ export function Home() {
           </div>
         </header>
 
-        <section aria-label="Listings">
+        <div className="flex gap-8 items-start">
+        <section aria-label="Listings" className="flex-1 min-w-0">
           {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5 md:gap-6 gap-y-6 sm:gap-y-8 md:gap-y-10">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -163,6 +165,12 @@ export function Home() {
             </div>
           )}
         </section>
+
+        {/* Sponsored Ads Sidebar — only on wide screens */}
+        <div className="hidden xl:block w-56 shrink-0 pt-1">
+          <SponsoredAdSidebar />
+        </div>
+        </div>
       </main>
 
       {trendingListings.length > 0 && (

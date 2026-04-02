@@ -115,6 +115,68 @@ export function Admin() {
     }
   };
 
+  type SponsoredAd = {
+    id: string; profileId: string; companyName: string;
+    title: string; description?: string; imageUrl?: string; targetUrl: string;
+    status: string; paymentStatus: string; adminNote?: string; createdAt: string;
+  };
+  const [sponsoredAds, setSponsoredAds] = useState<SponsoredAd[]>([]);
+  const [sponsoredAdsLoading, setSponsoredAdsLoading] = useState(false);
+  const [adEditId, setAdEditId] = useState<string | null>(null);
+  const [adEditForm, setAdEditForm] = useState({ title: "", description: "", imageUrl: "", targetUrl: "", adminNote: "" });
+  const [adActionPending, setAdActionPending] = useState<string | null>(null);
+
+  const loadSponsoredAds = async () => {
+    setSponsoredAdsLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/sponsored-ads`, { credentials: "include" });
+      if (res.ok) setSponsoredAds(await res.json());
+    } finally {
+      setSponsoredAdsLoading(false);
+    }
+  };
+
+  const handleAdAction = async (id: string, status: "approved" | "rejected", adminNote?: string) => {
+    setAdActionPending(id);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/sponsored-ads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status, adminNote }),
+      });
+      if (res.ok) {
+        setSponsoredAds(prev => prev.map(a => a.id === id ? { ...a, status, adminNote: adminNote ?? a.adminNote } : a));
+        toast({ title: status === "approved" ? "Werbung freigegeben" : "Werbung abgelehnt" });
+      }
+    } finally {
+      setAdActionPending(null);
+    }
+  };
+
+  const handleAdEditSave = async () => {
+    if (!adEditId) return;
+    setAdActionPending(adEditId);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/sponsored-ads/${adEditId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(adEditForm),
+      });
+      if (res.ok) {
+        setSponsoredAds(prev => prev.map(a => a.id === adEditId ? { ...a, ...adEditForm } : a));
+        setAdEditId(null);
+        toast({ title: "Werbung gespeichert" });
+      }
+    } finally {
+      setAdActionPending(null);
+    }
+  };
+
   const loadPendingVideos = async () => {
     setPendingVideosLoading(true);
     try {
@@ -426,6 +488,18 @@ export function Admin() {
               onClick={() => { if (businessBookings.length === 0) loadBusinessBookings(); }}
             >
               B2B
+            </TabsTrigger>
+            <TabsTrigger
+              value="ads"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900 relative"
+              onClick={() => { if (sponsoredAds.length === 0) loadSponsoredAds(); }}
+            >
+              Werbung
+              {sponsoredAds.filter(a => a.status === "pending" && a.paymentStatus === "paid").length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {sponsoredAds.filter(a => a.status === "pending" && a.paymentStatus === "paid").length}
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -1111,6 +1185,143 @@ export function Admin() {
               </div>
             )}
           </TabsContent>
+
+          {/* ── WERBUNG TAB ───────────────────────────────────────────────── */}
+          <TabsContent value="ads" className="space-y-6">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-1">Sponsored Ads</p>
+                <h2 className="text-2xl font-light text-slate-900">Werbeanzeigen</h2>
+              </div>
+              <Button variant="outline" size="sm" onClick={loadSponsoredAds} disabled={sponsoredAdsLoading}>
+                {sponsoredAdsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aktualisieren"}
+              </Button>
+            </div>
+
+            {sponsoredAdsLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              </div>
+            ) : sponsoredAds.length === 0 ? (
+              <div className="py-20 text-center border border-dashed border-slate-200 rounded-2xl">
+                <p className="text-slate-400 text-sm">Noch keine Werbebuchungen vorhanden</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sponsoredAds.map(ad => {
+                  const statusColor = ad.status === "approved" ? "bg-green-50 text-green-700" : ad.status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700";
+                  const isEditing = adEditId === ad.id;
+                  return (
+                    <div key={ad.id} className="border border-slate-200 rounded-xl p-5 bg-white space-y-4">
+                      <div className="flex items-start gap-4">
+                        {ad.imageUrl && (
+                          <div className="w-28 h-16 bg-slate-100 rounded-md overflow-hidden flex-shrink-0">
+                            <img src={ad.imageUrl} alt={ad.title} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <div>
+                              <p className="font-semibold text-slate-900">{ad.title}</p>
+                              <p className="text-xs text-slate-500 mt-0.5">{ad.companyName}</p>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${statusColor}`}>
+                                {ad.status === "approved" ? "Freigegeben" : ad.status === "rejected" ? "Abgelehnt" : "Ausstehend"}
+                              </span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${ad.paymentStatus === "paid" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
+                                {ad.paymentStatus === "paid" ? "Bezahlt" : "Nicht bezahlt"}
+                              </span>
+                            </div>
+                          </div>
+                          {ad.description && <p className="text-sm text-slate-500 mt-1.5">{ad.description}</p>}
+                          <a href={ad.targetUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-1 block truncate">{ad.targetUrl}</a>
+                          {ad.adminNote && (
+                            <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded mt-1.5">Notiz: {ad.adminNote}</p>
+                          )}
+                          <p className="text-[10px] text-slate-400 mt-1">
+                            {new Date(ad.createdAt).toLocaleDateString("de-DE")}
+                          </p>
+                        </div>
+                      </div>
+
+                      {isEditing ? (
+                        <div className="space-y-3 pt-2 border-t border-slate-100">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Titel</Label>
+                              <Input value={adEditForm.title} onChange={e => setAdEditForm(f => ({ ...f, title: e.target.value }))} className="h-8 text-sm" />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Ziel-URL</Label>
+                              <Input value={adEditForm.targetUrl} onChange={e => setAdEditForm(f => ({ ...f, targetUrl: e.target.value }))} className="h-8 text-sm" />
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Beschreibung</Label>
+                            <Input value={adEditForm.description} onChange={e => setAdEditForm(f => ({ ...f, description: e.target.value }))} className="h-8 text-sm" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Bild-URL</Label>
+                            <Input value={adEditForm.imageUrl} onChange={e => setAdEditForm(f => ({ ...f, imageUrl: e.target.value }))} className="h-8 text-sm" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Admin-Notiz</Label>
+                            <Input value={adEditForm.adminNote} onChange={e => setAdEditForm(f => ({ ...f, adminNote: e.target.value }))} className="h-8 text-sm" placeholder="Interne Notiz oder Ablehnungsgrund" />
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <Button variant="outline" size="sm" onClick={() => setAdEditId(null)}>Abbrechen</Button>
+                            <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white" onClick={handleAdEditSave} disabled={adActionPending === ad.id}>
+                              {adActionPending === ad.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Speichern"}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 flex-wrap border-t border-slate-100 pt-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs"
+                            onClick={() => {
+                              setAdEditId(ad.id);
+                              setAdEditForm({ title: ad.title, description: ad.description ?? "", imageUrl: ad.imageUrl ?? "", targetUrl: ad.targetUrl, adminNote: ad.adminNote ?? "" });
+                            }}
+                          >
+                            Bearbeiten
+                          </Button>
+                          {ad.status !== "approved" && (
+                            <Button
+                              size="sm"
+                              className="text-xs bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() => handleAdAction(ad.id, "approved")}
+                              disabled={adActionPending === ad.id}
+                            >
+                              {adActionPending === ad.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Freigeben"}
+                            </Button>
+                          )}
+                          {ad.status !== "rejected" && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="text-xs"
+                              onClick={() => {
+                                const note = prompt("Ablehnungsgrund (optional):");
+                                handleAdAction(ad.id, "rejected", note ?? undefined);
+                              }}
+                              disabled={adActionPending === ad.id}
+                            >
+                              Ablehnen
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
         </Tabs>
       </main>
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import {
   MessageSquare, User, Plus, Shield, LogIn, LogOut,
-  LayoutList, Star, Menu, X, Briefcase,
+  LayoutList, Star, Menu, X, Megaphone,
 } from "lucide-react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,13 @@ export function Navbar() {
               <Plus className="w-4 h-4" />
               <span>{t.nav_sell}</span>
             </Link>
+
+            {isAuthenticated && (
+              <Link href="/ads/create" className="text-sm font-medium flex items-center gap-1.5 text-slate-500 hover:text-slate-900 transition-colors">
+                <Megaphone className="w-4 h-4" />
+                <span>Werbung</span>
+              </Link>
+            )}
 
             {isAuthenticated && (
               <Link href="/favourites" className="text-slate-500 hover:text-slate-900 transition-colors" title={t.nav_favourites}>
@@ -134,6 +141,9 @@ export function Navbar() {
               )}
               {isAuthenticated && (
                 <MobileNavLink href="/favourites" icon={<Star className="w-4 h-4" />} label={t.nav_favourites} onClick={closeMenu} />
+              )}
+              {isAuthenticated && (
+                <MobileNavLink href="/ads/create" icon={<Megaphone className="w-4 h-4" />} label="Werbung schalten" onClick={closeMenu} />
               )}
               {isAuthenticated && (
                 <MobileNavLink href="/messages" icon={<MessageSquare className="w-4 h-4" />} label={t.messages_conversations} onClick={closeMenu} />

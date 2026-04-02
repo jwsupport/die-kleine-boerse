@@ -12,6 +12,7 @@ import notifyRouter from "./notify";
 import favouritesRouter from "./favourites";
 import aiRouter from "./ai";
 import invoicesRouter from "./invoices";
+import sponsoredAdsRouter from "./sponsored-ads";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(notifyRouter);
 router.use(favouritesRouter);
 router.use(aiRouter);
 router.use(invoicesRouter);
+router.use(sponsoredAdsRouter);
 
 export default router;

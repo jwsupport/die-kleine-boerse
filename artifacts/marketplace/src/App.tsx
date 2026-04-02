@@ -21,6 +21,7 @@ import { Favourites } from "@/pages/Favourites";
 import { CategoryPage } from "@/pages/CategoryPage";
 import CryptoPayment from "@/pages/CryptoPayment";
 import { Archive } from "@/pages/Archive";
+import { CreateSponsoredAd } from "@/pages/CreateSponsoredAd";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/profile/:id" component={Profile} />
       <Route path="/category/:id" component={CategoryPage} />
       <Route path="/archive" component={Archive} />
+      <Route path="/ads/create" component={CreateSponsoredAd} />
       <Route component={NotFound} />
     </Switch>
   );
