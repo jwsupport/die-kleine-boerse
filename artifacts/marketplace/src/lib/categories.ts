@@ -3,7 +3,7 @@ import {
   Dumbbell, BookOpen, Music, Gamepad2, Utensils, Leaf, PawPrint, Baby,
   Puzzle, GraduationCap, UserCheck, Hammer, Camera, Plane, Watch,
   HeartPulse, Tv, Tent, Bike, Anchor, Trophy, Film, Tractor, Sparkles,
-  Ticket, Truck, Apple, Scissors, Heart, Recycle, Gem, Users, TrendingUp,
+  Ticket, Truck, Apple, Scissors, Heart, Recycle, Users,
   Building2, Crown, Star, ChefHat, Search, Archive, Smartphone, Gauge, Layers,
   type LucideIcon,
 } from "lucide-react";
@@ -56,9 +56,7 @@ export const CATEGORIES: Category[] = [
   { id: "furniture",             label: "Furniture",                  Icon: Layers,        fee: 0.00 },
   { id: "dating",                label: "Dating & Contacts",         Icon: Heart,         fee: 0.00 },
   { id: "sustainability",        label: "Sustainability",             Icon: Recycle,       fee: 0.00 },
-  { id: "luxury-goods",          label: "Luxury Goods",              Icon: Gem,           fee: 0.00 },
   { id: "childcare",             label: "Childcare",                  Icon: Users,         fee: 0.00 },
-  { id: "finance-investment",    label: "Finance & Investment",      Icon: TrendingUp,    fee: 0.00 },
   { id: "office-stationery",     label: "Office & Stationery",       Icon: Building2,     fee: 0.00 },
   { id: "horse-equestrian",      label: "Equestrian & Horses",       Icon: Crown,         fee: 5.49 },
   { id: "esoteric-spiritual",    label: "Esoteric & Spiritual",      Icon: Star,          fee: 0.00 },
