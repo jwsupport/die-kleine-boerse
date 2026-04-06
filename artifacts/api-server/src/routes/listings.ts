@@ -145,15 +145,18 @@ router.post("/listings", async (req, res): Promise<void> => {
     return;
   }
 
-  // Enforce 200 active listings per user
-  const [{ value: activeCount }] = await db
-    .select({ value: count() })
-    .from(listingsTable)
-    .where(and(eq(listingsTable.sellerId, sellerId), eq(listingsTable.status, "active")));
+  // Enforce active listings limit (admin = 999, all others = 999)
+  const isAdmin = req.isAuthenticated() && (req.user as any).email === "welik.jakob@gmail.com";
+  if (!isAdmin) {
+    const [{ value: activeCount }] = await db
+      .select({ value: count() })
+      .from(listingsTable)
+      .where(and(eq(listingsTable.sellerId, sellerId), eq(listingsTable.status, "active")));
 
-  if (Number(activeCount) >= 200) {
-    res.status(400).json({ error: "Maximum limit of 200 active listings reached." });
-    return;
+    if (Number(activeCount) >= 999) {
+      res.status(400).json({ error: "Maximale Anzahl von 999 aktiven Inseraten erreicht." });
+      return;
+    }
   }
 
   const categoryFee = CATEGORY_FEES[category] ?? 0;

@@ -9,6 +9,7 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@workspace/replit-auth-web";
+import { isAdminEmail } from "@/lib/admin";
 import { Navbar } from "@/components/layout/Navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ListingCard } from "@/components/ListingCard";
@@ -264,13 +265,15 @@ export function Profile() {
               <Avatar className="w-28 h-28 mb-2 shadow-sm border-2 border-white ring-1 ring-slate-100">
                 <AvatarImage src={profile.avatarUrl || undefined} />
                 <AvatarFallback className="bg-white text-slate-600 text-3xl">
-                  {profile.fullName?.[0] || 'U'}
+                  {profile.fullName?.[0] || (isAdminEmail(user?.email) && isOwner ? 'G' : 'U')}
                 </AvatarFallback>
               </Avatar>
               
               <div>
                 <div className="flex items-center justify-center gap-2 flex-wrap">
-                  <h1 className="text-2xl font-medium text-slate-900">{profile.fullName || 'Anonymous User'}</h1>
+                  <h1 className="text-2xl font-medium text-slate-900">
+                    {profile.fullName || (isAdminEmail(user?.email) && isOwner ? 'Godfather' : 'Anonymer Nutzer')}
+                  </h1>
                   {profile.isVerified && (
                     <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold border border-blue-100">
                       <BadgeCheck className="w-3 h-3" /> Verifiziert

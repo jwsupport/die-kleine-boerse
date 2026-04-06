@@ -345,7 +345,7 @@ export function ListingDetail() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-slate-900 group-hover:underline decoration-slate-300 underline-offset-4">
-                          {listing.seller.fullName || 'Anonymous'}
+                          {listing.seller.fullName || 'Anonymer Nutzer'}
                         </span>
                         {(listing.seller as any).isBusiness && (
                           <span className="text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 bg-slate-900 text-white rounded-full">PRO</span>
