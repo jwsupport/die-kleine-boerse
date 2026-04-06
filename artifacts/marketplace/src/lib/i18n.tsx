@@ -4,6 +4,7 @@ export type Lang = "de" | "en";
 
 export const translations = {
   de: {
+    nav_logo: "die kleine börse",
     nav_sell: "Verkaufen",
     nav_myAds: "Meine Anzeigen",
     nav_favourites: "Merkliste",
@@ -288,6 +289,7 @@ export const translations = {
     pay_error: "Fehler beim Bestätigen der Zahlung. Bitte versuche es erneut.",
   },
   en: {
+    nav_logo: "the little exchange",
     nav_sell: "Sell",
     nav_myAds: "My Ads",
     nav_favourites: "Saved",
