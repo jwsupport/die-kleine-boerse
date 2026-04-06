@@ -1045,7 +1045,7 @@ export function Admin() {
           <TabsContent value="intelligence" className="space-y-6">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-blue-600 font-bold mb-1">Market Intelligence</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-blue-600 font-bold mb-1">Markttrends</p>
                 <h2 className="text-2xl font-light text-slate-900">Was deine Nutzer wirklich suchen</h2>
               </div>
               <Button variant="outline" size="sm" onClick={loadIntelligence} disabled={intelligenceLoading}>
@@ -1199,7 +1199,7 @@ export function Admin() {
           <TabsContent value="b2b" className="space-y-6">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-1">Business Module</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-1">Geschäftskunden</p>
                 <h2 className="text-2xl font-light text-slate-900">B2B-Buchungen</h2>
               </div>
               <Button variant="outline" size="sm" onClick={loadBusinessBookings} disabled={businessBookingsLoading}>

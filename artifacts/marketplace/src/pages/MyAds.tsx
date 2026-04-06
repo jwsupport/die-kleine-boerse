@@ -187,10 +187,10 @@ export function MyAds() {
       <div className="min-h-[100dvh] flex flex-col bg-background">
         <Navbar />
         <main className="flex-1 container mx-auto px-4 md:px-8 py-24 max-w-4xl text-center">
-          <h1 className="text-2xl font-medium tracking-tight text-slate-900 mb-4">Sign in to view your ads</h1>
-          <p className="text-slate-500 mb-8">You need to be signed in to manage your listings.</p>
+          <h1 className="text-2xl font-medium tracking-tight text-slate-900 mb-4">Anmelden um deine Anzeigen zu sehen</h1>
+          <p className="text-slate-500 mb-8">Du musst eingeloggt sein, um deine Inserate zu verwalten.</p>
           <Button onClick={login} className="bg-slate-900 hover:bg-slate-800 text-white">
-            Sign in
+            Anmelden
           </Button>
         </main>
       </div>
@@ -272,7 +272,7 @@ export function MyAds() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs">No image</div>
+                      <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs">Kein Bild</div>
                     )}
                   </div>
 
@@ -283,9 +283,9 @@ export function MyAds() {
                       </Link>
                       <div className="flex items-center gap-2 shrink-0">
                         {isPaid ? (
-                          <Badge className="bg-slate-900 text-white text-[10px] uppercase tracking-wide px-2 py-0.5">Premium</Badge>
+                          <Badge className="bg-slate-900 text-white text-[10px] uppercase tracking-wide px-2 py-0.5">Bezahlt</Badge>
                         ) : (
-                          <Badge variant="outline" className="text-[10px] uppercase tracking-wide px-2 py-0.5 text-slate-500">Free</Badge>
+                          <Badge variant="outline" className="text-[10px] uppercase tracking-wide px-2 py-0.5 text-slate-500">Kostenlos</Badge>
                         )}
                         <Badge
                           variant="outline"

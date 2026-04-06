@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { MapPin, Clock, ArrowRight, Star, Flag, Building2, Phone, Globe, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { de } from "date-fns/locale";
 import { ListingCard } from "@/components/ListingCard";
 import { ShareListing } from "@/components/ShareListing";
 import { ImageLightbox } from "@/components/ImageLightbox";
@@ -258,24 +259,24 @@ export function ListingDetail() {
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4" />
                   {listing.daysAge === 0
-                    ? "Listed today"
-                    : `Listed ${listing.daysAge} day${listing.daysAge !== 1 ? "s" : ""} ago`}
+                    ? "Heute inseriert"
+                    : `Vor ${listing.daysAge} ${listing.daysAge === 1 ? "Tag" : "Tagen"} inseriert`}
                 </div>
                 {listing.listingType === "paid" && (
                   <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest font-semibold bg-slate-900 text-white px-2 py-0.5 rounded-sm">
-                    Premium
+                    Top-Inserat
                   </span>
                 )}
                 {listing.expiryDate && (
                   <span className="text-xs text-slate-400">
-                    Expires {formatDistanceToNow(new Date(listing.expiryDate), { addSuffix: true })}
+                    Läuft ab {formatDistanceToNow(new Date(listing.expiryDate), { addSuffix: true, locale: de })}
                   </span>
                 )}
               </div>
 
               <div className="prose prose-slate max-w-none mb-12">
                 <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
-                  {listing.description || "No description provided."}
+                  {listing.description || "Keine Beschreibung vorhanden."}
                 </p>
               </div>
 

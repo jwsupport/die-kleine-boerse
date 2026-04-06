@@ -180,9 +180,9 @@ export function Home() {
             <header className="flex flex-col md:flex-row md:justify-between md:items-end mb-12 gap-2">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-blue-600 font-bold mb-2">
-                  Market Intelligence
+                  Markttrends
                 </p>
-                <h2 className="text-3xl font-light text-slate-900">Current Desires</h2>
+                <h2 className="text-3xl font-light text-slate-900">Aktuell gefragt</h2>
               </div>
               <p className="text-slate-400 text-sm italic">
                 Basierend auf den meistgesuchten Begriffen dieser Woche.

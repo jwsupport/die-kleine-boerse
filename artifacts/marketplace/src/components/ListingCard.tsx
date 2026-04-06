@@ -57,7 +57,7 @@ export function ListingCard({ listing, index = 0, size = "md" }: ListingCardProp
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs">
-              No image
+              Kein Bild
             </div>
           )}
           <div className="absolute top-1.5 right-1.5">
@@ -66,7 +66,7 @@ export function ListingCard({ listing, index = 0, size = "md" }: ListingCardProp
           {listing.listingType === "paid" && (
             <div className="absolute bottom-1.5 left-1.5">
               <span className="text-[7px] uppercase tracking-widest font-bold bg-slate-900/90 text-white px-1.5 py-0.5 rounded-full">
-                Premium
+                Top
               </span>
             </div>
           )}
