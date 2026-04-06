@@ -4,11 +4,11 @@ export function MarketplaceSchema() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Autobörse",
-    alternateName: ["Automarkt", "Fahrzeug-Kleinanzeigen"],
+    name: "Die kleine Börse",
+    alternateName: ["Kleinanzeigen Österreich", "Marktplatz Österreich"],
     url: BASE_URL,
     description:
-      "Autos, Motorräder und Fahrzeuge kaufen und verkaufen. Dein lokaler Marktplatz für Fahrzeug-Kleinanzeigen in Deutschland.",
+      "Kaufen und verkaufen auf Die kleine Börse — dein lokaler, sicherer Marktplatz für Kleinanzeigen in Österreich.",
     potentialAction: {
       "@type": "SearchAction",
       target: `${BASE_URL}/search?q={search_term_string}`,
