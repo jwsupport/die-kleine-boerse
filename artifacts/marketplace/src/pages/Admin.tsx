@@ -27,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Loader2, Pencil, TrendingUp, BadgeCheck, Users, Globe, Activity } from "lucide-react";
+import { Loader2, Pencil, TrendingUp, BadgeCheck, Users, Globe, Activity, AlertTriangle, MessageCircle, ChevronDown } from "lucide-react";
 import { CATEGORIES } from "@/lib/categories";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -125,6 +125,52 @@ export function Admin() {
   const [adEditId, setAdEditId] = useState<string | null>(null);
   const [adEditForm, setAdEditForm] = useState({ title: "", description: "", imageUrl: "", targetUrl: "", adminNote: "" });
   const [adActionPending, setAdActionPending] = useState<string | null>(null);
+
+  // Gespräche tab
+  type ConvSpam = { hasUrl: boolean; highFreq: boolean; repeatedContent: boolean; capsWarning: boolean };
+  type ConvSummary = {
+    listingId: string; listingTitle: string;
+    userA: string; userAName: string;
+    userB: string; userBName: string;
+    messageCount: number; lastMessage: string; lastMessageAt: string;
+    isSpam: boolean; spam: ConvSpam;
+  };
+  type ConvMessage = { id: string; senderId: string; senderName: string; content: string; createdAt: string; hasUrl: boolean };
+  const [conversations, setConversations] = useState<ConvSummary[]>([]);
+  const [convsLoading, setConvsLoading] = useState(false);
+  const [convSearch, setConvSearch] = useState("");
+  const [convSpamOnly, setConvSpamOnly] = useState(false);
+  const [expandedConv, setExpandedConv] = useState<string | null>(null);
+  const [convThread, setConvThread] = useState<Record<string, ConvMessage[]>>({});
+  const [threadLoading, setThreadLoading] = useState<string | null>(null);
+
+  const loadConversations = async () => {
+    setConvsLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/conversations`, { credentials: "include" });
+      if (res.ok) setConversations(await res.json());
+    } finally {
+      setConvsLoading(false);
+    }
+  };
+
+  const loadThread = async (conv: ConvSummary) => {
+    const key = `${conv.listingId}:${conv.userA}:${conv.userB}`;
+    if (convThread[key]) { setExpandedConv(expandedConv === key ? null : key); return; }
+    setThreadLoading(key);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/conversations/${conv.listingId}/${conv.userA}/${conv.userB}`, { credentials: "include" });
+      if (res.ok) {
+        const msgs = await res.json();
+        setConvThread((prev) => ({ ...prev, [key]: msgs }));
+        setExpandedConv(key);
+      }
+    } finally {
+      setThreadLoading(null);
+    }
+  };
 
   // Analytics tab
   type AnalyticsData = {
@@ -517,6 +563,18 @@ export function Admin() {
               {sponsoredAds.filter(a => a.status === "pending" && a.paymentStatus === "paid").length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {sponsoredAds.filter(a => a.status === "pending" && a.paymentStatus === "paid").length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="conversations"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900 relative"
+              onClick={() => { if (conversations.length === 0) loadConversations(); }}
+            >
+              Gespräche
+              {conversations.filter((c) => c.isSpam).length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {conversations.filter((c) => c.isSpam).length}
                 </span>
               )}
             </TabsTrigger>
@@ -1345,6 +1403,147 @@ export function Admin() {
                   );
                 })}
               </div>
+            )}
+          </TabsContent>
+
+          {/* ── Gespräche / Nachrichten-Moderation ── */}
+          <TabsContent value="conversations" className="space-y-6">
+            <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-900">Alle Gespräche</h2>
+              <div className="flex gap-2 flex-wrap items-center">
+                <Input
+                  placeholder="User oder Inserat suchen…"
+                  value={convSearch}
+                  onChange={(e) => setConvSearch(e.target.value)}
+                  className="h-8 text-sm w-56"
+                />
+                <button
+                  onClick={() => setConvSpamOnly((v) => !v)}
+                  className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${convSpamOnly ? "bg-red-50 border-red-300 text-red-700" : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"}`}
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Nur Spam
+                </button>
+                <button
+                  onClick={loadConversations}
+                  className="text-xs text-slate-500 hover:text-slate-900 border border-slate-200 rounded-lg px-3 py-1.5 transition-colors bg-white"
+                >
+                  {convsLoading ? <Loader2 className="w-3 h-3 animate-spin inline" /> : "Neu laden"}
+                </button>
+              </div>
+            </div>
+
+            {convsLoading && conversations.length === 0 ? (
+              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+            ) : (
+              <>
+                {/* Spam-Zusammenfassung */}
+                {conversations.filter((c) => c.isSpam).length > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-red-800">
+                        {conversations.filter((c) => c.isSpam).length} Gespräch{conversations.filter((c) => c.isSpam).length !== 1 ? "e" : ""} mit Spam-Verdacht
+                      </p>
+                      <p className="text-xs text-red-600 mt-0.5">Links, Wiederholungen, hohe Sendefrequenz oder excessive Großschreibung erkannt.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Liste */}
+                <div className="space-y-2">
+                  {conversations
+                    .filter((c) => {
+                      if (convSpamOnly && !c.isSpam) return false;
+                      if (!convSearch.trim()) return true;
+                      const q = convSearch.toLowerCase();
+                      return (
+                        c.userAName.toLowerCase().includes(q) ||
+                        c.userBName.toLowerCase().includes(q) ||
+                        c.listingTitle.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((conv) => {
+                      const key = `${conv.listingId}:${conv.userA}:${conv.userB}`;
+                      const isExpanded = expandedConv === key;
+                      const thread = convThread[key];
+                      const isLoadingThis = threadLoading === key;
+                      return (
+                        <div
+                          key={key}
+                          className={`bg-white border rounded-xl overflow-hidden transition-all ${conv.isSpam ? "border-red-200" : "border-slate-200"}`}
+                        >
+                          {/* Header */}
+                          <button
+                            onClick={() => loadThread(conv)}
+                            className="w-full text-left p-4 hover:bg-slate-50 transition-colors"
+                          >
+                            <div className="flex items-start gap-3">
+                              <MessageCircle className={`w-4 h-4 mt-0.5 shrink-0 ${conv.isSpam ? "text-red-400" : "text-slate-400"}`} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                  <span className="text-sm font-medium text-slate-900">{conv.userAName}</span>
+                                  <span className="text-xs text-slate-400">↔</span>
+                                  <span className="text-sm font-medium text-slate-900">{conv.userBName}</span>
+                                  <span className="text-xs text-slate-400">·</span>
+                                  <span className="text-xs text-slate-500 truncate max-w-[180px]">{conv.listingTitle}</span>
+                                  <span className="text-xs text-slate-400 ml-auto">{conv.messageCount} Nachr. · {format(new Date(conv.lastMessageAt), "dd.MM.yy HH:mm")}</span>
+                                </div>
+                                {/* Spam-Badges */}
+                                {conv.isSpam && (
+                                  <div className="flex gap-1.5 flex-wrap mb-1.5">
+                                    {conv.spam.hasUrl && <span className="text-[10px] font-semibold bg-red-100 text-red-700 rounded px-1.5 py-0.5">🔗 Link</span>}
+                                    {conv.spam.highFreq && <span className="text-[10px] font-semibold bg-orange-100 text-orange-700 rounded px-1.5 py-0.5">⚡ Hohe Frequenz</span>}
+                                    {conv.spam.repeatedContent && <span className="text-[10px] font-semibold bg-yellow-100 text-yellow-700 rounded px-1.5 py-0.5">🔁 Wiederholt</span>}
+                                    {conv.spam.capsWarning && <span className="text-[10px] font-semibold bg-purple-100 text-purple-700 rounded px-1.5 py-0.5">🔠 CAPS</span>}
+                                  </div>
+                                )}
+                                <p className="text-xs text-slate-500 truncate">{conv.lastMessage}</p>
+                              </div>
+                              {isLoadingThis ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-slate-400 shrink-0" />
+                              ) : (
+                                <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Thread */}
+                          {isExpanded && thread && (
+                            <div className="border-t border-slate-100 bg-slate-50 p-4 space-y-2 max-h-96 overflow-y-auto">
+                              {thread.map((msg) => (
+                                <div
+                                  key={msg.id}
+                                  className={`flex gap-2 ${msg.senderId === conv.userA ? "justify-start" : "justify-end"}`}
+                                >
+                                  <div className={`max-w-[75%] rounded-xl px-3 py-2 text-sm ${msg.senderId === conv.userA ? "bg-white border border-slate-200 text-slate-900" : "bg-slate-900 text-white"} ${msg.hasUrl ? "ring-1 ring-red-300" : ""}`}>
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                      <span className="text-[10px] font-semibold opacity-70">{msg.senderName}</span>
+                                      {msg.hasUrl && <AlertTriangle className="w-3 h-3 text-red-400 shrink-0" />}
+                                    </div>
+                                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                                    <p className="text-[10px] opacity-50 mt-0.5 text-right">{format(new Date(msg.createdAt), "HH:mm")}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                  {conversations.filter((c) => {
+                    if (convSpamOnly && !c.isSpam) return false;
+                    if (!convSearch.trim()) return true;
+                    const q = convSearch.toLowerCase();
+                    return c.userAName.toLowerCase().includes(q) || c.userBName.toLowerCase().includes(q) || c.listingTitle.toLowerCase().includes(q);
+                  }).length === 0 && !convsLoading && (
+                    <div className="text-center py-12 text-slate-400 text-sm">
+                      {convSpamOnly ? "Kein Spam-Verdacht gefunden." : "Noch keine Gespräche vorhanden."}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </TabsContent>
 

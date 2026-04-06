@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, gte, lt, sql, desc } from "drizzle-orm";
-import { db, listingsTable, profilesTable, searchStatsTable, businessBookingsTable, sponsoredAdsTable } from "@workspace/db";
+import { db, listingsTable, profilesTable, searchStatsTable, businessBookingsTable, sponsoredAdsTable, messagesTable } from "@workspace/db";
 import {
   AdminGetListingsQueryParams,
   AdminGetListingsResponse,
@@ -570,6 +570,185 @@ router.get("/admin/market-intelligence", async (req, res): Promise<void> => {
     searchCount: r.searchCount,
     listingCount: r.listingCount,
     lastSearchedAt: r.lastSearchedAt.toISOString(),
+  })));
+});
+
+// ── Admin: alle Gespräche ──────────────────────────────────────────────────
+// Spam-Heuristiken
+const URL_PATTERN = /https?:\/\/|www\.|\.com|\.net|\.org|\.at|\.de|t\.me|wa\.me|telegram|whatsapp|signal\.me/i;
+const CAPS_RATIO_THRESHOLD = 0.6; // mehr als 60 % Großbuchstaben → Spam-Verdacht
+
+function detectSpam(messages: { content: string; senderId: string; createdAt: Date }[]): {
+  hasUrl: boolean;
+  highFreq: boolean;
+  repeatedContent: boolean;
+  capsWarning: boolean;
+} {
+  const hasUrl = messages.some((m) => URL_PATTERN.test(m.content));
+
+  // High-frequency: same sender sends ≥5 messages within any 10-minute window
+  let highFreq = false;
+  const bySender = new Map<string, Date[]>();
+  for (const m of messages) {
+    const list = bySender.get(m.senderId) ?? [];
+    list.push(m.createdAt);
+    bySender.set(m.senderId, list);
+  }
+  for (const times of bySender.values()) {
+    const sorted = times.slice().sort((a, b) => a.getTime() - b.getTime());
+    for (let i = 0; i < sorted.length - 4; i++) {
+      if (sorted[i + 4]!.getTime() - sorted[i]!.getTime() <= 10 * 60 * 1000) {
+        highFreq = true;
+        break;
+      }
+    }
+    if (highFreq) break;
+  }
+
+  // Repeated content: same content sent >2 times
+  const contentCounts = new Map<string, number>();
+  for (const m of messages) {
+    const key = m.content.trim().toLowerCase();
+    contentCounts.set(key, (contentCounts.get(key) ?? 0) + 1);
+  }
+  const repeatedContent = [...contentCounts.values()].some((c) => c > 2);
+
+  // Excessive caps
+  const capsWarning = messages.some((m) => {
+    const letters = m.content.replace(/[^a-zA-ZäöüÄÖÜ]/g, "");
+    if (letters.length < 10) return false;
+    const upper = letters.replace(/[^A-ZÄÖÜ]/g, "");
+    return upper.length / letters.length > CAPS_RATIO_THRESHOLD;
+  });
+
+  return { hasUrl, highFreq, repeatedContent, capsWarning };
+}
+
+// GET /api/admin/conversations  – alle Konversationen
+router.get("/admin/conversations", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  // Alle Nachrichten (max 5000 neueste) laden
+  const allMessages = await db
+    .select({
+      id: messagesTable.id,
+      listingId: messagesTable.listingId,
+      senderId: messagesTable.senderId,
+      receiverId: messagesTable.receiverId,
+      content: messagesTable.content,
+      createdAt: messagesTable.createdAt,
+    })
+    .from(messagesTable)
+    .orderBy(desc(messagesTable.createdAt))
+    .limit(5000);
+
+  // Konversationen gruppieren: key = listingId:sortiertes(senderId,receiverId)-Paar
+  type Conv = {
+    listingId: string;
+    userA: string;
+    userB: string;
+    messages: typeof allMessages;
+    lastAt: Date;
+  };
+  const convMap = new Map<string, Conv>();
+  for (const m of allMessages) {
+    const [a, b] = [m.senderId, m.receiverId].sort();
+    const key = `${m.listingId}:${a}:${b}`;
+    if (!convMap.has(key)) {
+      convMap.set(key, { listingId: m.listingId, userA: a!, userB: b!, messages: [], lastAt: m.createdAt });
+    }
+    const conv = convMap.get(key)!;
+    conv.messages.push(m);
+    if (m.createdAt > conv.lastAt) conv.lastAt = m.createdAt;
+  }
+
+  // Listings + Profile in einer Runde laden
+  const listingIds = [...new Set([...convMap.values()].map((c) => c.listingId))];
+  const userIds = [...new Set([...convMap.values()].flatMap((c) => [c.userA, c.userB]))];
+
+  const [listings, profiles] = await Promise.all([
+    listingIds.length
+      ? db.select({ id: listingsTable.id, title: listingsTable.title }).from(listingsTable).where(
+          sql`${listingsTable.id} = ANY(${listingIds})`,
+        )
+      : Promise.resolve([]),
+    userIds.length
+      ? db.select({ id: profilesTable.id, fullName: profilesTable.fullName, username: profilesTable.username }).from(profilesTable).where(
+          sql`${profilesTable.id} = ANY(${userIds})`,
+        )
+      : Promise.resolve([]),
+  ]);
+
+  const listingMap = new Map(listings.map((l) => [l.id, l.title]));
+  const profileMap = new Map(profiles.map((p) => [p.id, p.fullName ?? p.username ?? p.id]));
+
+  const result = [...convMap.values()]
+    .sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime())
+    .map((conv) => {
+      const spam = detectSpam(conv.messages);
+      const isSpam = spam.hasUrl || spam.highFreq || spam.repeatedContent || spam.capsWarning;
+      const lastMsg = conv.messages.reduce((latest, m) =>
+        m.createdAt > latest.createdAt ? m : latest
+      );
+      return {
+        listingId: conv.listingId,
+        listingTitle: listingMap.get(conv.listingId) ?? "Gelöschtes Inserat",
+        userA: conv.userA,
+        userAName: profileMap.get(conv.userA) ?? conv.userA,
+        userB: conv.userB,
+        userBName: profileMap.get(conv.userB) ?? conv.userB,
+        messageCount: conv.messages.length,
+        lastMessage: lastMsg.content,
+        lastMessageAt: lastMsg.createdAt.toISOString(),
+        isSpam,
+        spam,
+      };
+    });
+
+  res.json(result);
+});
+
+// GET /api/admin/conversations/:listingId/:userA/:userB  – vollständiger Thread
+router.get("/admin/conversations/:listingId/:userA/:userB", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const { listingId, userA, userB } = req.params;
+
+  const msgs = await db
+    .select()
+    .from(messagesTable)
+    .where(
+      and(
+        eq(messagesTable.listingId, listingId),
+        sql`(
+          (${messagesTable.senderId} = ${userA} AND ${messagesTable.receiverId} = ${userB}) OR
+          (${messagesTable.senderId} = ${userB} AND ${messagesTable.receiverId} = ${userA})
+        )`,
+      ),
+    )
+    .orderBy(messagesTable.createdAt);
+
+  // Profilnamen
+  const ids = [...new Set([userA, userB])];
+  const profiles = await db
+    .select({ id: profilesTable.id, fullName: profilesTable.fullName, username: profilesTable.username })
+    .from(profilesTable)
+    .where(sql`${profilesTable.id} = ANY(${ids})`);
+  const profileMap = new Map(profiles.map((p) => [p.id, p.fullName ?? p.username ?? p.id]));
+
+  res.json(msgs.map((m) => ({
+    id: m.id,
+    senderId: m.senderId,
+    senderName: profileMap.get(m.senderId) ?? m.senderId,
+    content: m.content,
+    createdAt: m.createdAt.toISOString(),
+    hasUrl: URL_PATTERN.test(m.content),
   })));
 });
 
