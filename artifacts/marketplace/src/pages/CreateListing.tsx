@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/seo/SEO";
 import { CATEGORIES, categoryByLabel } from "@/lib/categories";
-import { ShieldCheck, Zap, Check, Loader2, Video, EyeOff } from "lucide-react";
+import { ShieldCheck, Zap, Check, Loader2, Video } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import { useT, getCatLabel } from "@/lib/i18n";
 
@@ -262,24 +262,6 @@ export function CreateListing() {
                 </div>
               </div>
             )}
-
-            {/* Silent Listing toggle */}
-            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                  <EyeOff className="w-4 h-4 text-slate-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-900">Diskreter Modus</p>
-                  <p className="text-xs text-slate-500">Nur für Nutzer mit direktem Link sichtbar — nicht in der öffentlichen Suche</p>
-                </div>
-              </div>
-              <Switch
-                id="silent"
-                checked={formData.isSilent}
-                onCheckedChange={(checked) => setFormData((p) => ({ ...p, isSilent: checked }))}
-              />
-            </div>
 
             {/* Tier picker — free categories get the two-option selector */}
             {formData.category && (
