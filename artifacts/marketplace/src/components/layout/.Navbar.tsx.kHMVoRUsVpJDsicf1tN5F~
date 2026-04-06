@@ -155,7 +155,8 @@ export function Navbar() {
                 <MobileNavLink href="/admin" icon={<Shield className="w-4 h-4" />} label={t.nav_admin} onClick={closeMenu} />
               )}
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end">
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <LanguageSwitcher />
                 {!isLoading && isAuthenticated ? (
                   <button
                     onClick={() => { logout(); closeMenu(); }}

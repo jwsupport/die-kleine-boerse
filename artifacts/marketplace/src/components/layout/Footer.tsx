@@ -1,5 +1,4 @@
 import { Link } from "wouter";
-import { useLanguage } from "@/lib/i18n";
 
 const CATEGORIES = [
   { name: "Wohnen & Interieur",    slug: "living-interior" },
@@ -13,9 +12,7 @@ const CATEGORIES = [
 ];
 
 export function Footer() {
-  const { lang } = useLanguage();
   const year = new Date().getFullYear();
-  const isDE = lang === "de";
 
   return (
     <footer className="bg-white border-t border-slate-100 pt-20 pb-10 px-8">
@@ -27,9 +24,7 @@ export function Footer() {
             Die kleine Börse
           </h2>
           <p className="text-slate-400 text-sm leading-relaxed">
-            {isDE
-              ? "Ihr exklusiver Marktplatz für hochwertige Fundstücke, Automobile und Immobilien. Qualität vor Quantität."
-              : "Your exclusive marketplace for high-quality finds, automobiles and real estate. Quality over quantity."}
+            Ihr exklusiver Marktplatz für hochwertige Fundstücke, Automobile und Immobilien. Qualität vor Quantität.
           </p>
         </div>
 
@@ -37,7 +32,7 @@ export function Footer() {
         <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
           <div className="space-y-3">
             <h3 className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-300 mb-2">
-              {isDE ? "Kategorien" : "Categories"}
+              Kategorien
             </h3>
             {CATEGORIES.slice(0, 4).map((cat) => (
               <Link
@@ -65,10 +60,10 @@ export function Footer() {
         {/* Legal */}
         <div className="space-y-3">
           <h3 className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-300 mb-2">
-            {isDE ? "Rechtliches" : "Legal"}
+            Rechtliches
           </h3>
           <Link href="/archive" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors font-medium">
-            {isDE ? "Archiv" : "Archive"}
+            Archiv
           </Link>
           <Link href="/impressum" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
             Impressum
