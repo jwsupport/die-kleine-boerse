@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import {
-  MessageSquare, User, Plus, Shield, LogIn, LogOut,
+  MessageSquare, User, Plus, LogIn, LogOut,
   LayoutList, Star, Menu, X, Megaphone,
 } from "lucide-react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { Button } from "@/components/ui/button";
-import { isAdminEmail } from "@/lib/admin";
 import { useT } from "@/lib/i18n";
 import { LiveCounter } from "@/components/LiveCounter";
 
@@ -31,13 +30,6 @@ export function Navbar() {
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-5">
             <LiveCounter />
-
-            {isAuthenticated && isAdminEmail(user?.email) && (
-              <Link href="/admin" className="text-sm font-medium flex items-center gap-1.5 text-slate-400 hover:text-slate-900 transition-colors">
-                <Shield className="w-4 h-4" />
-                <span>{t.nav_admin}</span>
-              </Link>
-            )}
 
             {isAuthenticated && (
               <Link href="/my-ads" className="text-sm font-medium flex items-center gap-1.5 text-slate-500 hover:text-slate-900 transition-colors">
@@ -151,10 +143,6 @@ export function Navbar() {
               {isAuthenticated && user && (
                 <MobileNavLink href={`/profile/${user.id}`} icon={<User className="w-4 h-4" />} label="Mein Profil" onClick={closeMenu} />
               )}
-              {isAuthenticated && isAdminEmail(user?.email) && (
-                <MobileNavLink href="/admin" icon={<Shield className="w-4 h-4" />} label={t.nav_admin} onClick={closeMenu} />
-              )}
-
               <div className="pt-3 border-t border-slate-100 flex items-center justify-end">
                 {!isLoading && isAuthenticated ? (
                   <button
