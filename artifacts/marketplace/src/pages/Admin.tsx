@@ -27,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Loader2, Pencil, TrendingUp, BadgeCheck } from "lucide-react";
+import { Loader2, Pencil, TrendingUp, BadgeCheck, Users, Globe, Activity } from "lucide-react";
 import { CATEGORIES } from "@/lib/categories";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -125,6 +125,25 @@ export function Admin() {
   const [adEditId, setAdEditId] = useState<string | null>(null);
   const [adEditForm, setAdEditForm] = useState({ title: "", description: "", imageUrl: "", targetUrl: "", adminNote: "" });
   const [adActionPending, setAdActionPending] = useState<string | null>(null);
+
+  // Analytics tab
+  type AnalyticsData = {
+    online: number; totalUnique: number; today: number; thisWeek: number;
+    byCountry: { country: string; count: number }[];
+  };
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  const loadAnalytics = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/analytics`, { credentials: "include" });
+      if (res.ok) setAnalytics(await res.json());
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
 
   const loadSponsoredAds = async () => {
     setSponsoredAdsLoading(true);
@@ -500,6 +519,13 @@ export function Admin() {
                   {sponsoredAds.filter(a => a.status === "pending" && a.paymentStatus === "paid").length}
                 </span>
               )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="analytics"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900"
+              onClick={() => { if (!analytics) loadAnalytics(); }}
+            >
+              Besucher
             </TabsTrigger>
           </TabsList>
 
@@ -1318,6 +1344,109 @@ export function Admin() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── Besucher Analytics ── */}
+          <TabsContent value="analytics" className="space-y-8">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-900">Besucherstatistiken</h2>
+              <button
+                onClick={loadAnalytics}
+                className="text-xs text-slate-500 hover:text-slate-900 border border-slate-200 rounded-lg px-3 py-1.5 transition-colors"
+              >
+                {analyticsLoading ? <Loader2 className="w-3 h-3 animate-spin inline" /> : "Aktualisieren"}
+              </button>
+            </div>
+
+            {analyticsLoading && !analytics ? (
+              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+            ) : analytics ? (
+              <>
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white border border-slate-200 rounded-xl p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                      </span>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">Jetzt online</p>
+                    </div>
+                    <p className="text-4xl font-semibold text-slate-900">{analytics.online}</p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-5">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-3">Heute</p>
+                    <p className="text-4xl font-semibold text-slate-900">{analytics.today}</p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-5">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-3">Diese Woche</p>
+                    <p className="text-4xl font-semibold text-slate-900">{analytics.thisWeek}</p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-5">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-3">Gesamt (unique)</p>
+                    <p className="text-4xl font-semibold text-slate-900">{analytics.totalUnique.toLocaleString()}</p>
+                  </div>
+                </div>
+
+                {/* Country breakdown */}
+                <div className="bg-white border border-slate-200 rounded-xl p-6">
+                  <div className="flex items-center gap-2 mb-5">
+                    <Globe className="w-4 h-4 text-slate-400" />
+                    <h3 className="font-medium text-slate-900">Herkunft (letzte 30 Tage)</h3>
+                  </div>
+                  {analytics.byCountry.length === 0 ? (
+                    <p className="text-sm text-slate-400 py-4 text-center">Noch keine Daten</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {analytics.byCountry.map((row, i) => {
+                        const max = analytics.byCountry[0]?.count ?? 1;
+                        const pct = Math.round((row.count / max) * 100);
+                        return (
+                          <div key={row.country} className="flex items-center gap-3">
+                            <span className="text-xs text-slate-400 w-4 text-right">{i + 1}</span>
+                            <span className="text-sm font-medium text-slate-700 w-32 truncate">{row.country}</span>
+                            <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                              <div
+                                className="h-2 rounded-full bg-slate-800 transition-all duration-500"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-semibold text-slate-900 w-10 text-right">{row.count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Recharts bar chart */}
+                {analytics.byCountry.length > 0 && (
+                  <div className="bg-white border border-slate-200 rounded-xl p-6">
+                    <h3 className="font-medium text-slate-900 mb-5">Top-Länder (Balkendiagramm)</h3>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={analytics.byCountry.slice(0, 10)} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                        <XAxis dataKey="country" tick={{ fontSize: 11, fill: "#94a3b8" }} />
+                        <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} allowDecimals={false} />
+                        <Tooltip
+                          contentStyle={{ border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: 12 }}
+                          formatter={(v: number) => [v, "Besucher"]}
+                        />
+                        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                          {analytics.byCountry.slice(0, 10).map((_, index) => (
+                            <Cell key={index} fill={index === 0 ? "#0f172a" : index === 1 ? "#334155" : "#94a3b8"} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-16 text-slate-400 text-sm">
+                Klicke auf "Besucher" um die Daten zu laden.
               </div>
             )}
           </TabsContent>

@@ -8,3 +8,4 @@ export * from "./search_stats";
 export * from "./business_bookings";
 export * from "./sponsored_ads";
 export * from "./crypto_payments";
+export * from "./visitor_sessions";

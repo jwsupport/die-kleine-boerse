@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { isAdminEmail } from "@/lib/admin";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n";
+import { LiveCounter } from "@/components/LiveCounter";
 
 export function Navbar() {
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
@@ -30,6 +31,7 @@ export function Navbar() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-5">
+            <LiveCounter />
             <LanguageSwitcher />
 
             {isAuthenticated && isAdminEmail(user?.email) && (
