@@ -496,7 +496,8 @@ export function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-8 w-full justify-start border-b border-slate-200 rounded-none bg-transparent h-auto p-0">
+          <div className="overflow-x-auto mb-8 border-b border-slate-200">
+          <TabsList className="w-max min-w-full justify-start rounded-none bg-transparent h-auto p-0">
             <TabsTrigger
               value="listings"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent px-6 py-3 font-medium text-slate-600 data-[state=active]:text-slate-900"
@@ -586,6 +587,7 @@ export function Admin() {
               Besucher
             </TabsTrigger>
           </TabsList>
+          </div>
 
           <TabsContent value="listings" className="space-y-6">
             <div className="flex flex-col md:flex-row gap-4 items-end md:items-center bg-white p-4 border border-slate-200 rounded-lg shadow-sm">
