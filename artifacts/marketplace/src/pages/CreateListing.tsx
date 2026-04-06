@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/seo/SEO";
 import { CATEGORIES, categoryByLabel } from "@/lib/categories";
-import { ShieldCheck, Zap, Check, Sparkles, Loader2, Video, EyeOff } from "lucide-react";
+import { ShieldCheck, Zap, Check, Loader2, Video, EyeOff } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import { useT, getCatLabel } from "@/lib/i18n";
 
@@ -32,7 +32,6 @@ export function CreateListing() {
   });
 
   const [selectedTier, setSelectedTier] = useState<"free" | "boost">("free");
-  const [isImprovingDescription, setIsImprovingDescription] = useState(false);
   const [isBusiness, setIsBusiness] = useState(false);
 
   useEffect(() => {
@@ -59,33 +58,6 @@ export function CreateListing() {
   });
 
   const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
-
-  const handleImproveDescription = async () => {
-    if (!formData.description.trim()) {
-      toast({ title: "Beschreibung fehlt", description: "Bitte zuerst eine Beschreibung eingeben.", variant: "destructive" });
-      return;
-    }
-    setIsImprovingDescription(true);
-    try {
-      const res = await fetch(`${base}/api/ai/improve-description`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ text: formData.description }),
-      });
-      const json = await res.json();
-      if (json.improved) {
-        setFormData((p) => ({ ...p, description: json.improved }));
-        toast({ title: "KI-Exposé aktiviert", description: "Beschreibung wurde im Quiet Luxury Stil veredelt." });
-      } else {
-        toast({ title: "Fehler", description: json.error ?? "Veredelung fehlgeschlagen.", variant: "destructive" });
-      }
-    } catch {
-      toast({ title: "Fehler", description: "KI-Veredelung fehlgeschlagen.", variant: "destructive" });
-    } finally {
-      setIsImprovingDescription(false);
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,23 +211,12 @@ export function CreateListing() {
               </div>
             </div>
 
-            {/* Description with KI-Exposé button */}
+            {/* Description */}
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2">
                 <label className="block text-xs uppercase tracking-widest text-slate-400 font-semibold">
                   {t.create_descriptionLabel}
                 </label>
-                <button
-                  type="button"
-                  onClick={handleImproveDescription}
-                  disabled={isImprovingDescription}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200 text-violet-700 rounded-full font-medium hover:from-violet-100 hover:to-indigo-100 transition-all disabled:opacity-60"
-                >
-                  {isImprovingDescription
-                    ? <Loader2 className="w-3 h-3 animate-spin" />
-                    : <Sparkles className="w-3 h-3" />}
-                  KI-Exposé
-                </button>
               </div>
               <textarea
                 rows={5}
