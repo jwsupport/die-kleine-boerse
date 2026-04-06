@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { X, Plus } from "lucide-react";
+import { useRef } from "react";
+import { X, Plus, ImageIcon } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 interface ImageUploaderProps {
@@ -8,50 +8,83 @@ interface ImageUploaderProps {
   maxImages?: number;
 }
 
+const MAX_DIMENSION = 1200;
+const JPEG_QUALITY = 0.82;
+
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIMENSION) / width);
+            width = MAX_DIMENSION;
+          } else {
+            width = Math.round((width * MAX_DIMENSION) / height);
+            height = MAX_DIMENSION;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
+      };
+      img.onerror = reject;
+      img.src = e.target!.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export function ImageUploader({ value, onChange, maxImages = 4 }: ImageUploaderProps) {
   const t = useT();
-  const [inputVisible, setInputVisible] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const addUrl = () => {
-    const trimmed = inputValue.trim();
-    if (!trimmed) return;
-    if (value.length >= maxImages) return;
-    onChange([...value, trimmed]);
-    setInputValue("");
-    setInputVisible(false);
+  const remaining = maxImages - value.length;
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).slice(0, remaining);
+    if (!files.length) return;
+    const compressed = await Promise.all(files.map(compressImage));
+    onChange([...value, ...compressed]);
+    e.target.value = "";
   };
 
   const removeImage = (idx: number) => {
     onChange(value.filter((_, i) => i !== idx));
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addUrl();
-    }
-    if (e.key === "Escape") {
-      setInputVisible(false);
-      setInputValue("");
-    }
+  const openPicker = () => {
+    if (remaining > 0) fileInputRef.current?.click();
   };
-
-  const openInput = () => {
-    setInputVisible(true);
-    setTimeout(() => inputRef.current?.focus(), 50);
-  };
-
-  const cols = maxImages > 4 ? "grid-cols-4" : "grid-cols-4";
 
   return (
     <div>
-      <label className="block text-xs uppercase tracking-widest text-slate-400 mb-3 font-semibold">
-        {t.uploader_gallery} ({value.length} / {maxImages})
-      </label>
+      <div className="flex items-center justify-between mb-3">
+        <label className="block text-xs uppercase tracking-widest text-slate-400 font-semibold">
+          {t.uploader_gallery} ({value.length} / {maxImages})
+        </label>
+        <span className="text-[10px] text-slate-400">
+          JPG · PNG · WEBP
+        </span>
+      </div>
 
-      <div className={`grid ${cols} gap-3`}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      <div className="grid grid-cols-4 gap-3">
         {value.map((url, idx) => (
           <div
             key={idx}
@@ -61,65 +94,54 @@ export function ImageUploader({ value, onChange, maxImages = 4 }: ImageUploaderP
               src={url}
               alt={`Bild ${idx + 1}`}
               className="object-cover w-full h-full"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src =
-                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f1f5f9' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-size='11'%3EFehler%3C/text%3E%3C/svg%3E";
-              }}
             />
             <button
               type="button"
               onClick={() => removeImage(idx)}
-              className="absolute top-1.5 right-1.5 w-5 h-5 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-              aria-label={t.uploader_removeAlt}
+              className="absolute top-1.5 right-1.5 w-6 h-6 bg-white/95 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-50"
+              aria-label="Bild entfernen"
             >
-              <X className="w-3 h-3 text-slate-700" />
+              <X className="w-3.5 h-3.5 text-slate-700" />
             </button>
+            <div className="absolute bottom-1.5 left-1.5 bg-black/40 text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full">
+              {idx + 1}
+            </div>
           </div>
         ))}
 
-        {value.length < maxImages && !inputVisible && (
+        {remaining > 0 && (
           <button
             type="button"
-            onClick={openInput}
-            className="aspect-square border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 hover:border-slate-300 transition-all text-slate-400"
+            onClick={openPicker}
+            className="aspect-square border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition-all text-slate-400 hover:text-slate-600"
           >
-            <Plus className="w-5 h-5" />
-            <span className="text-[10px] font-medium">{t.uploader_addUrl}</span>
+            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+              <Plus className="w-4 h-4" />
+            </div>
+            <span className="text-[10px] font-medium leading-tight text-center px-1">
+              Foto<br />hinzufügen
+            </span>
           </button>
         )}
       </div>
 
-      {inputVisible && (
-        <div className="mt-3 flex gap-2">
-          <input
-            ref={inputRef}
-            type="url"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={t.uploader_placeholder}
-            className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-slate-200"
-          />
-          <button
-            type="button"
-            onClick={addUrl}
-            className="px-4 py-2 bg-slate-900 text-white text-sm rounded-xl font-medium hover:bg-slate-800 transition-colors"
-          >
-            {t.uploader_add}
-          </button>
-          <button
-            type="button"
-            onClick={() => { setInputVisible(false); setInputValue(""); }}
-            className="px-3 py-2 text-slate-500 text-sm rounded-xl hover:bg-slate-100 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+      {value.length === 0 && (
+        <button
+          type="button"
+          onClick={openPicker}
+          className="mt-3 w-full py-8 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition-all text-slate-400 hover:text-slate-600"
+        >
+          <ImageIcon className="w-7 h-7" />
+          <span className="text-sm font-medium">Bilder vom Gerät hochladen</span>
+          <span className="text-[11px] text-slate-400">Bis zu {maxImages} Fotos · JPG, PNG, WEBP</span>
+        </button>
       )}
 
-      <p className="text-[10px] text-slate-400 mt-2 italic">
-        {t.uploader_hint}
-      </p>
+      {value.length > 0 && remaining > 0 && (
+        <p className="text-[10px] text-slate-400 mt-2 italic">
+          Noch {remaining} {remaining === 1 ? "Foto" : "Fotos"} möglich — tippe auf das Plusfeld
+        </p>
+      )}
     </div>
   );
 }
