@@ -4,7 +4,7 @@ export type Lang = "de";
 
 export const translations = {
   de: {
-    nav_logo: "die kleine börse",
+    nav_logo: "autobörse",
     nav_sell: "Verkaufen",
     nav_myAds: "Meine Anzeigen",
     nav_favourites: "Merkliste",
@@ -24,7 +24,7 @@ export const translations = {
     home_noItemsDesc: "Wir konnten keine Anzeigen zu deiner Suche finden.",
     home_footerSell: "Anzeige aufgeben",
     home_footerMessages: "Nachrichten",
-    home_copyright: "Curated Marketplace Excellence.",
+    home_copyright: "Autobörse — Fahrzeug-Kleinanzeigen in Deutschland.",
 
     categoryGrid_title: "Alle Kategorien",
     categoryGrid_from: "ab",

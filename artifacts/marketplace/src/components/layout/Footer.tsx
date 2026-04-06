@@ -21,10 +21,10 @@ export function Footer() {
         {/* Brand */}
         <div className="col-span-1">
           <h2 className="text-lg font-bold uppercase tracking-tighter mb-4 text-slate-900">
-            Die kleine Börse
+            Autobörse
           </h2>
           <p className="text-slate-400 text-sm leading-relaxed">
-            Ihr exklusiver Marktplatz für hochwertige Fundstücke, Automobile und Immobilien. Qualität vor Quantität.
+            Ihr Marktplatz für Fahrzeug-Kleinanzeigen — Autos, Motorräder und mehr. Sicher, lokal, kostenlos inserieren.
           </p>
         </div>
 
@@ -82,7 +82,7 @@ export function Footer() {
 
       {/* Copyright bar */}
       <div className="max-w-7xl mx-auto pt-8 border-t border-slate-50 flex flex-col md:flex-row justify-between items-center text-[10px] text-slate-300 uppercase tracking-widest font-medium">
-        <p>© {year} Die kleine Börse. Alle Rechte vorbehalten.</p>
+        <p>© {year} Autobörse. Alle Rechte vorbehalten.</p>
         <div className="mt-4 md:mt-0 flex space-x-6">
           <span>Ein Projekt von Jakob Welik</span>
           <span className="text-slate-200">Powered by Speed.it Hosting</span>

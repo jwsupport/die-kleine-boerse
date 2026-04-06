@@ -8,7 +8,7 @@ interface SEOProps {
   type?: "website" | "product";
 }
 
-const SITE_NAME = "Die kleine Börse";
+const SITE_NAME = "Autobörse";
 const BASE_URL = "https://die-kleine-boerse.de";
 const DEFAULT_IMAGE = `${BASE_URL}/og-default.jpg`;
 
