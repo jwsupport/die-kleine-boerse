@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import * as XLSX from "xlsx";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@workspace/replit-auth-web";
 import { useT, getCatLabel } from "@/lib/i18n";
@@ -180,6 +181,14 @@ export function Admin() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
+  // Year statistics
+  type YearRow = { date: string; total: number; byHour: Record<number, number> };
+  type YearData = { year: number; rows: YearRow[] };
+  const [yearData, setYearData] = useState<YearData | null>(null);
+  const [yearLoading, setYearLoading] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [sortDesc, setSortDesc] = useState(true);
+
   const loadAnalytics = async () => {
     setAnalyticsLoading(true);
     try {
@@ -190,6 +199,44 @@ export function Admin() {
       setAnalyticsLoading(false);
     }
   };
+
+  const loadYearData = useCallback(async (year: number) => {
+    setYearLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+      const res = await fetch(`${base}/api/admin/analytics/year?year=${year}`, { credentials: "include" });
+      if (res.ok) setYearData(await res.json());
+    } finally {
+      setYearLoading(false);
+    }
+  }, []);
+
+  const exportYearExcel = useCallback(() => {
+    if (!yearData) return;
+    const rows = sortDesc ? [...yearData.rows].reverse() : [...yearData.rows];
+
+    // Sheet 1: daily totals
+    const daily = rows.map(r => ({
+      "Datum": r.date,
+      "Besucher (gesamt)": r.total,
+      ...Object.fromEntries(Array.from({ length: 24 }, (_, h) => [`${String(h).padStart(2,"0")}:00 Uhr`, r.byHour[h] ?? 0])),
+    }));
+
+    // Sheet 2: monthly summary
+    const monthMap: Record<string, number> = {};
+    for (const r of yearData.rows) {
+      const month = r.date.substring(0, 7);
+      monthMap[month] = (monthMap[month] ?? 0) + r.total;
+    }
+    const monthly = Object.entries(monthMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, count]) => ({ "Monat": month, "Besucher": count }));
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(daily), "Täglich");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(monthly), "Monatlich");
+    XLSX.writeFile(wb, `Besucherstatistik_${yearData.year}.xlsx`);
+  }, [yearData, sortDesc]);
 
   const loadSponsoredAds = async () => {
     setSponsoredAdsLoading(true);
@@ -1551,21 +1598,25 @@ export function Admin() {
 
           {/* ── Besucher Analytics ── */}
           <TabsContent value="analytics" className="space-y-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-slate-900">Besucherstatistiken</h2>
+            {/* ── Header ── */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-blue-600 font-bold mb-1">Besucherstatistik</p>
+                <h2 className="text-2xl font-light text-slate-900">Wer hat die Seite besucht?</h2>
+              </div>
               <button
                 onClick={loadAnalytics}
-                className="text-xs text-slate-500 hover:text-slate-900 border border-slate-200 rounded-lg px-3 py-1.5 transition-colors"
+                className="text-xs text-slate-500 hover:text-slate-900 border border-slate-200 rounded-lg px-3 py-1.5 transition-colors self-start sm:self-auto"
               >
                 {analyticsLoading ? <Loader2 className="w-3 h-3 animate-spin inline" /> : "Aktualisieren"}
               </button>
             </div>
 
+            {/* ── Live KPI cards ── */}
             {analyticsLoading && !analytics ? (
-              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+              <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
             ) : analytics ? (
               <>
-                {/* KPI Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white border border-slate-200 rounded-xl p-5">
                     <div className="flex items-center gap-2 mb-3">
@@ -1592,14 +1643,12 @@ export function Admin() {
                 </div>
 
                 {/* Country breakdown */}
-                <div className="bg-white border border-slate-200 rounded-xl p-6">
-                  <div className="flex items-center gap-2 mb-5">
-                    <Globe className="w-4 h-4 text-slate-400" />
-                    <h3 className="font-medium text-slate-900">Herkunft (letzte 30 Tage)</h3>
-                  </div>
-                  {analytics.byCountry.length === 0 ? (
-                    <p className="text-sm text-slate-400 py-4 text-center">Noch keine Daten</p>
-                  ) : (
+                {analytics.byCountry.length > 0 && (
+                  <div className="bg-white border border-slate-200 rounded-xl p-6">
+                    <div className="flex items-center gap-2 mb-5">
+                      <Globe className="w-4 h-4 text-slate-400" />
+                      <h3 className="font-medium text-slate-900">Herkunft (letzte 30 Tage)</h3>
+                    </div>
                     <div className="space-y-3">
                       {analytics.byCountry.map((row, i) => {
                         const max = analytics.byCountry[0]?.count ?? 1;
@@ -1609,47 +1658,190 @@ export function Admin() {
                             <span className="text-xs text-slate-400 w-4 text-right">{i + 1}</span>
                             <span className="text-sm font-medium text-slate-700 w-32 truncate">{row.country}</span>
                             <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
-                              <div
-                                className="h-2 rounded-full bg-slate-800 transition-all duration-500"
-                                style={{ width: `${pct}%` }}
-                              />
+                              <div className="h-2 rounded-full bg-slate-800 transition-all duration-500" style={{ width: `${pct}%` }} />
                             </div>
                             <span className="text-sm font-semibold text-slate-900 w-10 text-right">{row.count}</span>
                           </div>
                         );
                       })}
                     </div>
-                  )}
-                </div>
-
-                {/* Recharts bar chart */}
-                {analytics.byCountry.length > 0 && (
-                  <div className="bg-white border border-slate-200 rounded-xl p-6">
-                    <h3 className="font-medium text-slate-900 mb-5">Top-Länder (Balkendiagramm)</h3>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={analytics.byCountry.slice(0, 10)} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                        <XAxis dataKey="country" tick={{ fontSize: 11, fill: "#94a3b8" }} />
-                        <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} allowDecimals={false} />
-                        <Tooltip
-                          contentStyle={{ border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: 12 }}
-                          formatter={(v: number) => [v, "Besucher"]}
-                        />
-                        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                          {analytics.byCountry.slice(0, 10).map((_, index) => (
-                            <Cell key={index} fill={index === 0 ? "#0f172a" : index === 1 ? "#334155" : "#94a3b8"} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
                   </div>
                 )}
               </>
             ) : (
-              <div className="text-center py-16 text-slate-400 text-sm">
-                Klicke auf "Besucher" um die Daten zu laden.
-              </div>
+              <p className="text-sm text-slate-400 text-center py-4">Lade Echtzeit-Daten…</p>
             )}
+
+            {/* ══ JAHRESSTATISTIK ══ */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
+              {/* Header row */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Activity className="w-4 h-4 text-slate-400" />
+                  <h3 className="font-medium text-slate-900">Jahresstatistik</h3>
+                  {/* Year picker */}
+                  <select
+                    value={selectedYear}
+                    onChange={e => {
+                      const y = Number(e.target.value);
+                      setSelectedYear(y);
+                      loadYearData(y);
+                    }}
+                    className="text-sm border border-slate-200 rounded-lg px-2 py-1 text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  >
+                    {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!yearData && (
+                    <button
+                      onClick={() => loadYearData(selectedYear)}
+                      disabled={yearLoading}
+                      className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 text-slate-700 transition-colors disabled:opacity-50"
+                    >
+                      {yearLoading ? <Loader2 className="w-3 h-3 animate-spin inline" /> : "Daten laden"}
+                    </button>
+                  )}
+                  {yearData && (
+                    <>
+                      <button
+                        onClick={() => setSortDesc(d => !d)}
+                        className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 text-slate-600 transition-colors"
+                      >
+                        {sortDesc ? "↓ Neueste zuerst" : "↑ Älteste zuerst"}
+                      </button>
+                      <button
+                        onClick={() => loadYearData(selectedYear)}
+                        disabled={yearLoading}
+                        className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 text-slate-600 transition-colors disabled:opacity-50"
+                      >
+                        {yearLoading ? <Loader2 className="w-3 h-3 animate-spin inline" /> : "Aktualisieren"}
+                      </button>
+                      <button
+                        onClick={exportYearExcel}
+                        className="text-xs bg-slate-900 text-white rounded-lg px-3 py-1.5 hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+                      >
+                        <TrendingUp className="w-3 h-3" />
+                        Excel herunterladen
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {yearLoading && !yearData && (
+                <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+              )}
+
+              {yearData && yearData.rows.length === 0 && (
+                <p className="text-sm text-slate-400 text-center py-8">Keine Besucherdaten für {selectedYear}.</p>
+              )}
+
+              {yearData && yearData.rows.length > 0 && (() => {
+                const rows = sortDesc ? [...yearData.rows].reverse() : [...yearData.rows];
+                const total = yearData.rows.reduce((s, r) => s + r.total, 0);
+                const maxDay = Math.max(...yearData.rows.map(r => r.total));
+
+                // Monthly chart data
+                const monthMap: Record<string, number> = {};
+                for (const r of yearData.rows) {
+                  const m = r.date.substring(0, 7);
+                  monthMap[m] = (monthMap[m] ?? 0) + r.total;
+                }
+                const monthData = Object.entries(monthMap).sort(([a], [b]) => a.localeCompare(b))
+                  .map(([m, cnt]) => ({ monat: m.substring(5), count: cnt }));
+
+                return (
+                  <>
+                    {/* Summary */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-slate-50 rounded-lg p-4 text-center">
+                        <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Gesamt {selectedYear}</p>
+                        <p className="text-2xl font-semibold text-slate-900">{total.toLocaleString("de-AT")}</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-lg p-4 text-center">
+                        <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Tage mit Besuchen</p>
+                        <p className="text-2xl font-semibold text-slate-900">{yearData.rows.length}</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-lg p-4 text-center">
+                        <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Rekordtag</p>
+                        <p className="text-2xl font-semibold text-slate-900">{maxDay.toLocaleString("de-AT")}</p>
+                      </div>
+                    </div>
+
+                    {/* Monthly bar chart */}
+                    <div>
+                      <p className="text-xs text-slate-400 uppercase tracking-wider font-medium mb-3">Monatliche Übersicht</p>
+                      <ResponsiveContainer width="100%" height={180}>
+                        <BarChart data={monthData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                          <XAxis dataKey="monat" tick={{ fontSize: 11, fill: "#94a3b8" }} />
+                          <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} allowDecimals={false} />
+                          <Tooltip
+                            contentStyle={{ border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: 12 }}
+                            formatter={(v: number) => [v.toLocaleString("de-AT"), "Besucher"]}
+                          />
+                          <Bar dataKey="count" radius={[3, 3, 0, 0]} fill="#0f172a" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Daily table */}
+                    <div>
+                      <p className="text-xs text-slate-400 uppercase tracking-wider font-medium mb-3">Tagesdetails</p>
+                      <div className="border border-slate-200 rounded-lg overflow-hidden">
+                        <div className="overflow-auto max-h-[480px]">
+                          <table className="w-full text-sm">
+                            <thead className="bg-slate-50 sticky top-0 z-10">
+                              <tr>
+                                <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Datum</th>
+                                <th className="text-right px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Besucher</th>
+                                <th className="px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Verteilung (Stunden)</th>
+                                <th className="text-right px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Spitzenstunde</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {rows.map(r => {
+                                const peakHour = Object.entries(r.byHour).sort(([, a], [, b]) => b - a)[0];
+                                const barPct = maxDay > 0 ? Math.round((r.total / maxDay) * 100) : 0;
+                                return (
+                                  <tr key={r.date} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-4 py-2.5 font-medium text-slate-800 whitespace-nowrap">{r.date}</td>
+                                    <td className="px-4 py-2.5 text-right font-semibold text-slate-900 whitespace-nowrap">{r.total.toLocaleString("de-AT")}</td>
+                                    <td className="px-4 py-2.5">
+                                      <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                        <div className="bg-slate-800 h-1.5 rounded-full" style={{ width: `${barPct}%` }} />
+                                      </div>
+                                    </td>
+                                    <td className="px-4 py-2.5 text-right text-slate-500 text-xs whitespace-nowrap">
+                                      {peakHour ? `${String(peakHour[0]).padStart(2,"0")}:00 Uhr (${peakHour[1]})` : "—"}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+
+              {!yearData && !yearLoading && (
+                <div className="text-center py-8">
+                  <p className="text-sm text-slate-400 mb-3">Jahresstatistik für {selectedYear} noch nicht geladen.</p>
+                  <button
+                    onClick={() => loadYearData(selectedYear)}
+                    className="text-xs bg-slate-900 text-white rounded-lg px-4 py-2 hover:bg-slate-700 transition-colors"
+                  >
+                    Jetzt laden
+                  </button>
+                </div>
+              )}
+            </div>
           </TabsContent>
 
         </Tabs>

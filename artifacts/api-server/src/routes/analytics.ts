@@ -158,4 +158,44 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
   });
 });
 
+// GET /api/admin/analytics/year  (admin only)
+router.get("/admin/analytics/year", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const year = parseInt(req.query.year as string) || new Date().getFullYear();
+  const yearStart = new Date(`${year}-01-01T00:00:00.000Z`);
+  const yearEnd   = new Date(`${year + 1}-01-01T00:00:00.000Z`);
+
+  const { rows } = await db.execute(
+    sql`SELECT
+          DATE(created_at AT TIME ZONE 'Europe/Vienna')         AS day,
+          EXTRACT(HOUR FROM created_at AT TIME ZONE 'Europe/Vienna')::int AS hour,
+          COUNT(DISTINCT session_id)::int                        AS cnt
+        FROM visitor_sessions
+        WHERE created_at >= ${yearStart} AND created_at < ${yearEnd}
+        GROUP BY day, hour
+        ORDER BY day ASC, hour ASC`,
+  );
+
+  // group into { date, total, byHour: {0..23: count} }
+  const map: Record<string, { total: number; byHour: Record<number, number> }> = {};
+  for (const r of rows as any[]) {
+    const day  = String(r.day).substring(0, 10);
+    const hour = Number(r.hour);
+    const cnt  = Number(r.cnt);
+    if (!map[day]) map[day] = { total: 0, byHour: {} };
+    map[day].total += cnt;
+    map[day].byHour[hour] = (map[day].byHour[hour] ?? 0) + cnt;
+  }
+
+  const result = Object.entries(map)
+    .map(([date, d]) => ({ date, total: d.total, byHour: d.byHour }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  res.json({ year, rows: result });
+});
+
 export default router;
