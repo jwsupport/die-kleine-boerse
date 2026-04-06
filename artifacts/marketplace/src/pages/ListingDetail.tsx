@@ -18,6 +18,7 @@ import { MapPin, Clock, ArrowRight, Star, Flag, Building2, Phone, Globe, Externa
 import { formatDistanceToNow } from "date-fns";
 import { ListingCard } from "@/components/ListingCard";
 import { ShareListing } from "@/components/ShareListing";
+import { ImageLightbox } from "@/components/ImageLightbox";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/seo/SEO";
 import { useT, getCatLabel } from "@/lib/i18n";
@@ -33,6 +34,7 @@ export function ListingDetail() {
   const [message, setMessage] = useState("");
   const [isMessaging, setIsMessaging] = useState(false);
   const [reportReason, setReportReason] = useState("");
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const search = new URLSearchParams(window.location.search);
@@ -155,26 +157,56 @@ export function ListingDetail() {
         <article className="container mx-auto px-4 md:px-8 py-8 md:py-16 max-w-7xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24">
             {/* Images */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {listing.imageUrls && listing.imageUrls.length > 0 ? (
-                <div className="aspect-[4/5] md:aspect-[3/4] relative bg-slate-100 rounded-sm overflow-hidden">
-                  <img src={listing.imageUrls[0]} alt={listing.title} className="object-cover w-full h-full" />
+                <div
+                  className="aspect-[4/5] md:aspect-[3/4] relative bg-slate-100 rounded-sm overflow-hidden cursor-zoom-in group"
+                  onClick={() => setLightboxIndex(0)}
+                >
+                  <img
+                    src={listing.imageUrls[0]}
+                    alt={listing.title}
+                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-[1.02]"
+                  />
+                  {listing.imageUrls.length > 1 && (
+                    <div className="absolute bottom-3 right-3 bg-black/50 text-white text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
+                      1 / {listing.imageUrls.length}
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="aspect-[4/5] bg-slate-100 rounded-sm flex items-center justify-center text-slate-400">
-                  No images
+                <div className="aspect-[4/5] bg-slate-100 rounded-sm flex items-center justify-center text-slate-400 text-sm">
+                  Keine Bilder vorhanden
                 </div>
               )}
               {listing.imageUrls && listing.imageUrls.length > 1 && (
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-4 gap-2">
                   {listing.imageUrls.slice(1).map((url, i) => (
-                    <div key={i} className="aspect-square bg-slate-100 rounded-sm overflow-hidden">
-                      <img src={url} alt="" className="object-cover w-full h-full" />
+                    <div
+                      key={i}
+                      className="aspect-square bg-slate-100 rounded-sm overflow-hidden cursor-zoom-in group"
+                      onClick={() => setLightboxIndex(i + 1)}
+                    >
+                      <img
+                        src={url}
+                        alt={`Bild ${i + 2}`}
+                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-[1.05]"
+                      />
                     </div>
                   ))}
                 </div>
               )}
             </div>
+
+            {/* Lightbox */}
+            {lightboxIndex !== null && listing.imageUrls && listing.imageUrls.length > 0 && (
+              <ImageLightbox
+                images={listing.imageUrls}
+                currentIndex={lightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+                onNavigate={setLightboxIndex}
+              />
+            )}
 
             {/* Details */}
             <div className="flex flex-col pt-4 md:pt-12">
