@@ -22,6 +22,10 @@ import { CategoryPage } from "@/pages/CategoryPage";
 import CryptoPayment from "@/pages/CryptoPayment";
 import { Archive } from "@/pages/Archive";
 import { CreateSponsoredAd } from "@/pages/CreateSponsoredAd";
+import { Impressum } from "@/pages/Impressum";
+import { AGB } from "@/pages/AGB";
+import { Datenschutz } from "@/pages/Datenschutz";
+import { Sicherheit } from "@/pages/Sicherheit";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +44,10 @@ function Router() {
       <Route path="/category/:id" component={CategoryPage} />
       <Route path="/archive" component={Archive} />
       <Route path="/ads/create" component={CreateSponsoredAd} />
+      <Route path="/impressum" component={Impressum} />
+      <Route path="/agb" component={AGB} />
+      <Route path="/datenschutz" component={Datenschutz} />
+      <Route path="/sicherheit" component={Sicherheit} />
       <Route component={NotFound} />
     </Switch>
   );
