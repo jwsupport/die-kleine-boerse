@@ -1,0 +1,16 @@
+
+lib/api-client-react/src/generated/api.ts(2427,5): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type 'CustomFetchOptions'.
+lib/api-client-react/src/generated/api.ts(2491,22): error TS2552: Cannot find name 'AdminPaymentItem'. Did you mean 'PaymentItem'?
+lib/api-zod/src/index.ts(2,1): error TS2308: Module "./generated/api" has already exported a member named 'CreateListingBody'. Consider explicitly re-exporting to resolve the ambiguity.
+lib/api-zod/src/index.ts(2,1): error TS2308: Module "./generated/api" has already exported a member named 'GetMessagesParams'. Consider explicitly re-exporting to resolve the ambiguity.
+lib/api-zod/src/index.ts(2,1): error TS2308: Module "./generated/api" has already exported a member named 'ReportListingBody'. Consider explicitly re-exporting to resolve the ambiguity.
+lib/api-zod/src/index.ts(2,1): error TS2308: Module "./generated/api" has already exported a member named 'SendMessageBody'. Consider explicitly re-exporting to resolve the ambiguity.
+lib/api-zod/src/index.ts(2,1): error TS2308: Module "./generated/api" has already exported a member named 'SubmitRatingBody'. Consider explicitly re-exporting to resolve the ambiguity.
+lib/api-zod/src/index.ts(2,1): error TS2308: Module "./generated/api" has already exported a member named 'UpdateListingBody'. Consider explicitly re-exporting to resolve the ambiguity.
+lib/api-client-react/src/generated/api.ts(2427,5): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type 'CustomFetchOptions'.
+lib/api-client-react/src/generated/api.ts(2491,22): error TS2552: Cannot find name 'AdminPaymentItem'. Did you mean 'PaymentItem'?
+lib/replit-auth-web/src/use-auth.ts(45,30): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+ ELIFECYCLE  Command failed with exit code 2.
+ ELIFECYCLE  Command failed with exit code 2.
+ ELIFECYCLE  Command failed with exit code 2.
+Error: Command "pnpm run build" exited with 2
