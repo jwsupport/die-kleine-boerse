@@ -20,6 +20,7 @@ import type {
   AdminGetListingsParams,
   AdminGetStatsParams,
   AdminListing,
+  AdminPaymentItem,
   AdminRevenueItem,
   AdminStats,
   AdminUpdateStatusBody,
@@ -2424,7 +2425,7 @@ export const updateProfile = async (
   return customFetch<Profile>(getUpdateProfileUrl(id), {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    data: updateProfileBody,
+    body: JSON.stringify(updateProfileBody),
     ...options,
   });
 };
