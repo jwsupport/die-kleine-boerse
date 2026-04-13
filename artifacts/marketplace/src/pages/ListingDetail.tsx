@@ -85,6 +85,7 @@ export function ListingDetail() {
     if (!message.trim() || !listing) return;
     
     sendMessage.mutate({
+      id: listing.id,
       data: {
         senderId: "user-demo-1",
         receiverId: listing.sellerId,

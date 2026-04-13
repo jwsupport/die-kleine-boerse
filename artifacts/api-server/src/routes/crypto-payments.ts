@@ -245,19 +245,16 @@ router.patch("/admin/crypto-payments/:id", async (req, res): Promise<void> => {
       await db
         .update(listingsTable)
         .set({ paymentStatus: "paid", listingType: "paid", paidAt: new Date() })
-        .where(eq(listingsTable.id, existing.listingId))
+        .where(eq(listingsTable.id, String(existing.listingId)))
         .catch(() => {});
     }
 
     if (existing.purpose === "sponsored_ad" && existing.purposeRefId) {
-      const adId = Number(existing.purposeRefId);
-      if (!isNaN(adId)) {
-        await db
-          .update(sponsoredAdsTable)
-          .set({ paymentStatus: "paid" })
-          .where(eq(sponsoredAdsTable.id, adId))
-          .catch(() => {});
-      }
+      await db
+        .update(sponsoredAdsTable)
+        .set({ paymentStatus: "paid" })
+        .where(eq(sponsoredAdsTable.id, existing.purposeRefId))
+        .catch(() => {});
     }
   }
 

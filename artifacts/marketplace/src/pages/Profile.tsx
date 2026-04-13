@@ -274,7 +274,7 @@ export function Profile() {
                   <h1 className="text-2xl font-medium text-slate-900">
                     {profile.fullName || (isAdminEmail(user?.email) && isOwner ? 'Godfather' : 'Anonymer Nutzer')}
                   </h1>
-                  {profile.isVerified && (
+                  {(profile as any).isVerified && (
                     <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold border border-blue-100">
                       <BadgeCheck className="w-3 h-3" /> Verifiziert
                     </span>

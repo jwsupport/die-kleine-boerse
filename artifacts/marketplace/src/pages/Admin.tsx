@@ -699,7 +699,7 @@ export function Admin() {
                               ) : (
                                 <Badge variant="outline" className="text-slate-600 border-slate-200 bg-slate-50">{t.admin_badge_free}</Badge>
                               )}
-                              {listing.paymentStatus === "pending" && (
+                              {(listing as any).paymentStatus === "pending" && (
                                 <Badge variant="outline" className="text-orange-700 border-orange-300 bg-orange-50 text-[10px] px-1.5">
                                   {t.admin_badge_cryptoPending}
                                 </Badge>

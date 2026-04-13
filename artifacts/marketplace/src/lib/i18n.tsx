@@ -52,6 +52,7 @@ export const translations = {
     myAds_premium: "Premium",
     myAds_active: "Aktiv",
     myAds_expires: "Läuft ab",
+    myAds_deleteSuccess: "Anzeige gelöscht",
 
     create_pageTitle: "Anzeige aufgeben",
     create_pageSubtitle: "Kostenlos inserieren — 10 Tage aktiv. Upgrade auf Premium für 30 Tage.",

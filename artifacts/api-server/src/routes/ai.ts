@@ -5,7 +5,9 @@ const router: IRouter = Router();
 
 const ai = new GoogleGenAI({
   apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY ?? "dummy",
-  baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
+  httpOptions: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL
+    ? { baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL }
+    : undefined,
 });
 
 router.post("/ai/improve-description", async (req, res): Promise<void> => {

@@ -29,7 +29,7 @@ function geoLookup(ip: string | null): { country: string | null; countryCode: st
     return { country: "Lokal", countryCode: "XX", city: null };
   }
   try {
-    const geo = geoip.lookup(ip);
+    const geo = geoip?.lookup(ip);
     if (!geo) return { country: null, countryCode: null, city: null };
     return {
       country: geo.country ?? null,

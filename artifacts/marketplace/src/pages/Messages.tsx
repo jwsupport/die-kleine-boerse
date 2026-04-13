@@ -48,7 +48,7 @@ export function Messages() {
     setNewMessage("");
 
     sendMessage.mutate({
-      listingId: activeListingId,
+      id: activeListingId!,
       data: { senderId: currentUserId, receiverId: otherUserId, content: sentMessageContent }
     }, {
       onSuccess: () => {
