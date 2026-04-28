@@ -60,26 +60,33 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Legal */}
-        <div className="space-y-3">
-          <h3 className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-300 mb-2">
-            Rechtliches
-          </h3>
-          <Link href="/archive" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors font-medium">
-            Archiv
-          </Link>
-          <Link href="/impressum" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
-            Impressum
-          </Link>
-          <Link href="/agb" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
-            AGB
-          </Link>
-          <Link href="/datenschutz" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
-            Datenschutz
-          </Link>
-          <Link href="/sicherheit" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
-            Sicherheitstipps
-          </Link>
+        {/* Legal + Platform */}
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <h3 className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-300 mb-2">
+              Plattform
+            </h3>
+            <Link href="/archive" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              Archiv
+            </Link>
+            <Link href="/sicherheit" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              Sicherheitstipps
+            </Link>
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-300 mb-2">
+              Rechtliches
+            </h3>
+            <Link href="/impressum" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              Impressum
+            </Link>
+            <Link href="/agb" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              AGB
+            </Link>
+            <Link href="/datenschutz" className="block text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              Datenschutz
+            </Link>
+          </div>
         </div>
       </div>
 
