@@ -5,10 +5,12 @@ import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/lib/i18n";
-import { useAuth } from "@workspace/replit-auth-web";
+import { useAuth, AuthProvider } from "@workspace/replit-auth-web";
 import { useGetProfile } from "@workspace/api-client-react";
 import { OnboardingModal } from "@/components/OnboardingModal";
+import { LoginModal } from "@/components/LoginModal";
 import NotFound from "@/pages/not-found";
+import type { FullProfile } from "@/lib/types";
 
 import { Home } from "@/pages/Home";
 import { ListingDetail } from "@/pages/ListingDetail";
@@ -54,12 +56,12 @@ function Router() {
 }
 
 function OnboardingGate({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, refetch } = useAuth();
   const { data: profile } = useGetProfile(user?.id ?? "", {
     query: { enabled: !!user?.id },
   });
 
-  const fullProfile = profile as import("@/lib/types").FullProfile | undefined;
+  const fullProfile = profile as FullProfile | undefined;
   const showOnboarding = !!user && !!fullProfile && !fullProfile.setupComplete;
 
   return (
@@ -68,9 +70,10 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
       {showOnboarding && (
         <OnboardingModal
           userId={user.id}
-          onComplete={() => {}}
+          onComplete={refetch}
         />
       )}
+      <LoginModal />
     </>
   );
 }
@@ -81,12 +84,14 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <LanguageProvider>
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-              <OnboardingGate>
-                <Router />
-              </OnboardingGate>
-            </WouterRouter>
-            <Toaster />
+            <AuthProvider>
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                <OnboardingGate>
+                  <Router />
+                </OnboardingGate>
+              </WouterRouter>
+              <Toaster />
+            </AuthProvider>
           </LanguageProvider>
         </TooltipProvider>
       </QueryClientProvider>

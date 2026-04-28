@@ -1,61 +1,87 @@
-import { useState, useEffect, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useContext,
+  createContext,
+  createElement,
+  type ReactNode,
+} from "react";
 import type { AuthUser } from "@workspace/api-client-react";
 
 export type { AuthUser };
 
-interface AuthState {
+interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: () => void;
-  logout: () => void;
+  logout: () => Promise<void>;
+  refetch: () => void;
+  modalOpen: boolean;
+  openModal: () => void;
+  closeModal: () => void;
 }
 
-export function useAuth(): AuthState {
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-
+  const fetchUser = useCallback(() => {
+    setIsLoading(true);
     fetch("/api/auth/user", { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<{ user: AuthUser | null }>;
       })
       .then((data) => {
-        if (!cancelled) {
-          setUser(data.user ?? null);
-          setIsLoading(false);
-        }
+        setUser(data.user ?? null);
+        setIsLoading(false);
       })
       .catch(() => {
-        if (!cancelled) {
-          setUser(null);
-          setIsLoading(false);
-        }
+        setUser(null);
+        setIsLoading(false);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
 
   const login = useCallback(() => {
-    const metaEnv = (import.meta as unknown as { env?: { BASE_URL?: string } }).env;
-    const base = (metaEnv?.BASE_URL ?? "/").replace(/\/+$/, "") || "/";
-    window.location.href = `/api/login?returnTo=${encodeURIComponent(base)}`;
+    setModalOpen(true);
   }, []);
 
-  const logout = useCallback(() => {
-    window.location.href = "/api/logout";
+  const logout = useCallback(async () => {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    setUser(null);
   }, []);
 
-  return {
+  const openModal = useCallback(() => setModalOpen(true), []);
+  const closeModal = useCallback(() => setModalOpen(false), []);
+
+  const value: AuthContextValue = {
     user,
     isLoading,
     isAuthenticated: !!user,
     login,
     logout,
+    refetch: fetchUser,
+    modalOpen,
+    openModal,
+    closeModal,
   };
+
+  return createElement(AuthContext.Provider, { value }, children);
+}
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return ctx;
 }
