@@ -6,8 +6,8 @@ export function Impressum() {
   return (
     <>
       <SEO
-        title="Impressum"
-        description="Impressum von Die kleine Börse — Angaben gemäß § 5 ECG."
+        title="Impressum — Die kleine Börse"
+        description="Impressum und Anbieterkennzeichnung von Die kleine Börse — Angaben gemäß § 5 ECG (AT), § 5 TMG (DE) und Art. 13 DSGVO."
         url="/impressum"
       />
       <div className="min-h-screen bg-[#F8F7F4]">

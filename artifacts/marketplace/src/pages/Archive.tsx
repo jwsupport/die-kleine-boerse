@@ -32,8 +32,8 @@ export function Archive() {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
       <SEO
-        title="Archiv — Die kleine Börse"
-        description="Entdecke verkaufte Raritäten und Preisgeschichte. Das Archiv der kleinen Börse — eine Dokumentation des Wertvollen."
+        title="Archiv — Verkaufte Raritäten & Preisgeschichte"
+        description="Das Archiv von Die kleine Börse — entdecke bereits verkaufte Einzelstücke, Vintage-Objekte und Preisreferenzen aus dem DACH-Raum."
       />
       <Navbar />
 

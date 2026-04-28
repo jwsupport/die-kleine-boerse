@@ -6,8 +6,8 @@ export function Datenschutz() {
   return (
     <>
       <SEO
-        title="Datenschutzerklärung"
-        description="Datenschutzerklärung von Die kleine Börse gemäß DSGVO."
+        title="Datenschutzerklärung — DSGVO-konform"
+        description="Datenschutzerklärung von Die kleine Börse gemäß DSGVO — transparente Informationen zur Datenverarbeitung für Nutzer in Österreich, Deutschland und der Schweiz."
         url="/datenschutz"
       />
       <div className="min-h-screen bg-[#F8F7F4]">

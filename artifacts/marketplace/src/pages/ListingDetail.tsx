@@ -124,7 +124,7 @@ export function ListingDetail() {
 
   const seoDescription = listing.description
     ? listing.description.slice(0, 155)
-    : `${listing.title} — €${listing.price.toLocaleString()} in ${listing.location}. Available on Die kleine Börse.`;
+    : `${listing.title} — €${listing.price.toLocaleString("de-AT")} in ${listing.location}. Jetzt ansehen auf Die kleine Börse — dem Marktplatz für Österreich, Deutschland & die Schweiz.`;
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">

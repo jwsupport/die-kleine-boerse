@@ -1,6 +1,7 @@
 import { useAuth } from "@workspace/replit-auth-web";
 import { useGetFavourites, getFavouritesQueryKey } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
+import { SEO } from "@/components/seo/SEO";
 import { ListingCard } from "@/components/ListingCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -18,9 +19,18 @@ export function Favourites() {
     },
   });
 
+  const seoTag = (
+    <SEO
+      title="Merkliste — Deine gespeicherten Anzeigen"
+      description="Deine gespeicherten Lieblingsanzeigen auf Die kleine Börse — jederzeit abrufbar und vergleichbar."
+      url="/favourites"
+    />
+  );
+
   if (authLoading) {
     return (
       <div className="min-h-[100dvh] flex flex-col bg-background">
+        {seoTag}
         <Navbar />
         <main className="flex-1 container mx-auto px-4 md:px-8 py-12 max-w-7xl">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 animate-pulse">
@@ -36,6 +46,7 @@ export function Favourites() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-[100dvh] flex flex-col bg-background">
+        {seoTag}
         <Navbar />
         <main className="flex-1 container mx-auto px-4 md:px-8 py-24 max-w-4xl text-center">
           <Star className="w-12 h-12 stroke-slate-200 mx-auto mb-6" />
@@ -53,6 +64,7 @@ export function Favourites() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
+      {seoTag}
       <Navbar />
       <main className="flex-1 container mx-auto px-4 md:px-8 py-10 max-w-7xl">
         <div className="mb-8">

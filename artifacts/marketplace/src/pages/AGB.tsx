@@ -6,8 +6,8 @@ export function AGB() {
   return (
     <>
       <SEO
-        title="Allgemeine Geschäftsbedingungen"
-        description="AGB von Die kleine Börse — Nutzungsbedingungen für die Kleinanzeigenplattform."
+        title="AGB — Allgemeine Geschäftsbedingungen"
+        description="Nutzungsbedingungen von Die kleine Börse — dem Kleinanzeigenmarkt für Österreich, Deutschland und die Schweiz. Transparent, fair und DSGVO-konform."
         url="/agb"
       />
       <div className="min-h-screen bg-[#F8F7F4]">

@@ -39,8 +39,8 @@ export function Sicherheit() {
   return (
     <>
       <SEO
-        title="Sicherheitstipps"
-        description="Tipps für sicheres Kaufen und Verkaufen auf Die kleine Börse."
+        title="Sicher kaufen & verkaufen im DACH-Raum"
+        description="So schützt du dich beim Kaufen und Verkaufen auf Die kleine Börse: Video-Verifikation, sichere Zahlung, Betrugsschutz — unsere Tipps für Österreich, Deutschland und die Schweiz."
         url="/sicherheit"
       />
       <div className="min-h-screen bg-[#F8F7F4]">

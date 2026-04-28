@@ -127,7 +127,11 @@ export function CreateListing() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
-      <SEO title="Anzeige aufgeben" description="Verkaufe dein Objekt auf Die kleine Börse — einfach, sicher und kostenlos." />
+      <SEO
+        title="Anzeige inserieren — kostenlos im DACH-Raum"
+        description="Inseriere kostenlos bei Die kleine Börse — dem Kleinanzeigenmarkt für Österreich, Deutschland und die Schweiz. In weniger als 2 Minuten live."
+        url="/create"
+      />
       <Navbar />
 
       <main className="flex-1 container mx-auto px-4 py-12 max-w-2xl">

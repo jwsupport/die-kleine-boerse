@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useGetConversations, getGetConversationsQueryKey, useGetMessages, getGetMessagesQueryKey, useSendMessage } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
+import { SEO } from "@/components/seo/SEO";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
@@ -69,6 +70,11 @@ export function Messages() {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
+      <SEO
+        title="Nachrichten — Direkt mit Verkäufern chatten"
+        description="Kontaktiere Verkäufer direkt auf Die kleine Börse — sicher, anonym und ohne deine persönlichen Daten zu teilen."
+        url="/messages"
+      />
       <Navbar />
       
       <main className="flex-1 flex overflow-hidden container mx-auto max-w-5xl px-0 sm:px-4 py-0 sm:py-6">

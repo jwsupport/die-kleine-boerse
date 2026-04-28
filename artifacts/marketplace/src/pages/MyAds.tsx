@@ -8,6 +8,7 @@ import {
   useUpdateListing,
 } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
+import { SEO } from "@/components/seo/SEO";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -167,9 +168,18 @@ export function MyAds() {
     );
   };
 
+  const seoTag = (
+    <SEO
+      title="Meine Anzeigen — Verwalte deine Inserate"
+      description="Verwalte, bearbeite und booste deine Kleinanzeigen auf Die kleine Börse — dem Marktplatz für Österreich, Deutschland und die Schweiz."
+      url="/my-ads"
+    />
+  );
+
   if (authLoading) {
     return (
       <div className="min-h-[100dvh] flex flex-col bg-background">
+        {seoTag}
         <Navbar />
         <main className="flex-1 container mx-auto px-4 md:px-8 py-12 max-w-4xl">
           <div className="space-y-4 animate-pulse">
@@ -185,6 +195,7 @@ export function MyAds() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-[100dvh] flex flex-col bg-background">
+        {seoTag}
         <Navbar />
         <main className="flex-1 container mx-auto px-4 md:px-8 py-24 max-w-4xl text-center">
           <h1 className="text-2xl font-medium tracking-tight text-slate-900 mb-4">Anmelden um deine Anzeigen zu sehen</h1>
@@ -205,6 +216,7 @@ export function MyAds() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
+      {seoTag}
       <Navbar />
       <main className="flex-1 container mx-auto px-4 md:px-8 py-10 max-w-4xl">
         <div className="flex items-center justify-between mb-6">

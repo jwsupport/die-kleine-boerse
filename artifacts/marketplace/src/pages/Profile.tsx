@@ -1,5 +1,6 @@
 import { useParams } from "wouter";
 import { useState, useEffect } from "react";
+import { SEO } from "@/components/seo/SEO";
 import { 
   useGetProfile, getGetProfileQueryKey, 
   useGetProfileListings, getGetProfileListingsQueryKey,
@@ -212,6 +213,11 @@ export function Profile() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
+      <SEO
+        title={`${profile.fullName ?? profile.username ?? "Verkäufer"} — Profil auf Die kleine Börse`}
+        description={`Entdecke die Anzeigen von ${profile.fullName ?? profile.username ?? "diesem Verkäufer"} auf Die kleine Börse — dem Kleinanzeigenmarkt für Österreich, Deutschland und die Schweiz.`}
+        url={`/profile/${profile.id}`}
+      />
       <Navbar />
       
       <main className="flex-1 container mx-auto px-4 md:px-8 py-12 max-w-7xl">

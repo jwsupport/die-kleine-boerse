@@ -38,7 +38,7 @@ export function CategoryPage() {
     <div className="min-h-[100dvh] flex flex-col bg-background">
       <SEO
         title={`${getCatLabel(cat.id, t)} kaufen & verkaufen — Die kleine Börse`}
-        description={`Entdecke gebrauchte ${getCatLabel(cat.id, t).toLowerCase()} Artikel in deiner Nähe auf Die kleine Börse — fair, sicher und kuratiert.`}
+        description={`${getCatLabel(cat.id, t)} kaufen & verkaufen bei Die kleine Börse — kostenlose Kleinanzeigen aus Österreich, Deutschland und der Schweiz. Direkt von Privat, ohne Zwischenhändler.`}
       />
       <Navbar />
 
