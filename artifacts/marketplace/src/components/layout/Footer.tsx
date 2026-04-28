@@ -23,8 +23,11 @@ export function Footer() {
           <h2 className="text-lg font-bold uppercase tracking-tighter mb-4 text-slate-900">
             Die kleine Börse
           </h2>
-          <p className="text-slate-400 text-sm leading-relaxed">
-            Dein Marktplatz für Kleinanzeigen in Österreich — sicher, lokal und kostenlos inserieren.
+          <p className="text-slate-400 text-sm leading-relaxed mb-4">
+            Der Marktplatz für den deutschsprachigen Raum. Privat oder gewerblich — kostenlos inserieren, sicher handeln.
+          </p>
+          <p className="text-[10px] text-slate-300 uppercase tracking-[0.2em] font-medium">
+            Österreich · Deutschland · Schweiz
           </p>
         </div>
 
@@ -82,10 +85,9 @@ export function Footer() {
 
       {/* Copyright bar */}
       <div className="max-w-7xl mx-auto pt-8 border-t border-slate-50 flex flex-col md:flex-row justify-between items-center text-[10px] text-slate-300 uppercase tracking-widest font-medium">
-        <p>© {year} Die kleine Börse. Alle Rechte vorbehalten.</p>
+        <p>© {year} Die kleine Börse — Kleinanzeigen für Österreich, Deutschland & die Schweiz.</p>
         <div className="mt-4 md:mt-0 flex space-x-6">
           <span>Ein Projekt von Jakob Welik</span>
-          <span className="text-slate-200">Powered by Speed.it Hosting</span>
         </div>
       </div>
     </footer>

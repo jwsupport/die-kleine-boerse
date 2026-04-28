@@ -53,11 +53,11 @@ export function Home() {
   });
 
   const pageTitle = category
-    ? `${category} — Local Listings`
-    : "Local Marketplace for Unique Finds";
+    ? `${getCatLabel(category, t)} — Kleinanzeigen im DACH-Raum`
+    : "Die kleine Börse — Kleinanzeigen für Österreich, Deutschland & die Schweiz";
   const pageDesc = category
-    ? `Browse pre-owned ${category.toLowerCase()} items near you on Die kleine Börse — quality over quantity.`
-    : "Buy and sell pre-owned treasures at Die kleine Börse. Your local, secure, and minimalist community marketplace for unique finds.";
+    ? `Jetzt ${getCatLabel(category, t)} entdecken bei Die kleine Börse — dem Marktplatz für den deutschsprachigen Raum. Kostenlos inserieren.`
+    : "Entdecke besondere Anzeigen oder inseriere kostenlos bei Die kleine Börse — dem Marktplatz für Österreich, Deutschland und die Schweiz. Sicher, diskret, DACH-weit.";
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
@@ -67,9 +67,14 @@ export function Home() {
 
       <main className="flex-1 container mx-auto px-4 md:px-8 py-8 md:py-12 max-w-7xl">
         <header className="mb-8 md:mb-12 space-y-5 md:space-y-8">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight text-slate-900">
-            {t.home_headline}
-          </h1>
+          <div className="space-y-2">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight text-slate-900">
+              {t.home_headline}
+            </h1>
+            <p className="text-sm text-slate-400 font-light tracking-wide">
+              {t.home_subheadline}
+            </p>
+          </div>
           
           <div className="flex flex-col md:flex-row gap-4 max-w-2xl">
             <div className="relative flex-1">

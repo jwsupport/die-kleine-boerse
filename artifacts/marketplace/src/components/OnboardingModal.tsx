@@ -59,10 +59,10 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
             Die Kleine Börse
           </p>
           <h2 className="text-2xl font-light text-slate-900 tracking-tight">
-            Willkommen
+            Willkommen bei Die kleine Börse
           </h2>
           <p className="text-sm text-slate-500 mt-2 font-light">
-            Bitte wähle deinen Kontotyp, um fortzufahren.
+            Wähle deinen Kontotyp — kostenlos und in weniger als einer Minute bereit.
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
             <div className="bg-slate-50 rounded-2xl p-5 mb-6 animate-in fade-in slide-in-from-bottom-2">
               <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-1">Privatkonto</p>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Ideal für Privatverkäufe. Verkaufe Einzelstücke, Möbel, Kunst und mehr — einfach und diskret.
+                Ideal für Privatverkäufe in Österreich, Deutschland und der Schweiz. Verkaufe Einzelstücke, Möbel, Kunst und mehr — kostenlos, einfach und diskret.
               </p>
             </div>
           ) : (
@@ -106,7 +106,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
               <div className="bg-slate-50 rounded-2xl p-5">
                 <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-1">Gewerblicher Partner</p>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  Für Händler, Makler und Galerien. Erhalte das PRO-Badge und Zugang zu Rechnungsstellung.
+                  Für Händler, Makler und Galerien im DACH-Raum. Erhalte das PRO-Badge, eigene Profilseite und Zugang zur automatischen Rechnungsstellung.
                 </p>
               </div>
               <div className="space-y-3">
