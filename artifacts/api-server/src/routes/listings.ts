@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, ilike, and, gte, lte, sql, count } from "drizzle-orm";
+
 import { notifyNewListing } from "../lib/adminEmail";
 import { db, listingsTable, profilesTable, searchStatsTable, businessBookingsTable } from "@workspace/db";
 import type { Listing } from "@workspace/db";
@@ -19,6 +20,8 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const CATEGORY_FEES: Record<string, number> = {
   "Vehicles & Mobility": 5.49,
@@ -267,6 +270,10 @@ router.get("/listings/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
+  if (!UUID_REGEX.test(params.data.id)) {
+    res.status(404).json({ error: "Listing not found" });
+    return;
+  }
 
   const [row] = await db
     .select({
@@ -315,6 +322,10 @@ router.patch("/listings/:id", async (req, res): Promise<void> => {
   const params = UpdateListingParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
+    return;
+  }
+  if (!UUID_REGEX.test(params.data.id)) {
+    res.status(404).json({ error: "Listing not found" });
     return;
   }
 
@@ -375,6 +386,10 @@ router.delete("/listings/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
+  if (!UUID_REGEX.test(params.data.id)) {
+    res.status(404).json({ error: "Listing not found" });
+    return;
+  }
 
   const [existing] = await db
     .select({ sellerId: listingsTable.sellerId })
@@ -409,6 +424,10 @@ router.post("/listings/:id/report", async (req, res): Promise<void> => {
   const params = ReportListingParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
+    return;
+  }
+  if (!UUID_REGEX.test(params.data.id)) {
+    res.status(404).json({ error: "Listing not found" });
     return;
   }
 

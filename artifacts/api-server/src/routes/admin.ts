@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, gte, lt, sql, desc } from "drizzle-orm";
-import { db, listingsTable, profilesTable, searchStatsTable, businessBookingsTable, sponsoredAdsTable, messagesTable } from "@workspace/db";
+import { db, listingsTable, profilesTable, searchStatsTable, businessBookingsTable, sponsoredAdsTable, messagesTable, visitorSessionsTable } from "@workspace/db";
 import {
   AdminGetListingsQueryParams,
   AdminGetListingsResponse,
@@ -547,6 +547,92 @@ router.patch("/admin/sponsored-ads/:id", async (req, res): Promise<void> => {
   }
 
   res.json({ ok: true, ad: updated, weekStart: updated.weekStart, slotPosition: updated.slotPosition });
+});
+
+router.get("/admin/analytics", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const onlineThreshold = new Date(now.getTime() - 5 * 60 * 1000);
+
+  const [onlineRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(visitorSessionsTable)
+    .where(gte(visitorSessionsTable.lastSeen, onlineThreshold));
+
+  const [todayRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(visitorSessionsTable)
+    .where(gte(visitorSessionsTable.createdAt, todayStart));
+
+  const [weekRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(visitorSessionsTable)
+    .where(gte(visitorSessionsTable.createdAt, weekStart));
+
+  const [totalRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(visitorSessionsTable);
+
+  const countryRows = await db.execute(
+    sql`SELECT COALESCE(country, 'Unbekannt') AS country, COUNT(*)::int AS count
+        FROM visitor_sessions
+        GROUP BY country
+        ORDER BY count DESC
+        LIMIT 15`
+  );
+  const countryArray: any[] = Array.isArray(countryRows) ? countryRows : (countryRows as any).rows ?? [];
+
+  res.json({
+    online: onlineRow?.count ?? 0,
+    today: todayRow?.count ?? 0,
+    thisWeek: weekRow?.count ?? 0,
+    totalUnique: totalRow?.count ?? 0,
+    byCountry: countryArray.map((r) => ({ country: String(r.country), count: Number(r.count) })),
+  });
+});
+
+router.get("/admin/analytics/year", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated() || (req.user as any).email !== "welik.jakob@gmail.com") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const year = parseInt(String(req.query.year ?? new Date().getFullYear()), 10);
+
+  const rows = await db.execute(
+    sql`SELECT
+          TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
+          EXTRACT(HOUR FROM created_at AT TIME ZONE 'UTC')::int AS hour,
+          COUNT(*)::int AS cnt
+        FROM visitor_sessions
+        WHERE EXTRACT(YEAR FROM created_at AT TIME ZONE 'UTC') = ${year}
+        GROUP BY date, hour
+        ORDER BY date, hour`
+  );
+  const rowArray: any[] = Array.isArray(rows) ? rows : (rows as any).rows ?? [];
+
+  const byDate = new Map<string, { total: number; byHour: Record<number, number> }>();
+  for (const r of rowArray) {
+    const d = String(r.date);
+    const h = Number(r.hour);
+    const c = Number(r.cnt);
+    if (!byDate.has(d)) byDate.set(d, { total: 0, byHour: {} });
+    const entry = byDate.get(d)!;
+    entry.total += c;
+    entry.byHour[h] = (entry.byHour[h] ?? 0) + c;
+  }
+
+  const result = Array.from(byDate.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, { total, byHour }]) => ({ date, total, byHour }));
+
+  res.json({ year, rows: result });
 });
 
 router.get("/admin/market-intelligence", async (req, res): Promise<void> => {
