@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@workspace/replit-auth-web";
-import { Megaphone, ExternalLink, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { Megaphone, ExternalLink, Loader2, ImageIcon, X, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface MyAd {
   id: string;
@@ -40,6 +40,7 @@ export function CreateSponsoredAd() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [imageStatus, setImageStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [targetUrl, setTargetUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -194,18 +195,64 @@ export function CreateSponsoredAd() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="imageUrl" className="text-sm font-medium text-slate-700">
-                  Bild-URL (Logo oder Foto)
+                  Bild-URL <span className="text-slate-400 font-normal">(Logo oder Foto)</span>
                 </Label>
-                <Input
-                  id="imageUrl"
-                  value={imageUrl}
-                  onChange={e => setImageUrl(e.target.value)}
-                  placeholder="https://example.com/logo.png"
-                  type="url"
-                />
+                <div className="relative">
+                  <Input
+                    id="imageUrl"
+                    value={imageUrl}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setImageUrl(val);
+                      setImageStatus(val.trim() ? "loading" : "idle");
+                    }}
+                    placeholder="https://example.com/logo.png"
+                    type="url"
+                    className="pr-10"
+                  />
+                  {imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => { setImageUrl(""); setImageStatus("idle"); }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600 transition-colors"
+                      title="URL entfernen"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-xs text-slate-400">
+                  Empfohlen: min. 800 × 300 px, JPG oder PNG. Das Bild erscheint in der Werbeleiste auf der Startseite.
+                </p>
+
+                {/* Preview area */}
                 {imageUrl && (
-                  <div className="mt-2 w-full aspect-[16/7] bg-slate-100 rounded-sm overflow-hidden">
-                    <img src={imageUrl} alt="Vorschau" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = "none")} />
+                  <div className="mt-3 border border-slate-200 rounded-sm overflow-hidden bg-slate-50">
+                    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-slate-100 bg-white">
+                      <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-[11px] text-slate-400 uppercase tracking-widest font-medium">Vorschau</span>
+                      {imageStatus === "ok" && <CheckCircle2 className="w-3.5 h-3.5 text-green-500 ml-auto" />}
+                      {imageStatus === "error" && <AlertCircle className="w-3.5 h-3.5 text-red-400 ml-auto" />}
+                      {imageStatus === "loading" && <Loader2 className="w-3.5 h-3.5 text-slate-300 ml-auto animate-spin" />}
+                    </div>
+                    <div className="w-full aspect-[16/7] bg-slate-100 relative">
+                      {imageStatus === "error" ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
+                          <AlertCircle className="w-6 h-6 text-slate-300" />
+                          <p className="text-xs">Bild konnte nicht geladen werden</p>
+                          <p className="text-[10px] text-slate-300">Prüfe die URL oder ob das Bild öffentlich zugänglich ist</p>
+                        </div>
+                      ) : (
+                        <img
+                          src={imageUrl}
+                          alt="Vorschau"
+                          className="w-full h-full object-cover"
+                          onLoad={() => setImageStatus("ok")}
+                          onError={() => setImageStatus("error")}
+                        />
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
