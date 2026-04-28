@@ -109,8 +109,6 @@ export function CreateListing() {
               description: "Deine Anzeige wird nach Prüfung des Videos freigeschaltet.",
             });
             setLocation("/my-ads");
-          } else if (newListing.paymentStatus === "pending") {
-            setLocation(`/pay/${newListing.id}`);
           } else {
             toast({ title: t.create_success, description: t.create_successDesc });
             setLocation(`/listings/${newListing.id}`);

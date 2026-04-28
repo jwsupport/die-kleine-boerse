@@ -21,7 +21,6 @@ import { Admin } from "@/pages/Admin";
 import { MyAds } from "@/pages/MyAds";
 import { Favourites } from "@/pages/Favourites";
 import { CategoryPage } from "@/pages/CategoryPage";
-import CryptoPayment from "@/pages/CryptoPayment";
 import { Archive } from "@/pages/Archive";
 import { CreateSponsoredAd } from "@/pages/CreateSponsoredAd";
 import { Impressum } from "@/pages/Impressum";
@@ -40,7 +39,6 @@ function Router() {
       <Route path="/favourites" component={Favourites} />
       <Route path="/listings/create" component={CreateListing} />
       <Route path="/listings/:id" component={ListingDetail} />
-      <Route path="/pay/:id" component={CryptoPayment} />
       <Route path="/messages" component={Messages} />
       <Route path="/profile/:id" component={Profile} />
       <Route path="/category/:id" component={CategoryPage} />

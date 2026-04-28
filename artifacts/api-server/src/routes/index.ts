@@ -14,7 +14,6 @@ import favouritesRouter from "./favourites";
 import aiRouter from "./ai";
 import invoicesRouter from "./invoices";
 import sponsoredAdsRouter from "./sponsored-ads";
-import cryptoPaymentsRouter from "./crypto-payments";
 import analyticsRouter from "./analytics";
 
 const router: IRouter = Router();
@@ -34,7 +33,6 @@ router.use(favouritesRouter);
 router.use(aiRouter);
 router.use(invoicesRouter);
 router.use(sponsoredAdsRouter);
-router.use(cryptoPaymentsRouter);
 router.use(analyticsRouter);
 
 export default router;
