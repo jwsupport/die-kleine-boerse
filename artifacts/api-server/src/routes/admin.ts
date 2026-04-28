@@ -264,7 +264,7 @@ router.get("/admin/payments", async (req, res): Promise<void> => {
   }
 
   const now = new Date();
-  const targetYear = query.data.year ?? now.getFullYear();
+  const targetYear = Number(query.data.year ?? now.getFullYear());
   const yearStart = new Date(targetYear, 0, 1);
   const yearEnd = new Date(targetYear + 1, 0, 1);
 

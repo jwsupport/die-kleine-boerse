@@ -125,7 +125,7 @@ export function Home() {
             >
               {t.home_allFilter}
             </button>
-            {stats?.map((stat) => {
+            {Array.isArray(stats) && stats.map((stat) => {
               const meta = categoryByLabel[stat.category];
               const Icon = meta?.Icon;
               return (

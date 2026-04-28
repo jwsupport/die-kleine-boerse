@@ -35,7 +35,7 @@ export const AdminGetRevenueResponseItem = zod.object({
 export const AdminGetRevenueResponse = zod.array(AdminGetRevenueResponseItem);
 
 export const AdminGetPaymentsQueryParams = zod.object({
-  year: zod.string().optional(),
+  year: zod.coerce.number().optional(),
 });
 
 export const AdminGetPaymentsResponseItem = zod.object({
