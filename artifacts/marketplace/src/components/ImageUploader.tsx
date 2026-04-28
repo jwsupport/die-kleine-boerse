@@ -1,6 +1,15 @@
-import { useRef } from "react";
-import { X, ImageIcon } from "lucide-react";
+import { useRef, useState, useCallback, DragEvent, ChangeEvent } from "react";
+import { useUpload } from "@workspace/object-storage-web";
+import { UploadCloud, X, Link2, Loader2, ImageIcon } from "lucide-react";
 import { useT } from "@/lib/i18n";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/+$/, "");
+
+function toDisplayUrl(value: string): string {
+  if (!value) return "";
+  if (value.startsWith("/objects/")) return `${BASE}/api/storage${value}`;
+  return value;
+}
 
 interface ImageUploaderProps {
   value: string[];
@@ -8,137 +17,230 @@ interface ImageUploaderProps {
   maxImages?: number;
 }
 
-const MAX_DIMENSION = 1200;
-const JPEG_QUALITY = 0.82;
-
-function compressImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-          if (width > height) {
-            height = Math.round((height * MAX_DIMENSION) / width);
-            width = MAX_DIMENSION;
-          } else {
-            width = Math.round((width * MAX_DIMENSION) / height);
-            height = MAX_DIMENSION;
-          }
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d")!;
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
-      };
-      img.onerror = reject;
-      img.src = e.target!.result as string;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+type Tab = "upload" | "url";
 
 export function ImageUploader({ value, onChange, maxImages = 4 }: ImageUploaderProps) {
   const t = useT();
+  const [tab, setTab] = useState<Tab>("upload");
+  const [urlInput, setUrlInput] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadingCount, setUploadingCount] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const remaining = maxImages - value.length;
+  const { uploadFile } = useUpload({
+    onError: (err) => setUploadError(err.message),
+  });
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []).slice(0, remaining);
-    if (!files.length) return;
-    const compressed = await Promise.all(files.map(compressImage));
-    onChange([...value, ...compressed]);
+  const canAddMore = value.length < maxImages;
+
+  const processFiles = useCallback(
+    async (files: File[]) => {
+      setUploadError(null);
+      const slots = maxImages - value.length;
+      const allowed = files.slice(0, slots);
+      if (allowed.length === 0) return;
+
+      setUploadingCount((n) => n + allowed.length);
+      const results: string[] = [];
+
+      for (const file of allowed) {
+        if (!file.type.startsWith("image/")) {
+          setUploadError("Nur Bilddateien erlaubt (jpg, png, webp …)");
+          setUploadingCount((n) => n - 1);
+          continue;
+        }
+        const result = await uploadFile(file);
+        setUploadingCount((n) => n - 1);
+        if (result?.objectPath) {
+          results.push(result.objectPath);
+        }
+      }
+
+      if (results.length > 0) {
+        onChange([...value, ...results]);
+      }
+    },
+    [value, onChange, maxImages, uploadFile]
+  );
+
+  const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    processFiles(files);
     e.target.value = "";
   };
 
-  const removeImage = (idx: number) => {
-    onChange(value.filter((_, i) => i !== idx));
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    processFiles(files);
   };
 
-  const openPicker = () => {
-    if (remaining > 0) fileInputRef.current?.click();
+  const addUrlImage = () => {
+    const url = urlInput.trim();
+    if (!url || value.includes(url)) return;
+    onChange([...value, url]);
+    setUrlInput("");
   };
+
+  const removeImage = (index: number) => {
+    onChange(value.filter((_, i) => i !== index));
+  };
+
+  const isUploading = uploadingCount > 0;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
         <label className="block text-xs uppercase tracking-widest text-slate-400 font-semibold">
-          {t.uploader_gallery} ({value.length} / {maxImages})
+          {t.uploader_gallery ?? "Fotos"}
         </label>
-        <span className="text-[10px] text-slate-400">
-          JPG · PNG · WEBP
+        <span className="text-xs text-slate-400">
+          {value.length}/{maxImages}
         </span>
       </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={handleFileChange}
-      />
-
-      <div className="grid grid-cols-4 gap-3">
-        {value.map((url, idx) => (
-          <div
-            key={idx}
-            className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden border border-slate-200 group"
-          >
-            <img
-              src={url}
-              alt={`Bild ${idx + 1}`}
-              className="object-cover w-full h-full"
-            />
-            <button
-              type="button"
-              onClick={() => removeImage(idx)}
-              className="absolute top-1.5 right-1.5 w-6 h-6 bg-white/95 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-50"
-              aria-label="Bild entfernen"
-            >
-              <X className="w-3.5 h-3.5 text-slate-700" />
-            </button>
-            <div className="absolute bottom-1.5 left-1.5 bg-black/40 text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full">
-              {idx + 1}
+      {(value.length > 0 || isUploading) && (
+        <div className="grid grid-cols-4 gap-2">
+          {value.map((url, i) => (
+            <div key={i} className="relative group aspect-square rounded-xl overflow-hidden bg-slate-50 border border-slate-100">
+              <img
+                src={toDisplayUrl(url)}
+                alt={`Bild ${i + 1}`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const el = e.currentTarget as HTMLImageElement;
+                  el.style.display = "none";
+                }}
+              />
+              {i === 0 && (
+                <span className="absolute bottom-1 left-1 text-[9px] uppercase tracking-widest font-bold bg-slate-900/70 text-white px-1.5 py-0.5 rounded-full pointer-events-none">
+                  Titelbild
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => removeImage(i)}
+                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+              >
+                <X className="w-3 h-3 text-slate-700" />
+              </button>
             </div>
-          </div>
-        ))}
-
-        {Array.from({ length: remaining }).map((_, i) => (
-          <div
-            key={`placeholder-${i}`}
-            className="aspect-square border border-dashed border-slate-200 rounded-xl flex items-center justify-center bg-slate-50/50"
-          >
-            <svg viewBox="0 0 48 48" className="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="6" y="10" width="36" height="28" rx="4" stroke="#cbd5e1" strokeWidth="1.5" fill="#f8fafc"/>
-              <circle cx="17" cy="20" r="3.5" stroke="#cbd5e1" strokeWidth="1.5"/>
-              <path d="M6 32l9-8 7 7 5-4 9 9" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-        ))}
-      </div>
-
-      {value.length === 0 && (
-        <button
-          type="button"
-          onClick={openPicker}
-          className="mt-3 w-full py-8 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition-all text-slate-400 hover:text-slate-600"
-        >
-          <ImageIcon className="w-7 h-7" />
-          <span className="text-sm font-medium">Bilder vom Gerät hochladen</span>
-          <span className="text-[11px] text-slate-400">Bis zu {maxImages} Fotos · JPG, PNG, WEBP</span>
-        </button>
+          ))}
+          {isUploading &&
+            Array.from({ length: uploadingCount }).map((_, i) => (
+              <div key={`uploading-${i}`} className="aspect-square rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+              </div>
+            ))}
+        </div>
       )}
 
-      {value.length > 0 && remaining > 0 && (
-        <p className="text-[10px] text-slate-400 mt-2 italic">
-          Noch {remaining} {remaining === 1 ? "Foto" : "Fotos"} möglich — nutze den Button unten
-        </p>
+      {canAddMore && (
+        <div>
+          <div className="flex gap-1 mb-3">
+            <button
+              type="button"
+              onClick={() => setTab("upload")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                tab === "upload"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <UploadCloud className="w-3.5 h-3.5" />
+              Hochladen
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("url")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                tab === "url"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <Link2 className="w-3.5 h-3.5" />
+              Bild-URL
+            </button>
+          </div>
+
+          {tab === "upload" && (
+            <div
+              onDrop={handleDrop}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+              className={`relative flex flex-col items-center justify-center gap-2 p-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all select-none ${
+                isDragging
+                  ? "border-slate-400 bg-slate-50"
+                  : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+              } ${isUploading ? "pointer-events-none" : ""}`}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-7 h-7 text-slate-400 animate-spin" />
+                  <p className="text-sm text-slate-500">Wird hochgeladen…</p>
+                </>
+              ) : (
+                <>
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                    <ImageIcon className="w-5 h-5 text-slate-400" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-slate-700 font-medium">
+                      Bilder hierher ziehen oder{" "}
+                      <span className="underline underline-offset-2">auswählen</span>
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      JPG, PNG, WEBP · max. 10 MB · noch {maxImages - value.length}{" "}
+                      Foto{maxImages - value.length !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="sr-only"
+                onChange={handleFileInput}
+              />
+            </div>
+          )}
+
+          {tab === "url" && (
+            <div className="flex gap-2">
+              <input
+                type="url"
+                placeholder="https://example.com/bild.jpg"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addUrlImage();
+                  }
+                }}
+                className="flex-1 p-4 bg-slate-50 border border-transparent rounded-xl focus:ring-2 focus:ring-slate-200 outline-none text-slate-900 placeholder:text-slate-400 text-sm"
+              />
+              <button
+                type="button"
+                onClick={addUrlImage}
+                disabled={!urlInput.trim()}
+                className="px-5 py-4 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-all disabled:bg-slate-200 disabled:text-slate-400"
+              >
+                Hinzufügen
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {uploadError && (
+        <p className="text-xs text-red-500 mt-1">{uploadError}</p>
       )}
     </div>
   );

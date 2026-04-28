@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@workspace/replit-auth-web";
-import { Megaphone, ExternalLink, Loader2, ImageIcon, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { useUpload } from "@workspace/object-storage-web";
+import { Megaphone, ExternalLink, Loader2, ImageIcon, X, CheckCircle2, AlertCircle, UploadCloud, Link2 } from "lucide-react";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/+$/, "");
+function toDisplayUrl(value: string): string {
+  if (!value) return "";
+  if (value.startsWith("/objects/")) return `${BASE}/api/storage${value}`;
+  return value;
+}
 
 interface MyAd {
   id: string;
@@ -41,7 +49,34 @@ export function CreateSponsoredAd() {
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageStatus, setImageStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [imageTab, setImageTab] = useState<"upload" | "url">("upload");
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
   const [targetUrl, setTargetUrl] = useState("");
+  const imageFileRef = useRef<HTMLInputElement>(null);
+
+  const { uploadFile } = useUpload({
+    onError: (err) => { setImageUploadError(err.message); setImageUploading(false); },
+  });
+
+  const handleImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setImageUploadError("Nur Bilddateien erlaubt.");
+      return;
+    }
+    setImageUploadError(null);
+    setImageUploading(true);
+    setImageStatus("loading");
+    const result = await uploadFile(file);
+    setImageUploading(false);
+    if (result?.objectPath) {
+      setImageUrl(result.objectPath);
+      setImageStatus("loading");
+    }
+    e.target.value = "";
+  };
   const [submitting, setSubmitting] = useState(false);
 
   const [myAds, setMyAds] = useState<MyAd[]>([]);
@@ -193,59 +228,127 @@ export function CreateSponsoredAd() {
                 <p className="text-xs text-slate-400">{description.length}/200</p>
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="imageUrl" className="text-sm font-medium text-slate-700">
-                  Bild-URL <span className="text-slate-400 font-normal">(Logo oder Foto)</span>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-slate-700">
+                  Bild <span className="text-slate-400 font-normal">(Logo oder Foto)</span>
                 </Label>
-                <div className="relative">
-                  <Input
-                    id="imageUrl"
-                    value={imageUrl}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setImageUrl(val);
-                      setImageStatus(val.trim() ? "loading" : "idle");
-                    }}
-                    placeholder="https://example.com/logo.png"
-                    type="url"
-                    className="pr-10"
-                  />
-                  {imageUrl && (
-                    <button
-                      type="button"
-                      onClick={() => { setImageUrl(""); setImageStatus("idle"); }}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600 transition-colors"
-                      title="URL entfernen"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
+
+                {/* Tab switcher */}
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setImageTab("upload")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      imageTab === "upload" ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    Hochladen
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageTab("url")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      imageTab === "url" ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <Link2 className="w-3.5 h-3.5" />
+                    Bild-URL
+                  </button>
                 </div>
 
-                <p className="text-xs text-slate-400">
-                  Empfohlen: min. 800 × 300 px, JPG oder PNG. Das Bild erscheint in der Werbeleiste auf der Startseite.
-                </p>
+                {imageTab === "upload" && !imageUrl && (
+                  <div
+                    onClick={() => !imageUploading && imageFileRef.current?.click()}
+                    className={`flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed cursor-pointer transition-all select-none ${
+                      imageUploading
+                        ? "border-slate-200 pointer-events-none"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                    }`}
+                  >
+                    {imageUploading ? (
+                      <>
+                        <Loader2 className="w-7 h-7 text-slate-400 animate-spin" />
+                        <p className="text-sm text-slate-500">Wird hochgeladen…</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                          <ImageIcon className="w-5 h-5 text-slate-400" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm text-slate-700 font-medium">
+                            Bild auswählen
+                          </p>
+                          <p className="text-xs text-slate-400 mt-0.5">JPG, PNG · mind. 800 × 300 px · max. 10 MB</p>
+                        </div>
+                      </>
+                    )}
+                    <input
+                      ref={imageFileRef}
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={handleImageFile}
+                    />
+                  </div>
+                )}
+
+                {imageTab === "url" && !imageUrl && (
+                  <div className="relative">
+                    <Input
+                      id="imageUrl"
+                      placeholder="https://example.com/logo.png"
+                      type="url"
+                      onBlur={(e) => {
+                        const val = e.target.value.trim();
+                        if (val) { setImageUrl(val); setImageStatus("loading"); }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const val = (e.target as HTMLInputElement).value.trim();
+                          if (val) { setImageUrl(val); setImageStatus("loading"); }
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-slate-400 mt-1">
+                      Empfohlen: min. 800 × 300 px, JPG oder PNG.
+                    </p>
+                  </div>
+                )}
+
+                {imageUploadError && (
+                  <p className="text-xs text-red-500">{imageUploadError}</p>
+                )}
 
                 {/* Preview area */}
                 {imageUrl && (
-                  <div className="mt-3 border border-slate-200 rounded-sm overflow-hidden bg-slate-50">
+                  <div className="border border-slate-200 rounded-sm overflow-hidden bg-slate-50">
                     <div className="flex items-center gap-2 px-3 py-1.5 border-b border-slate-100 bg-white">
                       <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
                       <span className="text-[11px] text-slate-400 uppercase tracking-widest font-medium">Vorschau</span>
                       {imageStatus === "ok" && <CheckCircle2 className="w-3.5 h-3.5 text-green-500 ml-auto" />}
                       {imageStatus === "error" && <AlertCircle className="w-3.5 h-3.5 text-red-400 ml-auto" />}
                       {imageStatus === "loading" && <Loader2 className="w-3.5 h-3.5 text-slate-300 ml-auto animate-spin" />}
+                      <button
+                        type="button"
+                        onClick={() => { setImageUrl(""); setImageStatus("idle"); setImageUploadError(null); }}
+                        className="ml-1 text-slate-300 hover:text-slate-600 transition-colors"
+                        title="Bild entfernen"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                     <div className="w-full aspect-[16/7] bg-slate-100 relative">
                       {imageStatus === "error" ? (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
                           <AlertCircle className="w-6 h-6 text-slate-300" />
                           <p className="text-xs">Bild konnte nicht geladen werden</p>
-                          <p className="text-[10px] text-slate-300">Prüfe die URL oder ob das Bild öffentlich zugänglich ist</p>
                         </div>
                       ) : (
                         <img
-                          src={imageUrl}
+                          src={toDisplayUrl(imageUrl)}
                           alt="Vorschau"
                           className="w-full h-full object-cover"
                           onLoad={() => setImageStatus("ok")}
@@ -315,7 +418,7 @@ export function CreateSponsoredAd() {
 
                       {ad.imageUrl && (
                         <div className="w-full aspect-[16/6] bg-slate-100 rounded-sm overflow-hidden">
-                          <img src={ad.imageUrl} alt={ad.title} className="w-full h-full object-cover" />
+                          <img src={toDisplayUrl(ad.imageUrl)} alt={ad.title} className="w-full h-full object-cover" />
                         </div>
                       )}
 

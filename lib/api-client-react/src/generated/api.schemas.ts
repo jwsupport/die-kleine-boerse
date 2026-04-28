@@ -24,13 +24,6 @@ export interface Profile {
   createdAt: string;
 }
 
-export interface UpdateProfileBody {
-  /** @nullable */
-  fullName?: string | null;
-  /** @nullable */
-  username?: string | null;
-}
-
 export interface Listing {
   id: string;
   sellerId: string;
@@ -234,19 +227,6 @@ export interface AdminStats {
   newListingsThisPeriod: number;
 }
 
-export interface AdminRevenueItem {
-  month: string;
-  revenue: number;
-}
-
-export interface AdminPaymentItem {
-  id: string;
-  title: string;
-  category: string;
-  amount: number;
-  paidAt: string;
-}
-
 export interface AuthUser {
   id: string;
   /** @nullable */
@@ -293,6 +273,25 @@ export interface ListingPriceResponse {
   priceId?: string | null;
   amount: number;
   currency: string;
+}
+
+export interface UploadUrlRequest {
+  /** @minLength 1 */
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  /** @minLength 1 */
+  contentType: string;
+}
+
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata?: UploadUrlRequest;
+}
+
+export interface ErrorEnvelope {
+  error: string;
 }
 
 export type BeginBrowserLoginParams = {

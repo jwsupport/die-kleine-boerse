@@ -8,6 +8,35 @@
 import * as zod from "zod";
 
 /**
+ * @summary Request a presigned URL for file upload
+ */
+
+export const RequestUploadUrlBody = zod.object({
+  name: zod.string().min(1),
+  size: zod.number().min(1),
+  contentType: zod.string().min(1),
+});
+
+export const RequestUploadUrlResponse = zod.object({
+  uploadURL: zod.string().url(),
+  objectPath: zod.string(),
+  metadata: zod
+    .object({
+      name: zod.string().min(1),
+      size: zod.number().min(1),
+      contentType: zod.string().min(1),
+    })
+    .optional(),
+});
+
+/**
+ * @summary Serve an object entity
+ */
+export const GetStorageObjectParams = zod.object({
+  objectPath: zod.coerce.string(),
+});
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -100,25 +129,6 @@ export const GetProfileResponse = zod.object({
   fullName: zod.string().nullish(),
   avatarUrl: zod.string().nullish(),
   createdAt: zod.string(),
-  isVerified: zod.boolean().optional(),
-  verificationDate: zod.string().nullish(),
-});
-
-export const UpdateProfileParams = zod.object({
-  id: zod.coerce.string(),
-});
-
-export const UpdateProfileBody = zod.object({
-  fullName: zod.string().max(100).nullish(),
-  username: zod.string().max(50).nullish(),
-});
-
-export const UpdateProfileResponse = zod.object({
-  id: zod.string(),
-  username: zod.string().nullish(),
-  fullName: zod.string().nullish(),
-  avatarUrl: zod.string().nullish(),
-  createdAt: zod.string(),
 });
 
 export const GetProfileListingsParams = zod.object({
@@ -143,8 +153,8 @@ export const GetProfileListingsResponseItem = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
-  paymentStatus: zod.string().optional(),
-  listingFee: zod.number().optional(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
 });
@@ -216,11 +226,10 @@ export const GetListingsResponseItem = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
-  paymentStatus: zod.string().optional(),
-  listingFee: zod.number().optional(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
-  viewCount: zod.number().optional(),
 });
 export const GetListingsResponse = zod.array(GetListingsResponseItem);
 
@@ -236,7 +245,6 @@ export const CreateListingBody = zod.object({
   listingType: zod.string().optional(),
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
-  boostTier: zod.string().optional(),
 });
 
 export const GetListingParams = zod.object({
@@ -261,11 +269,10 @@ export const GetListingResponse = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
-  paymentStatus: zod.string().optional(),
-  listingFee: zod.number().optional(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
-  viewCount: zod.number().optional(),
   seller: zod.object({
     id: zod.string(),
     username: zod.string().nullish(),
@@ -309,8 +316,8 @@ export const UpdateListingResponse = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
-  paymentStatus: zod.string().optional(),
-  listingFee: zod.number().optional(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
 });
@@ -348,8 +355,8 @@ export const ReportListingResponse = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
-  paymentStatus: zod.string().optional(),
-  listingFee: zod.number().optional(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
 });
@@ -427,8 +434,8 @@ export const GetRecentListingsResponseItem = zod.object({
   lng: zod.number().nullish(),
   expiryDate: zod.string().nullish(),
   paidAt: zod.string().nullish(),
-  paymentStatus: zod.string().optional(),
-  listingFee: zod.number().optional(),
+  paymentStatus: zod.string(),
+  listingFee: zod.number(),
   daysAge: zod.number(),
   createdAt: zod.string(),
 });
@@ -459,8 +466,6 @@ export const AdminGetListingsResponseItem = zod.object({
   imageUrls: zod.array(zod.string()),
   status: zod.string(),
   listingType: zod.string(),
-  paymentStatus: zod.string(),
-  listingFee: zod.number(),
   isReported: zod.boolean(),
   reportReason: zod.string().nullish(),
   expiryDate: zod.string().nullish(),
@@ -495,8 +500,6 @@ export const AdminUpdateListingStatusResponse = zod.object({
   imageUrls: zod.array(zod.string()),
   status: zod.string(),
   listingType: zod.string(),
-  paymentStatus: zod.string(),
-  listingFee: zod.number(),
   isReported: zod.boolean(),
   reportReason: zod.string().nullish(),
   expiryDate: zod.string().nullish(),
@@ -525,28 +528,3 @@ export const AdminGetStatsResponse = zod.object({
   newProfilesThisPeriod: zod.number(),
   newListingsThisPeriod: zod.number(),
 });
-
-export const AdminGetRevenueQueryParams = zod.object({
-  year: zod.coerce.number().optional(),
-});
-
-export const AdminRevenueItem = zod.object({
-  month: zod.string(),
-  revenue: zod.number(),
-});
-
-export const AdminGetRevenueResponse = zod.array(AdminRevenueItem);
-
-export const AdminGetPaymentsQueryParams = zod.object({
-  year: zod.coerce.number().optional(),
-});
-
-export const AdminPaymentItem = zod.object({
-  id: zod.string(),
-  title: zod.string(),
-  category: zod.string(),
-  amount: zod.number(),
-  paidAt: zod.string(),
-});
-
-export const AdminGetPaymentsResponse = zod.array(AdminPaymentItem);
