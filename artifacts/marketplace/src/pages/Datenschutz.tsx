@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { SEO } from "@/components/seo/SEO";
+import { Footer } from "@/components/layout/Footer";
 
 export function Datenschutz() {
   return (
@@ -96,6 +97,7 @@ export function Datenschutz() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }

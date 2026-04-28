@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { SEO } from "@/components/seo/SEO";
+import { Footer } from "@/components/layout/Footer";
 
 export function AGB() {
   return (
@@ -67,6 +68,7 @@ export function AGB() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }

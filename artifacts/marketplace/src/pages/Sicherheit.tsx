@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { ArrowLeft, ShieldCheck, AlertTriangle, Eye, CreditCard, MessageSquare, Video } from "lucide-react";
 import { SEO } from "@/components/seo/SEO";
+import { Footer } from "@/components/layout/Footer";
 
 const tips = [
   {
@@ -86,6 +87,7 @@ export function Sicherheit() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }

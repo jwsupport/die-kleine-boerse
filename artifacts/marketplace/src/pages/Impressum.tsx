@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { SEO } from "@/components/seo/SEO";
+import { Footer } from "@/components/layout/Footer";
 
 export function Impressum() {
   return (
@@ -56,6 +57,7 @@ export function Impressum() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }
