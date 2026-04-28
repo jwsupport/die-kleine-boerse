@@ -8,6 +8,7 @@ import {
   useSubmitRating,
   useUpdateProfile,
 } from "@workspace/api-client-react";
+import type { FullProfile } from "@/lib/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@workspace/replit-auth-web";
 import { isAdminEmail } from "@/lib/admin";
@@ -41,12 +42,13 @@ export function Profile() {
 
   const isOwner = !!user && user.id === id;
 
-  const { data: profile, isLoading: loadingProfile } = useGetProfile(id, {
+  const { data: rawProfile, isLoading: loadingProfile } = useGetProfile(id, {
     query: {
       enabled: !!id,
       queryKey: getGetProfileQueryKey(id)
     }
   });
+  const profile = rawProfile as FullProfile | undefined;
 
   const { data: listings, isLoading: loadingListings } = useGetProfileListings(id, {
     query: {
@@ -90,42 +92,42 @@ export function Profile() {
   const [myBookings, setMyBookings] = useState<MyBooking[]>([]);
 
   useEffect(() => {
-    if (!isOwner || !(profile as any)?.isBusiness) return;
+    if (!isOwner || !profile?.isBusiness) return;
     const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
     fetch(`${base}/api/my/business-bookings`, { credentials: "include" })
       .then(r => r.ok ? r.json() : [])
       .then(setMyBookings)
       .catch(() => {});
-  }, [isOwner, (profile as any)?.isBusiness]);
+  }, [isOwner, profile?.isBusiness]);
 
   useEffect(() => {
     if (profile && editOpen) {
       setEditFullName(profile.fullName ?? "");
       setEditUsername(profile.username ?? "");
-      setEditIsBusiness((profile as any).isBusiness ?? false);
-      setEditCompanyName((profile as any).companyName ?? "");
-      setEditVatId((profile as any).vatId ?? "");
-      setEditStreet((profile as any).street ?? "");
-      setEditPostalCode((profile as any).postalCode ?? "");
-      setEditCity((profile as any).city ?? "");
-      setEditCountry((profile as any).country ?? "");
-      setEditPhone((profile as any).phone ?? "");
-      setEditWebsite((profile as any).website ?? "");
+      setEditIsBusiness(profile.isBusiness ?? false);
+      setEditCompanyName(profile.companyName ?? "");
+      setEditVatId(profile.vatId ?? "");
+      setEditStreet(profile.street ?? "");
+      setEditPostalCode(profile.postalCode ?? "");
+      setEditCity(profile.city ?? "");
+      setEditCountry(profile.country ?? "");
+      setEditPhone(profile.phone ?? "");
+      setEditWebsite(profile.website ?? "");
     }
   }, [profile, editOpen]);
 
   const handleOpenEdit = () => {
     setEditFullName(profile?.fullName ?? "");
     setEditUsername(profile?.username ?? "");
-    setEditIsBusiness((profile as any)?.isBusiness ?? false);
-    setEditCompanyName((profile as any)?.companyName ?? "");
-    setEditVatId((profile as any)?.vatId ?? "");
-    setEditStreet((profile as any)?.street ?? "");
-    setEditPostalCode((profile as any)?.postalCode ?? "");
-    setEditCity((profile as any)?.city ?? "");
-    setEditCountry((profile as any)?.country ?? "");
-    setEditPhone((profile as any)?.phone ?? "");
-    setEditWebsite((profile as any)?.website ?? "");
+    setEditIsBusiness(profile?.isBusiness ?? false);
+    setEditCompanyName(profile?.companyName ?? "");
+    setEditVatId(profile?.vatId ?? "");
+    setEditStreet(profile?.street ?? "");
+    setEditPostalCode(profile?.postalCode ?? "");
+    setEditCity(profile?.city ?? "");
+    setEditCountry(profile?.country ?? "");
+    setEditPhone(profile?.phone ?? "");
+    setEditWebsite(profile?.website ?? "");
     setEditOpen(true);
   };
 
@@ -133,7 +135,7 @@ export function Profile() {
     updateProfile.mutate(
       {
         id,
-        data: {
+        body: {
           fullName: editFullName.trim() || null,
           username: editUsername.trim() || null,
           isBusiness: editIsBusiness,
@@ -145,7 +147,7 @@ export function Profile() {
           country: editIsBusiness ? editCountry.trim() || null : null,
           phone: editIsBusiness ? editPhone.trim() || null : null,
           website: editIsBusiness ? editWebsite.trim() || null : null,
-        } as any,
+        },
       },
       {
         onSuccess: () => {
@@ -280,20 +282,20 @@ export function Profile() {
                   <h1 className="text-2xl font-medium text-slate-900">
                     {profile.fullName || (isAdminEmail(user?.email) && isOwner ? 'Godfather' : 'Anonymer Nutzer')}
                   </h1>
-                  {(profile as any).isVerified && (
+                  {profile.isVerified && (
                     <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold border border-blue-100">
                       <BadgeCheck className="w-3 h-3" /> Verifiziert
                     </span>
                   )}
-                  {(profile as any).isBusiness && (
+                  {profile.isBusiness && (
                     <span className="inline-flex items-center gap-1 bg-slate-900 text-white px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold">
                       <Briefcase className="w-3 h-3" /> PRO
                     </span>
                   )}
                 </div>
                 {profile.username && <p className="text-slate-500 mt-1">@{profile.username}</p>}
-                {(profile as any).isBusiness && (profile as any).companyName && (
-                  <p className="text-xs text-slate-500 mt-0.5">{(profile as any).companyName}</p>
+                {profile.isBusiness && profile.companyName && (
+                  <p className="text-xs text-slate-500 mt-0.5">{profile.companyName}</p>
                 )}
               </div>
 
@@ -330,7 +332,7 @@ export function Profile() {
             </header>
 
             {/* Business Invoices — only for owner who is a business */}
-            {isOwner && (profile as any).isBusiness && (
+            {isOwner && profile?.isBusiness && (
               <div>
                 <div className="flex items-center gap-2 border-b border-slate-200 pb-4 mb-5">
                   <Briefcase className="w-4 h-4 text-slate-500" />

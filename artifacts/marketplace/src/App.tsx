@@ -56,10 +56,11 @@ function Router() {
 function OnboardingGate({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { data: profile } = useGetProfile(user?.id ?? "", {
-    query: { enabled: !!user?.id } as any,
+    query: { enabled: !!user?.id },
   });
 
-  const showOnboarding = !!user && !!profile && !(profile as any).setupComplete;
+  const fullProfile = profile as import("@/lib/types").FullProfile | undefined;
+  const showOnboarding = !!user && !!fullProfile && !fullProfile.setupComplete;
 
   return (
     <>

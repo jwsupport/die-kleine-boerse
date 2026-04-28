@@ -62,7 +62,7 @@ export default function CryptoPayment() {
   const [coin, setCoin] = useState<CryptoCoin>("usdt");
 
   const { data: listing, isLoading } = useGetListing(id ?? "", {
-    query: { enabled: !!id } as any,
+    query: { enabled: !!id },
   });
 
   const notifyPayment = useMutation({
