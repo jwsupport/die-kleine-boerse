@@ -54,6 +54,7 @@ function mapListing(l: Listing) {
     listingFee: Number(l.listingFee),
     daysAge,
     createdAt: l.createdAt instanceof Date ? l.createdAt.toISOString() : new Date(l.createdAt).toISOString(),
+    viewCount: l.viewCount ?? 0,
   };
 }
 
@@ -290,6 +291,11 @@ router.get("/listings/:id", async (req, res): Promise<void> => {
   }
 
   const { listing, seller } = row;
+
+  db.update(listingsTable)
+    .set({ viewCount: sql`${listingsTable.viewCount} + 1` })
+    .where(eq(listingsTable.id, listing.id))
+    .catch(() => {});
 
   res.json({
     ...mapListing(listing),

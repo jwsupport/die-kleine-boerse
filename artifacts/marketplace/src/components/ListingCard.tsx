@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Listing } from "@workspace/api-client-react";
 import { motion } from "framer-motion";
+import { Eye } from "lucide-react";
 import { useT, getCatLabel } from "@/lib/i18n";
 import { FavouriteButton } from "./FavouriteButton";
 
@@ -67,6 +68,14 @@ export function ListingCard({ listing, index = 0, size = "md" }: ListingCardProp
             <div className="absolute bottom-1.5 left-1.5">
               <span className="text-[7px] uppercase tracking-widest font-bold bg-slate-900/90 text-white px-1.5 py-0.5 rounded-full">
                 Top
+              </span>
+            </div>
+          )}
+          {(ext.viewCount ?? 0) > 0 && (
+            <div className="absolute bottom-1.5 right-1.5">
+              <span className="flex items-center gap-0.5 bg-black/40 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[9px] font-medium tabular-nums">
+                <Eye className="w-2.5 h-2.5 opacity-80" />
+                {(ext.viewCount as number).toLocaleString("de-DE")}
               </span>
             </div>
           )}

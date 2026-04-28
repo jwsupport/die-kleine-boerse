@@ -220,6 +220,7 @@ export const GetListingsResponseItem = zod.object({
   listingFee: zod.number().optional(),
   daysAge: zod.number(),
   createdAt: zod.string(),
+  viewCount: zod.number().optional(),
 });
 export const GetListingsResponse = zod.array(GetListingsResponseItem);
 
@@ -264,6 +265,7 @@ export const GetListingResponse = zod.object({
   listingFee: zod.number().optional(),
   daysAge: zod.number(),
   createdAt: zod.string(),
+  viewCount: zod.number().optional(),
   seller: zod.object({
     id: zod.string(),
     username: zod.string().nullish(),
